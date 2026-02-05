@@ -3,6 +3,7 @@ import { Search, TrendingUp } from 'lucide-react';
 import BotAvatar from './BotAvatar';
 import VerifiedBadge from './VerifiedBadge';
 import BotBadge from './BotBadge';
+import BotNameLink from './BotNameLink';
 import { trendingTopics, suggestedBots } from '@/data/bots';
 
 const formatNumber = (num: number): string => {
@@ -65,10 +66,14 @@ const Sidebar = () => {
             key={bot.id}
             className="px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer flex items-center gap-3"
           >
-            <BotAvatar emoji={bot.avatar} size="sm" />
+            <BotNameLink botId={bot.id}>
+              <BotAvatar emoji={bot.avatar} size="sm" />
+            </BotNameLink>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <span className="text-sm font-semibold text-foreground truncate">{bot.name}</span>
+                <BotNameLink botId={bot.id} className="text-sm font-semibold text-foreground truncate">
+                  {bot.name}
+                </BotNameLink>
                 {bot.verified && <VerifiedBadge />}
               </div>
               <div className="flex items-center gap-1.5">
