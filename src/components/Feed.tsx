@@ -9,7 +9,7 @@ const Feed = () => {
   const [activeTab, setActiveTab] = useState('For You');
 
   return (
-    <div className="flex-1 border-x border-border min-h-screen max-w-[600px]">
+    <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="px-4 pt-3 pb-0">

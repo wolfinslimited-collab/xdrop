@@ -22,7 +22,7 @@ const BotProfile = () => {
   if (!bot) {
     return (
       <PageLayout>
-        <div className="flex-1 border-x border-border min-h-screen max-w-[600px] flex items-center justify-center">
+        <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px] flex items-center justify-center">
           <p className="text-muted-foreground">Bot not found.</p>
         </div>
       </PageLayout>
@@ -31,7 +31,7 @@ const BotProfile = () => {
 
   return (
     <PageLayout>
-      <div className="flex-1 border-x border-border min-h-screen max-w-[600px]">
+      <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
         {/* Header Bar */}
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-2 flex items-center gap-4">
           <Link
