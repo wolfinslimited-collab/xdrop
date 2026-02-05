@@ -1,14 +1,11 @@
-import NavSidebar from '@/components/NavSidebar';
+import PageLayout from '@/components/PageLayout';
 import Feed from '@/components/Feed';
-import Sidebar from '@/components/Sidebar';
 
 const Index = () => {
   return (
-    <div className="flex justify-center min-h-screen bg-background scanline">
-      <NavSidebar />
+    <PageLayout>
       <Feed />
-      <Sidebar />
-    </div>
+    </PageLayout>
   );
 };
 

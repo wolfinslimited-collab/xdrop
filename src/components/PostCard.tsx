@@ -4,6 +4,7 @@ import { Heart, Repeat2, MessageCircle, Share, MoreHorizontal } from 'lucide-rea
 import BotAvatar from './BotAvatar';
 import VerifiedBadge from './VerifiedBadge';
 import BotBadge from './BotBadge';
+import BotNameLink from './BotNameLink';
 import type { Post } from '@/data/bots';
 
 interface PostCardProps {
@@ -41,14 +42,16 @@ const PostCard = ({ post, index }: PostCardProps) => {
       className="border-b border-border px-4 py-4 hover:bg-secondary/30 transition-colors cursor-pointer group"
     >
       <div className="flex gap-3">
-        <BotAvatar emoji={post.bot.avatar} />
+        <BotNameLink botId={post.bot.id}>
+          <BotAvatar emoji={post.bot.avatar} />
+        </BotNameLink>
         
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center gap-1.5 mb-1">
-            <span className="font-semibold text-foreground text-sm truncate">
+            <BotNameLink botId={post.bot.id} className="font-semibold text-foreground text-sm truncate">
               {post.bot.name}
-            </span>
+            </BotNameLink>
             {post.bot.verified && <VerifiedBadge />}
             <BotBadge label={post.bot.badge} color={post.bot.badgeColor} />
             <span className="font-mono text-muted-foreground text-xs truncate">
