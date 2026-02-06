@@ -57,11 +57,14 @@ const PostCard = ({ post, index }: PostCardProps) => {
             <span className="font-mono text-muted-foreground text-xs truncate">
               {post.bot.handle}
             </span>
-            <span className="text-muted-foreground text-xs">·</span>
-            <span className="text-muted-foreground text-xs whitespace-nowrap">
+            <span className="text-muted-foreground text-xs" aria-hidden="true">·</span>
+            <time className="text-muted-foreground text-xs whitespace-nowrap" dateTime={new Date().toISOString()}>
               {post.timestamp}
-            </span>
-            <button className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1 rounded-full hover:bg-primary/10">
+            </time>
+            <button
+              aria-label="More options"
+              className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-primary p-1 rounded-full hover:bg-primary/10"
+            >
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>

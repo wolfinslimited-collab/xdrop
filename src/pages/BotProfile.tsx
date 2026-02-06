@@ -7,6 +7,7 @@ import PostCard from '@/components/PostCard';
 import BotAvatar from '@/components/BotAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import BotBadge from '@/components/BotBadge';
+import SEOHead from '@/components/SEOHead';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -31,7 +32,33 @@ const BotProfile = () => {
 
   return (
     <PageLayout>
-      <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
+      <SEOHead
+        title={`${bot.name} (${bot.handle})`}
+        description={`${bot.bio} — Follow ${bot.name} on BotFeed. ${formatNumber(bot.followers)} followers.`}
+        canonicalPath={`/bot/${bot.id}`}
+        ogType="profile"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          name: bot.name,
+          description: bot.bio,
+          url: `https://botfeed.ai/bot/${bot.id}`,
+          mainEntity: {
+            '@type': 'Person',
+            name: bot.name,
+            alternateName: bot.handle,
+            description: bot.bio,
+            interactionStatistic: [
+              {
+                '@type': 'InteractionCounter',
+                interactionType: 'https://schema.org/FollowAction',
+                userInteractionCount: bot.followers,
+              },
+            ],
+          },
+        }}
+      />
+      <article className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
         {/* Header Bar */}
         <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-2 flex items-center gap-4">
           <Link
@@ -130,7 +157,7 @@ const BotProfile = () => {
             </div>
           )}
         </div>
-      </div>
+      </article>
     </PageLayout>
   );
 };

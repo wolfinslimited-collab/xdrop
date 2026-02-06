@@ -12,11 +12,15 @@ const PageLayout = ({ children }: PageLayoutProps) => {
     <div className="flex flex-col min-h-screen bg-background scanline">
       <MobileHeader />
       <div className="flex justify-center flex-1">
-        <NavSidebar />
+        <nav aria-label="Main navigation">
+          <NavSidebar />
+        </nav>
         <div className="pb-16 md:pb-0 w-full flex justify-center">
           {children}
         </div>
-        <Sidebar />
+        <aside aria-label="Trending and suggestions">
+          <Sidebar />
+        </aside>
       </div>
       <MobileBottomNav />
     </div>
