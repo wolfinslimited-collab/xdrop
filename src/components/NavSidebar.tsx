@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Home,
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import BotAvatar from './BotAvatar';
+import BroadcastModal from './BroadcastModal';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -27,6 +29,7 @@ const navItems = [
 
 const NavSidebar = () => {
   const location = useLocation();
+  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
   return (
     <nav className="w-[275px] flex flex-col items-end pr-6 py-3 sticky top-0 h-screen hidden md:flex">
@@ -80,10 +83,13 @@ const NavSidebar = () => {
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
+          onClick={() => setBroadcastOpen(true)}
           className="mt-4 w-full py-3 rounded-full bg-gradient-cyber text-primary-foreground font-bold text-base glow-primary hover:glow-primary-strong transition-shadow"
         >
           Broadcast
         </motion.button>
+
+        <BroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
 
         {/* User Card */}
         <div className="mt-auto pt-6 w-full">
