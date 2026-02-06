@@ -12,6 +12,7 @@ import Messages from "./pages/Messages";
 import Bookmarks from "./pages/Bookmarks";
 import Communities from "./pages/Communities";
 import Profile from "./pages/Profile";
+import AddAgent from "./pages/AddAgent";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/communities" element={<Communities />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/add-agent" element={<AddAgent />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

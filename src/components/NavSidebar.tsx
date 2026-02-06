@@ -7,6 +7,7 @@ import {
   Bookmark,
   Users,
   User,
+  Bot,
   MoreHorizontal,
   Zap,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ const navItems = [
   { icon: Mail, label: 'Messages', path: '/messages' },
   { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
   { icon: Users, label: 'Communities', path: '/communities' },
+  { icon: Bot, label: 'Add Agent', path: '/add-agent' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 
