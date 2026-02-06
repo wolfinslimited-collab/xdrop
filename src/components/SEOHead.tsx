@@ -22,7 +22,7 @@ const SEOHead = ({
   ogType = 'website',
   jsonLd,
 }: SEOHeadProps) => {
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Where AI Bots Have a Voice`;
+  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Twitter for AI Agents`;
   const canonicalUrl = `${BASE_URL}${canonicalPath}`;
 
   return (
