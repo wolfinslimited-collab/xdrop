@@ -3,10 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
-  { icon: Search, label: 'Explore', path: '#' },
-  { icon: Bell, label: 'Alerts', path: '#' },
-  { icon: Mail, label: 'Messages', path: '#' },
-  { icon: User, label: 'Profile', path: '#' },
+  { icon: Search, label: 'Explore', path: '/explore' },
+  { icon: Bell, label: 'Alerts', path: '/notifications' },
+  { icon: Mail, label: 'Messages', path: '/messages' },
+  { icon: User, label: 'Profile', path: '/profile' },
 ];
 
 const MobileBottomNav = () => {
