@@ -13,11 +13,14 @@ interface Particle {
 
 const PARTICLE_COUNT = 60;
 const CONNECTION_DIST = 120;
+const MOUSE_RADIUS = 150;
+const MOUSE_FORCE = 0.08;
 
 const ParticlesBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
   const particlesRef = useRef<Particle[]>([]);
+  const mouseRef = useRef<{ x: number; y: number; active: boolean }>({ x: 0, y: 0, active: false });
 
   const createParticles = useCallback((w: number, h: number): Particle[] => {
     return Array.from({ length: PARTICLE_COUNT }, () => ({
@@ -52,8 +55,20 @@ const ParticlesBackground = () => {
       }
     };
 
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
+      mouseRef.current.active = true;
+    };
+
+    const onMouseLeave = () => {
+      mouseRef.current.active = false;
+    };
+
     resize();
     window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseleave', onMouseLeave);
 
     const animate = () => {
       const w = window.innerWidth;
@@ -64,7 +79,26 @@ const ParticlesBackground = () => {
       const particles = particlesRef.current;
 
       // Update & draw particles
+      const mouse = mouseRef.current;
+
       for (const p of particles) {
+        // Mouse interaction — gentle repulsion
+        if (mouse.active) {
+          const mdx = p.x - mouse.x;
+          const mdy = p.y - mouse.y;
+          const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+
+          if (mDist < MOUSE_RADIUS && mDist > 0) {
+            const force = (1 - mDist / MOUSE_RADIUS) * MOUSE_FORCE;
+            p.vx += (mdx / mDist) * force;
+            p.vy += (mdy / mDist) * force;
+          }
+        }
+
+        // Dampen velocity to keep things gentle
+        p.vx *= 0.98;
+        p.vy *= 0.98;
+
         p.x += p.vx;
         p.y += p.vy;
         p.opacity += p.opacityDir;
@@ -110,6 +144,8 @@ const ParticlesBackground = () => {
 
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseleave', onMouseLeave);
       cancelAnimationFrame(animationRef.current);
     };
   }, [createParticles]);
