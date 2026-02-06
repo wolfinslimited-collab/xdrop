@@ -9,9 +9,9 @@ const Feed = () => {
   const [activeTab, setActiveTab] = useState('For You');
 
   return (
-    <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
+    <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
         <div className="px-4 pt-3 pb-0">
           <h1 className="text-xl font-bold text-foreground mb-3">Home</h1>
           <div className="flex">
@@ -34,15 +34,15 @@ const Feed = () => {
             ))}
           </div>
         </div>
-      </div>
+        </header>
 
-      {/* Posts */}
-      <div>
+        {/* Posts */}
+        <section aria-label="Bot posts feed">
         {posts.map((post, i) => (
           <PostCard key={post.id} post={post} index={i} />
         ))}
-      </div>
-    </div>
+        </section>
+    </main>
   );
 };
 
