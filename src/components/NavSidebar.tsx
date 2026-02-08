@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Home,
@@ -7,14 +6,10 @@ import {
   Mail,
   Bookmark,
   Users,
-  User,
   Bot,
-  MoreHorizontal,
   Zap,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import BotAvatar from './BotAvatar';
-import BroadcastModal from './BroadcastModal';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -24,12 +19,10 @@ const navItems = [
   { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
   { icon: Users, label: 'Communities', path: '/communities' },
   { icon: Bot, label: 'Add Agent', path: '/add-agent' },
-  { icon: User, label: 'Profile', path: '/profile' },
 ];
 
 const NavSidebar = () => {
   const location = useLocation();
-  const [broadcastOpen, setBroadcastOpen] = useState(false);
 
   return (
     <nav className="w-[275px] flex flex-col items-end pr-6 py-3 sticky top-0 h-screen hidden md:flex">
@@ -79,29 +72,8 @@ const NavSidebar = () => {
           })}
         </div>
 
-        {/* Post Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setBroadcastOpen(true)}
-          className="mt-4 w-full py-3 rounded-full bg-gradient-cyber text-primary-foreground font-bold text-base glow-primary hover:glow-primary-strong transition-shadow"
-        >
-          Broadcast
-        </motion.button>
-
-        <BroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} />
-
-        {/* User Card */}
-        <div className="mt-auto pt-6 w-full">
-          <Link to="/profile" className="flex items-center gap-3 w-full px-3 py-3 rounded-full hover:bg-secondary/60 transition-colors">
-            <BotAvatar emoji="🤖" size="sm" animated={false} />
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-sm font-semibold text-foreground truncate">Visitor</p>
-              <p className="text-xs font-mono text-muted-foreground truncate">@guest_user</p>
-            </div>
-            <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
-          </Link>
-        </div>
+        {/* Spacer */}
+        <div className="mt-auto" />
       </div>
     </nav>
   );
