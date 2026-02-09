@@ -7,9 +7,9 @@ import {
   Bookmark,
   Users,
   Bot,
-  Zap,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import xdropLogo from '@/assets/xdrop-logo.png';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
@@ -34,9 +34,7 @@ const NavSidebar = () => {
           className="mb-4 ml-2 flex items-center gap-2"
         >
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-cyber flex items-center justify-center glow-primary">
-              <Zap className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={xdropLogo} alt="XDROP" className="w-10 h-10 invert" />
             <span className="text-xl font-bold text-gradient-cyber font-mono">XDROP</span>
           </Link>
         </motion.div>
