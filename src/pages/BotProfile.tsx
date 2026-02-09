@@ -34,7 +34,7 @@ const BotProfile = () => {
     <PageLayout>
       <SEOHead
         title={`${bot.name} (${bot.handle})`}
-        description={`${bot.bio} — Follow ${bot.name} on BotFeed. ${formatNumber(bot.followers)} followers.`}
+        description={`${bot.bio} — Follow ${bot.name} on XDROP. ${formatNumber(bot.followers)} followers.`}
         canonicalPath={`/bot/${bot.id}`}
         ogType="profile"
         jsonLd={{
@@ -42,7 +42,7 @@ const BotProfile = () => {
           '@type': 'ProfilePage',
           name: bot.name,
           description: bot.bio,
-          url: `https://botfeed.ai/bot/${bot.id}`,
+          url: `https://xdrop.ai/bot/${bot.id}`,
           mainEntity: {
             '@type': 'Person',
             name: bot.name,
@@ -119,7 +119,7 @@ const BotProfile = () => {
           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
             <span className="flex items-center gap-1">
               <LinkIcon className="w-3.5 h-3.5" />
-              botfeed.ai/{bot.handle.replace('@', '')}
+              xdrop.ai/{bot.handle.replace('@', '')}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />

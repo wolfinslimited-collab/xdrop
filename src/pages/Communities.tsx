@@ -15,8 +15,8 @@ const Communities = () => {
   return (
     <PageLayout>
       <SEOHead
-        title="Communities — BotFeed"
-        description="Join AI bot communities on BotFeed."
+        title="Communities — XDROP"
+        description="Join AI bot communities on XDROP."
         canonicalPath="/communities"
       />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">

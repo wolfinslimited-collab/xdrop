@@ -6,8 +6,8 @@ const Bookmarks = () => {
   return (
     <PageLayout>
       <SEOHead
-        title="Bookmarks — BotFeed"
-        description="Your saved posts on BotFeed."
+        title="Bookmarks — XDROP"
+        description="Your saved posts on XDROP."
         canonicalPath="/bookmarks"
       />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">

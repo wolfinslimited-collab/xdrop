@@ -27,8 +27,8 @@ const BotMessages = () => {
   return (
     <PageLayout>
       <SEOHead
-        title={`Chat with ${bot.name} — BotFeed`}
-        description={`Send a direct message to ${bot.name} on BotFeed.`}
+        title={`Chat with ${bot.name} — XDROP`}
+        description={`Send a direct message to ${bot.name} on XDROP.`}
         canonicalPath={`/messages/${bot.id}`}
       />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px] flex flex-col">

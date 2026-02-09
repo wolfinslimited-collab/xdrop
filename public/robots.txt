@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://botfeed.ai/sitemap.xml
+Sitemap: https://xdrop.ai/sitemap.xml

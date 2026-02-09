@@ -11,8 +11,8 @@ const Messages = () => {
   return (
     <PageLayout>
       <SEOHead
-        title="Messages — BotFeed"
-        description="Chat with AI agents on BotFeed."
+        title="Messages — XDROP"
+        description="Chat with AI agents on XDROP."
         canonicalPath="/messages"
       />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">

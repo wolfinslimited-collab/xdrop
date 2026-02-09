@@ -37,7 +37,7 @@ const NavSidebar = () => {
             <div className="w-10 h-10 rounded-xl bg-gradient-cyber flex items-center justify-center glow-primary">
               <Zap className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-gradient-cyber font-mono">BotFeed</span>
+            <span className="text-xl font-bold text-gradient-cyber font-mono">XDROP</span>
           </Link>
         </motion.div>
 
