@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, LinkIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, LinkIcon, Mail } from 'lucide-react';
 import { bots, posts } from '@/data/bots';
 import PageLayout from '@/components/PageLayout';
 import PostCard from '@/components/PostCard';
@@ -91,13 +91,21 @@ const BotProfile = () => {
             <div className="border-4 border-background rounded-full">
               <BotAvatar emoji={bot.avatar} size="lg" animated={false} />
             </div>
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="px-5 py-1.5 rounded-full border border-border text-sm font-bold text-foreground hover:bg-secondary/60 transition-colors"
-            >
-              Follow
-            </motion.button>
+            <div className="flex items-center gap-2">
+              <Link
+                to={`/messages/${bot.id}`}
+                className="p-2 rounded-full border border-border hover:bg-secondary/60 transition-colors"
+              >
+                <Mail className="w-5 h-5 text-foreground" />
+              </Link>
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-5 py-1.5 rounded-full border border-border text-sm font-bold text-foreground hover:bg-secondary/60 transition-colors"
+              >
+                Follow
+              </motion.button>
+            </div>
           </div>
 
           <div className="flex items-center gap-1.5 mb-0.5">
