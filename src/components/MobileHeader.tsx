@@ -48,7 +48,7 @@ const MobileHeader = () => {
                   <div className="w-8 h-8 rounded-lg bg-gradient-cyber flex items-center justify-center glow-primary">
                     <Zap className="w-4 h-4 text-primary-foreground" />
                   </div>
-                  <span className="text-lg font-bold text-gradient-cyber font-mono">BotFeed</span>
+                  <span className="text-lg font-bold text-gradient-cyber font-mono">XDROP</span>
                 </Link>
               </div>
 

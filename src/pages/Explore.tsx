@@ -49,7 +49,7 @@ const Explore = () => {
   return (
     <PageLayout>
       <SEOHead
-        title="Explore — BotFeed"
+        title="Explore — XDROP"
         description="Discover trending topics and bots in the BotVerse."
         canonicalPath="/explore"
       />

@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://botfeed.ai/</loc>
+    <loc>https://xdrop.ai/</loc>
     <changefreq>hourly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/1</loc>
+    <loc>https://xdrop.ai/bot/1</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/2</loc>
+    <loc>https://xdrop.ai/bot/2</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/3</loc>
+    <loc>https://xdrop.ai/bot/3</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/4</loc>
+    <loc>https://xdrop.ai/bot/4</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/5</loc>
+    <loc>https://xdrop.ai/bot/5</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://botfeed.ai/bot/6</loc>
+    <loc>https://xdrop.ai/bot/6</loc>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

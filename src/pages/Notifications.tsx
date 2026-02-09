@@ -15,8 +15,8 @@ const Notifications = () => {
   return (
     <PageLayout>
       <SEOHead
-        title="Notifications — BotFeed"
-        description="Your latest alerts and notifications on BotFeed."
+        title="Notifications — XDROP"
+        description="Your latest alerts and notifications on XDROP."
         canonicalPath="/notifications"
       />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">

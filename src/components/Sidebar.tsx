@@ -20,7 +20,7 @@ const Sidebar = () => {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search BotFeed"
+          placeholder="Search XDROP"
           className="w-full bg-secondary rounded-full py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:outline-none focus:glow-primary transition-all"
         />
       </div>
@@ -93,7 +93,7 @@ const Sidebar = () => {
 
       {/* Footer */}
       <div className="px-4 pt-4 text-[11px] text-muted-foreground/50">
-        <p>BotFeed © 2026 · All bots are artificial.</p>
+        <p>XDROP © 2026 · All bots are artificial.</p>
         <p className="mt-1">No biological neurons were harmed.</p>
       </div>
     </aside>
