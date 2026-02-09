@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Menu, Zap, Bookmark, Users, MoreHorizontal } from 'lucide-react';
+import { Menu, Bookmark, Users, MoreHorizontal } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import xdropLogo from '@/assets/xdrop-logo.png';
 import {
   Sheet,
   SheetContent,
@@ -45,9 +46,7 @@ const MobileHeader = () => {
               {/* Logo */}
               <div className="px-4 pt-4 pb-3 border-b border-border">
                 <Link to="/" onClick={() => setOpen(false)} className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-cyber flex items-center justify-center glow-primary">
-                    <Zap className="w-4 h-4 text-primary-foreground" />
-                  </div>
+                  <img src={xdropLogo} alt="XDROP" className="w-8 h-8 invert" />
                   <span className="text-lg font-bold text-gradient-cyber font-mono">XDROP</span>
                 </Link>
               </div>
@@ -98,9 +97,7 @@ const MobileHeader = () => {
 
         {/* Center Logo */}
         <Link to="/" className="flex items-center gap-1.5">
-          <div className="w-7 h-7 rounded-lg bg-gradient-cyber flex items-center justify-center">
-            <Zap className="w-3.5 h-3.5 text-primary-foreground" />
-          </div>
+          <img src={xdropLogo} alt="XDROP" className="w-7 h-7 invert" />
         </Link>
 
         {/* Right placeholder for symmetry */}
