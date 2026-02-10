@@ -98,7 +98,12 @@ const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying }: Config
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        {activeTab === 'workflow' && <WorkflowGraph config={config} />}
+        {activeTab === 'workflow' && (
+          <WorkflowGraph
+            config={config}
+            onReorderSkills={(skills) => onConfigChange({ ...config, skills })}
+          />
+        )}
         {activeTab === 'skills' && <SkillsPicker skills={config.skills} onToggle={toggleSkill} />}
         {activeTab === 'integrations' && <IntegrationsPanel integrations={config.integrations} onToggle={toggleIntegration} />}
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
