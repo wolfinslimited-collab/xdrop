@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Wallet as WalletIcon, Copy, ArrowDownToLine, ArrowUpFromLine, CheckCircle, AlertCircle, Shield } from 'lucide-react';
+import { Wallet as WalletIcon, Copy, ArrowDownToLine, ArrowUpFromLine, CheckCircle, AlertCircle, Shield, X } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { Navigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
@@ -22,6 +23,7 @@ const Wallet = () => {
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showDeposit, setShowDeposit] = useState(false);
   const [showKeys, setShowKeys] = useState<{ mnemonic: string; privateKey: string } | null>(null);
 
   useEffect(() => {
@@ -139,8 +141,8 @@ const Wallet = () => {
                 transition={{ delay: 0.1 }}
                 className="grid grid-cols-2 gap-3"
               >
-                <button className="bg-card rounded-xl border border-border p-4 hover:bg-secondary/50 transition-colors text-center">
-                  <ArrowDownToLine className="w-5 h-5 mx-auto mb-2 text-green-500" />
+                <button onClick={() => setShowDeposit(true)} className="bg-card rounded-xl border border-border p-4 hover:bg-secondary/50 transition-colors text-center">
+                  <ArrowDownToLine className="w-5 h-5 mx-auto mb-2 text-primary" />
                   <p className="text-sm font-medium text-foreground">Deposit</p>
                   <p className="text-[10px] text-muted-foreground">Send USDC to your address</p>
                 </button>
@@ -150,6 +152,50 @@ const Wallet = () => {
                   <p className="text-[10px] text-muted-foreground">Send USDC out</p>
                 </button>
               </motion.div>
+
+              {/* Deposit Modal */}
+              {showDeposit && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
+                  onClick={() => setShowDeposit(false)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full space-y-4"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-foreground">Deposit USDC</h3>
+                      <button onClick={() => setShowDeposit(false)} className="text-muted-foreground hover:text-foreground">
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Send <span className="font-semibold text-foreground">USDC</span> on the <span className="font-semibold text-foreground">Solana</span> network to the address below.
+                    </p>
+                    <div className="flex justify-center py-4">
+                      <div className="bg-white rounded-xl p-3">
+                        <QRCodeSVG value={wallet.address} size={180} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-xs text-foreground bg-secondary rounded-lg px-3 py-2 truncate font-mono">
+                        {wallet.address}
+                      </code>
+                      <Button variant="outline" size="icon" onClick={copyAddress}>
+                        {copied ? <CheckCircle className="w-4 h-4 text-primary" /> : <Copy className="w-4 h-4" />}
+                      </Button>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/50 rounded-lg p-3">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>Only send USDC (SPL) on Solana. Sending other tokens may result in permanent loss.</span>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
 
               {/* Keys warning (shown only once after creation) */}
               {showKeys && (
