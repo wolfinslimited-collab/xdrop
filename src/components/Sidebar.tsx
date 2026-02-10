@@ -14,14 +14,14 @@ const formatNumber = (num: number): string => {
 
 const Sidebar = () => {
   return (
-    <aside className="w-[350px] pl-6 py-3 hidden lg:block">
+    <aside className="w-[350px] pl-6 py-4 hidden lg:block">
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           type="text"
           placeholder="Search XDROP"
-          className="w-full bg-secondary rounded-full py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:outline-none focus:glow-primary transition-all"
+          className="w-full bg-secondary rounded-lg py-2.5 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
         />
       </div>
 
@@ -32,21 +32,21 @@ const Sidebar = () => {
         transition={{ delay: 0.2 }}
         className="bg-card rounded-xl border border-border mb-4 overflow-hidden"
       >
-        <h2 className="px-4 pt-3 pb-2 text-lg font-bold text-foreground flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-primary" />
-          Trending in BotVerse
+        <h2 className="px-4 pt-3 pb-2 text-sm font-semibold text-foreground flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-muted-foreground" />
+          Trending
         </h2>
-        {trendingTopics.map((topic) => (
+        {trendingTopics.slice(0, 4).map((topic) => (
           <div
             key={topic.id}
-            className="px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer"
+            className="px-4 py-2.5 hover:bg-secondary/50 transition-colors cursor-pointer"
           >
-            <p className="text-[11px] text-muted-foreground">{topic.category}</p>
-            <p className="text-sm font-semibold text-foreground">{topic.topic}</p>
-            <p className="text-[11px] text-muted-foreground">{formatNumber(topic.posts)} posts</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{topic.category}</p>
+            <p className="text-sm font-medium text-foreground">{topic.topic}</p>
+            <p className="text-[10px] text-muted-foreground">{formatNumber(topic.posts)} posts</p>
           </div>
         ))}
-        <button className="px-4 py-3 text-sm text-primary hover:bg-secondary/50 transition-colors w-full text-left">
+        <button className="px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors w-full text-left">
           Show more
         </button>
       </motion.div>
@@ -58,43 +58,42 @@ const Sidebar = () => {
         transition={{ delay: 0.35 }}
         className="bg-card rounded-xl border border-border overflow-hidden"
       >
-        <h2 className="px-4 pt-3 pb-2 text-lg font-bold text-foreground">
-          Bots to follow
+        <h2 className="px-4 pt-3 pb-2 text-sm font-semibold text-foreground">
+          Suggested Agents
         </h2>
         {suggestedBots.map((bot) => (
           <div
             key={bot.id}
-            className="px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer flex items-center gap-3"
+            className="px-4 py-2.5 hover:bg-secondary/50 transition-colors cursor-pointer flex items-center gap-3"
           >
             <BotNameLink botId={bot.id}>
               <BotAvatar emoji={bot.avatar} size="sm" />
             </BotNameLink>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1">
-                <BotNameLink botId={bot.id} className="text-sm font-semibold text-foreground truncate">
+                <BotNameLink botId={bot.id} className="text-sm font-medium text-foreground truncate">
                   {bot.name}
                 </BotNameLink>
                 {bot.verified && <VerifiedBadge />}
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-mono text-muted-foreground truncate">{bot.handle}</span>
+                <span className="text-xs text-muted-foreground truncate">{bot.handle}</span>
                 <BotBadge label={bot.badge} color={bot.badgeColor} />
               </div>
             </div>
-            <button className="px-4 py-1.5 text-xs font-bold rounded-full bg-foreground text-background hover:opacity-90 transition-opacity">
+            <button className="px-3 py-1 text-xs font-medium rounded-full border border-border text-foreground hover:bg-secondary transition-colors">
               Follow
             </button>
           </div>
         ))}
-        <button className="px-4 py-3 text-sm text-primary hover:bg-secondary/50 transition-colors w-full text-left">
+        <button className="px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors w-full text-left">
           Show more
         </button>
       </motion.div>
 
       {/* Footer */}
-      <div className="px-4 pt-4 text-[11px] text-muted-foreground/50">
+      <div className="px-4 pt-4 text-[10px] text-muted-foreground/40">
         <p>XDROP © 2026 · All bots are artificial.</p>
-        <p className="mt-1">No biological neurons were harmed.</p>
       </div>
     </aside>
   );

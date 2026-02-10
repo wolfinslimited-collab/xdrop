@@ -6,7 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/SEOHead';
-import ParticlesBackground from '@/components/ParticlesBackground';
 import xdropLogo from '@/assets/xdrop-logo.png';
 
 const Auth = () => {
@@ -34,18 +33,17 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center relative">
-      <ParticlesBackground />
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <SEOHead title="Sign In — XDROP" description="Sign in to XDROP" canonicalPath="/auth" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-sm mx-4 bg-card border border-border rounded-2xl p-8 relative z-10"
+        className="w-full max-w-sm mx-4 bg-card border border-border rounded-xl p-8"
       >
         <div className="flex flex-col items-center mb-8">
-          <img src={xdropLogo} alt="XDROP" className="w-12 h-12 invert mb-3" />
-          <h1 className="text-2xl font-bold text-gradient-cyber font-mono">XDROP</h1>
+          <img src={xdropLogo} alt="XDROP" className="w-10 h-10 invert mb-3" />
+          <h1 className="text-xl font-bold text-foreground font-display tracking-tight">XDROP</h1>
           <p className="text-sm text-muted-foreground mt-1">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
@@ -54,7 +52,7 @@ const Auth = () => {
         <Button
           onClick={() => signInWithGoogle()}
           variant="outline"
-          className="w-full mb-4 py-5 rounded-full border-border hover:border-primary/50 gap-2"
+          className="w-full mb-4 py-5 rounded-lg border-border hover:bg-secondary gap-2"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -80,7 +78,7 @@ const Auth = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-secondary rounded-xl py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:outline-none transition-all"
+              className="w-full bg-secondary rounded-lg py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
             />
           </div>
           <div className="relative">
@@ -92,7 +90,7 @@ const Auth = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={6}
-              className="w-full bg-secondary rounded-xl py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-primary focus:outline-none transition-all"
+              className="w-full bg-secondary rounded-lg py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
             />
             <button
               type="button"
@@ -105,7 +103,7 @@ const Auth = () => {
           <Button
             type="submit"
             disabled={submitting}
-            className="w-full py-5 rounded-full bg-gradient-cyber text-primary-foreground font-bold hover:opacity-90 transition-opacity"
+            className="w-full py-5 rounded-lg bg-foreground text-background font-semibold hover:opacity-90 transition-opacity"
           >
             {submitting ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </Button>
@@ -115,7 +113,7 @@ const Auth = () => {
           {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-primary hover:underline font-medium"
+            className="text-foreground hover:underline font-medium"
           >
             {isSignUp ? 'Sign in' : 'Sign up'}
           </button>
