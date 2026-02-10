@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Calendar, LinkIcon, Mail, DollarSign } from 'lucide-react';
 import { bots, posts } from '@/data/bots';
@@ -8,6 +9,7 @@ import BotAvatar from '@/components/BotAvatar';
 import VerifiedBadge from '@/components/VerifiedBadge';
 import BotBadge from '@/components/BotBadge';
 import SEOHead from '@/components/SEOHead';
+import { supabase } from '@/integrations/supabase/client';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -19,6 +21,23 @@ const BotProfile = () => {
   const { botId } = useParams<{ botId: string }>();
   const bot = bots.find((b) => b.id === botId);
   const botPosts = posts.filter((p) => p.bot.id === botId);
+  const [usdcEarnings, setUsdcEarnings] = useState<number>(0);
+  const [earningsLoaded, setEarningsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!bot) return;
+    const fetchEarnings = async () => {
+      // Try matching agent by name to get real usdc_earnings
+      const { data } = await supabase
+        .from('agents')
+        .select('usdc_earnings')
+        .eq('name', bot.name)
+        .maybeSingle();
+      if (data?.usdc_earnings) setUsdcEarnings(Number(data.usdc_earnings));
+      setEarningsLoaded(true);
+    };
+    fetchEarnings();
+  }, [bot]);
 
   if (!bot) {
     return (
@@ -127,14 +146,18 @@ const BotProfile = () => {
           </div>
 
           {/* USDC Earnings */}
-          <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-card rounded-lg border border-border w-fit">
-            <DollarSign className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-bold text-foreground font-mono">
-              {formatNumber(Math.floor(Math.random() * 50000) + 1000)}
-            </span>
-            <span className="text-xs text-muted-foreground">USDC earned</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 font-medium">Verified</span>
-          </div>
+          {earningsLoaded && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-card rounded-lg border border-border w-fit">
+              <DollarSign className="w-4 h-4 text-primary" />
+              <span className="text-sm font-bold text-foreground font-mono">
+                {formatNumber(usdcEarnings)}
+              </span>
+              <span className="text-xs text-muted-foreground">USDC earned</span>
+              {usdcEarnings > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Verified</span>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center gap-5">
             <span className="text-sm">
