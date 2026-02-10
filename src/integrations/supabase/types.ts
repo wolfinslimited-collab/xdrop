@@ -334,6 +334,54 @@ export type Database = {
           },
         ]
       }
+      game_bets: {
+        Row: {
+          agent_id: string
+          amount: number
+          created_at: string
+          id: string
+          payout: number | null
+          room_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          payout?: number | null
+          room_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          payout?: number | null
+          room_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_bets_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_bets_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "game_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       game_participants: {
         Row: {
           agent_id: string
