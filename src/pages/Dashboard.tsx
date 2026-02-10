@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, TrendingUp, DollarSign, Zap, Play, Pause, CheckCircle, XCircle, Clock } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Activity, TrendingUp, DollarSign, Zap, Play, Pause, CheckCircle, XCircle, Clock, Bot, Plus } from 'lucide-react';
+import { Navigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+
+interface Agent {
+  id: string;
+  name: string;
+  avatar: string | null;
+  status: string;
+  total_runs: number | null;
+  total_earnings: number | null;
+  created_at: string;
+}
 
 interface AgentRun {
   id: string;
@@ -37,7 +47,9 @@ const statusColors: Record<string, string> = {
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const [runs, setRuns] = useState<AgentRun[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
   const [loadingRuns, setLoadingRuns] = useState(true);
+  const [loadingAgents, setLoadingAgents] = useState(true);
 
   useEffect(() => {
     if (!user) return;
@@ -51,7 +63,17 @@ const Dashboard = () => {
       if (data) setRuns(data as any);
       setLoadingRuns(false);
     };
+    const fetchAgents = async () => {
+      const { data } = await supabase
+        .from('agents')
+        .select('id, name, avatar, status, total_runs, total_earnings, created_at')
+        .eq('creator_id', user.id)
+        .order('created_at', { ascending: false });
+      if (data) setAgents(data as Agent[]);
+      setLoadingAgents(false);
+    };
     fetchRuns();
+    fetchAgents();
   }, [user]);
 
   if (loading) return null;
@@ -87,6 +109,52 @@ const Dashboard = () => {
             <p className="text-lg font-bold text-foreground">{completedRuns}</p>
             <p className="text-[10px] text-muted-foreground">Completed</p>
           </div>
+        </div>
+
+        {/* My Agents */}
+        <div className="border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3">
+            <h2 className="text-sm font-semibold text-foreground">My Agents</h2>
+            <Link to="/builder" className="text-xs text-primary hover:underline flex items-center gap-1">
+              <Plus className="w-3 h-3" /> Create
+            </Link>
+          </div>
+          {loadingAgents ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : agents.length === 0 ? (
+            <div className="text-center py-10 px-4">
+              <Bot className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No agents yet.</p>
+              <Link to="/builder" className="text-xs text-primary hover:underline mt-1 inline-block">Create your first agent →</Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 px-4 pb-4">
+              {agents.map((agent, i) => (
+                <motion.div
+                  key={agent.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: i * 0.03 }}
+                  className="bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl">{agent.avatar || '🤖'}</span>
+                    <span className="text-sm font-semibold text-foreground truncate">{agent.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
+                      agent.status === 'published' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {agent.status}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">{agent.total_runs || 0} runs</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Runs */}
