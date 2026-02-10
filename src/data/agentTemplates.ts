@@ -27,13 +27,11 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
   { id: 'ig-model', name: 'Instagram AI Model', icon: '📸', category: 'AI Content', description: 'Generate and post AI model content with automated engagement and growth.', monthlyReturnMin: 18, monthlyReturnMax: 26, yearlyPrice: 100, features: ['AI image generation', 'Auto-posting', 'Hashtag optimization'], popular: true },
   { id: 'tiktok-creator', name: 'TikTok Content Creator', icon: '🎬', category: 'AI Content', description: 'Create trending short-form video content with AI voiceovers and editing.', monthlyReturnMin: 17, monthlyReturnMax: 25, yearlyPrice: 100, features: ['Trend detection', 'AI voiceover', 'Auto-posting'] },
   { id: 'youtube-shorts', name: 'YouTube Shorts Factory', icon: '▶️', category: 'AI Content', description: 'Mass-produce YouTube Shorts with AI scripts, voiceover, and thumbnails.', monthlyReturnMin: 15, monthlyReturnMax: 23, yearlyPrice: 100, features: ['Script generation', 'Voice synthesis', 'Thumbnail AI'] },
-  { id: 'twitter-growth', name: 'Twitter/X Growth Engine', icon: '🐦', category: 'AI Content', description: 'Grow your X presence with AI-crafted threads, replies, and engagement.', monthlyReturnMin: 16, monthlyReturnMax: 24, yearlyPrice: 100, features: ['Thread generation', 'Smart replies', 'Follower targeting'] },
+  
 
   // Freelancing
   { id: 'upwork-hunter', name: 'Upwork Lead Hunter', icon: '💼', category: 'Freelancing', description: 'Find, qualify, and auto-apply to high-value Upwork jobs matching your skills.', monthlyReturnMin: 20, monthlyReturnMax: 28, yearlyPrice: 100, features: ['Job matching AI', 'Auto-proposals', 'Client scoring'], popular: true },
   { id: 'fiverr-bot', name: 'Fiverr Gig Optimizer', icon: '🛠️', category: 'Freelancing', description: 'Optimize gig listings, auto-respond to inquiries, and manage order flow.', monthlyReturnMin: 18, monthlyReturnMax: 26, yearlyPrice: 100, features: ['SEO optimization', 'Auto-responses', 'Order tracking'] },
-  { id: 'cold-email', name: 'Cold Email Outreach', icon: '📧', category: 'Freelancing', description: 'AI-personalized cold email campaigns with follow-up sequences and tracking.', monthlyReturnMin: 17, monthlyReturnMax: 25, yearlyPrice: 100, features: ['Email personalization', 'Sequence automation', 'Reply detection'] },
-  { id: 'linkedin-networker', name: 'LinkedIn Networker', icon: '🔗', category: 'Freelancing', description: 'Auto-connect, message, and nurture leads on LinkedIn for B2B sales.', monthlyReturnMin: 16, monthlyReturnMax: 24, yearlyPrice: 100, features: ['Auto-connect', 'DM sequences', 'Profile visits'] },
 
   // E-commerce
   { id: 'dropship-agent', name: 'Dropshipping Agent', icon: '📦', category: 'E-commerce', description: 'Find trending products, auto-list on stores, and manage fulfillment.', monthlyReturnMin: 19, monthlyReturnMax: 27, yearlyPrice: 100, features: ['Product research', 'Auto-listing', 'Order fulfillment'] },
