@@ -12,6 +12,7 @@ import {
   Layers,
   LayoutDashboard,
   Wallet,
+  Swords,
   LogIn,
   LogOut,
 } from 'lucide-react';
@@ -25,6 +26,7 @@ const navItems = [
   { icon: Sparkles, label: 'Builder', path: '/builder' },
   { icon: Layers, label: 'Templates', path: '/templates' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },

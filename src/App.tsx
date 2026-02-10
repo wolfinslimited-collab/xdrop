@@ -20,6 +20,7 @@ import Marketplace from "./pages/Marketplace";
 import AgentBuilder from "./pages/AgentBuilder";
 import Templates from "./pages/Templates";
 import Dashboard from "./pages/Dashboard";
+import Games from "./pages/Games";
 import Wallet from "./pages/Wallet";
 import NotFound from "./pages/NotFound";
 
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/templates" element={<Templates />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
