@@ -14,16 +14,431 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agent_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      agent_manifests: {
+        Row: {
+          agent_id: string
+          created_at: string
+          guardrails: Json
+          id: string
+          tool_permissions: Json
+          triggers: Json
+          updated_at: string
+          version: string
+          workflow_steps: Json
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          guardrails?: Json
+          id?: string
+          tool_permissions?: Json
+          triggers?: Json
+          updated_at?: string
+          version?: string
+          workflow_steps?: Json
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          guardrails?: Json
+          id?: string
+          tool_permissions?: Json
+          triggers?: Json
+          updated_at?: string
+          version?: string
+          workflow_steps?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_manifests_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_purchases: {
+        Row: {
+          agent_id: string
+          expires_at: string | null
+          id: string
+          price_paid: number
+          purchased_at: string
+          subscription_status: string | null
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          expires_at?: string | null
+          id?: string
+          price_paid: number
+          purchased_at?: string
+          subscription_status?: string | null
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          expires_at?: string | null
+          id?: string
+          price_paid?: number
+          purchased_at?: string
+          subscription_status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_purchases_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_ratings: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_ratings_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agent_runs: {
+        Row: {
+          agent_id: string
+          completed_at: string | null
+          created_at: string
+          earnings: number | null
+          id: string
+          inputs: Json | null
+          metrics: Json | null
+          outputs: Json | null
+          started_at: string | null
+          status: string
+          user_id: string
+          verification_tier: number | null
+        }
+        Insert: {
+          agent_id: string
+          completed_at?: string | null
+          created_at?: string
+          earnings?: number | null
+          id?: string
+          inputs?: Json | null
+          metrics?: Json | null
+          outputs?: Json | null
+          started_at?: string | null
+          status?: string
+          user_id: string
+          verification_tier?: number | null
+        }
+        Update: {
+          agent_id?: string
+          completed_at?: string | null
+          created_at?: string
+          earnings?: number | null
+          id?: string
+          inputs?: Json | null
+          metrics?: Json | null
+          outputs?: Json | null
+          started_at?: string | null
+          status?: string
+          user_id?: string
+          verification_tier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      agents: {
+        Row: {
+          avatar: string | null
+          category_id: string | null
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          name: string
+          price: number
+          reliability_score: number | null
+          required_integrations: string[] | null
+          short_description: string | null
+          status: string
+          subscription_price: number | null
+          total_earnings: number | null
+          total_runs: number | null
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          category_id?: string | null
+          created_at?: string
+          creator_id: string
+          description: string
+          id?: string
+          name: string
+          price?: number
+          reliability_score?: number | null
+          required_integrations?: string[] | null
+          short_description?: string | null
+          status?: string
+          subscription_price?: number | null
+          total_earnings?: number | null
+          total_runs?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          category_id?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          name?: string
+          price?: number
+          reliability_score?: number | null
+          required_integrations?: string[] | null
+          short_description?: string | null
+          status?: string
+          subscription_price?: number | null
+          total_earnings?: number | null
+          total_runs?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "agent_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_creator: boolean
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id: string
+          is_creator?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_creator?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      run_cards: {
+        Row: {
+          agent_id: string
+          agent_run_id: string
+          created_at: string
+          earnings_shown: number | null
+          id: string
+          is_public: boolean | null
+          likes: number | null
+          replies: number | null
+          reposts: number | null
+          summary: string | null
+          title: string
+          user_id: string
+          verification_tier: number | null
+        }
+        Insert: {
+          agent_id: string
+          agent_run_id: string
+          created_at?: string
+          earnings_shown?: number | null
+          id?: string
+          is_public?: boolean | null
+          likes?: number | null
+          replies?: number | null
+          reposts?: number | null
+          summary?: string | null
+          title: string
+          user_id: string
+          verification_tier?: number | null
+        }
+        Update: {
+          agent_id?: string
+          agent_run_id?: string
+          created_at?: string
+          earnings_shown?: number | null
+          id?: string
+          is_public?: boolean | null
+          likes?: number | null
+          replies?: number | null
+          reposts?: number | null
+          summary?: string | null
+          title?: string
+          user_id?: string
+          verification_tier?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_cards_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "run_cards_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      run_logs: {
+        Row: {
+          agent_run_id: string
+          created_at: string
+          id: string
+          log_level: string | null
+          message: string
+          metadata: Json | null
+        }
+        Insert: {
+          agent_run_id: string
+          created_at?: string
+          id?: string
+          log_level?: string | null
+          message: string
+          metadata?: Json | null
+        }
+        Update: {
+          agent_run_id?: string
+          created_at?: string
+          id?: string
+          log_level?: string | null
+          message?: string
+          metadata?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "run_logs_agent_run_id_fkey"
+            columns: ["agent_run_id"]
+            isOneToOne: false
+            referencedRelation: "agent_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_purchased_agent: { Args: { _agent_id: string }; Returns: boolean }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_agent_creator: { Args: { _agent_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "moderator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +565,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "moderator", "user"],
+    },
   },
 } as const

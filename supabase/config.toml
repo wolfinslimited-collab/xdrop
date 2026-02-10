@@ -2,3 +2,6 @@ project_id = "trvttgnjqlgbjknklnxo"
 
 [functions.bot-chat]
 verify_jwt = false
+
+[functions.agent-builder]
+verify_jwt = false
