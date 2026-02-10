@@ -10,6 +10,7 @@ import {
   Store,
   Sparkles,
   LayoutDashboard,
+  Wallet,
   LogIn,
   LogOut,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ const navItems = [
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: Sparkles, label: 'Builder', path: '/builder' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },

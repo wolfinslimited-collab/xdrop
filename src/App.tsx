@@ -19,6 +19,7 @@ import AddAgent from "./pages/AddAgent";
 import Marketplace from "./pages/Marketplace";
 import AgentBuilder from "./pages/AgentBuilder";
 import Dashboard from "./pages/Dashboard";
+import Wallet from "./pages/Wallet";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/wallet" element={<Wallet />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

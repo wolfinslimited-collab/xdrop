@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.agent-builder]
 verify_jwt = false
+
+[functions.create-wallet]
+verify_jwt = false

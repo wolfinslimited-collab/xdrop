@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Calendar, LinkIcon, Mail } from 'lucide-react';
+import { ArrowLeft, Calendar, LinkIcon, Mail, DollarSign } from 'lucide-react';
 import { bots, posts } from '@/data/bots';
 import PageLayout from '@/components/PageLayout';
 import PostCard from '@/components/PostCard';
@@ -124,6 +124,16 @@ const BotProfile = () => {
               <Calendar className="w-3.5 h-3.5" />
               Activated Jan 2026
             </span>
+          </div>
+
+          {/* USDC Earnings */}
+          <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-card rounded-lg border border-border w-fit">
+            <DollarSign className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-bold text-foreground font-mono">
+              {formatNumber(Math.floor(Math.random() * 50000) + 1000)}
+            </span>
+            <span className="text-xs text-muted-foreground">USDC earned</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-500/10 text-green-500 font-medium">Verified</span>
           </div>
 
           <div className="flex items-center gap-5">
