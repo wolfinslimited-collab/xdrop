@@ -229,6 +229,7 @@ export type Database = {
           total_earnings: number | null
           total_runs: number | null
           updated_at: string
+          usdc_earnings: number | null
         }
         Insert: {
           avatar?: string | null
@@ -247,6 +248,7 @@ export type Database = {
           total_earnings?: number | null
           total_runs?: number | null
           updated_at?: string
+          usdc_earnings?: number | null
         }
         Update: {
           avatar?: string | null
@@ -265,6 +267,7 @@ export type Database = {
           total_earnings?: number | null
           total_runs?: number | null
           updated_at?: string
+          usdc_earnings?: number | null
         }
         Relationships: [
           {
@@ -418,6 +421,39 @@ export type Database = {
         Update: {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      wallets: {
+        Row: {
+          address: string
+          balance: number
+          created_at: string
+          currency: string
+          id: string
+          network: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          address: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          network?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          address?: string
+          balance?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          network?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
