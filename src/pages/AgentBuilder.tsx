@@ -9,6 +9,7 @@ import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import ConfigSidebar from '@/components/agent-builder/ConfigSidebar';
+import OnboardingWizard from '@/components/agent-builder/OnboardingWizard';
 import { DEFAULT_CONFIG, type AgentConfig } from '@/types/agentBuilder';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,9 @@ const AgentBuilder = () => {
   const [showConfig, setShowConfig] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
   const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [showWizard, setShowWizard] = useState(() => {
+    return !localStorage.getItem('xdrop_builder_onboarded');
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -235,6 +239,16 @@ const AgentBuilder = () => {
   return (
     <PageLayout>
       <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents with chat + visual config." canonicalPath="/builder" />
+      {showWizard && (
+        <OnboardingWizard
+          config={config}
+          onConfigChange={setConfig}
+          onComplete={() => {
+            setShowWizard(false);
+            localStorage.setItem('xdrop_builder_onboarded', 'true');
+          }}
+        />
+      )}
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[1100px] flex flex-col md:flex-row relative">
         {/* Chat Panel */}
         <div className={`flex flex-col flex-1 ${!isMobile && showConfig ? 'md:w-1/2' : ''} border-r border-border transition-all`}>
