@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, Sparkles, Loader2, PanelRightOpen, PanelRightClose } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2, PanelRightOpen, PanelRightClose, ChevronUp, X } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
 import { Navigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
@@ -36,12 +37,14 @@ Use the **config panel** on the right to manually pick skills and integrations, 
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>(BUILDER_SYSTEM_PROMPTS);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [config, setConfig] = useState<AgentConfig>({ ...DEFAULT_CONFIG });
   const [showConfig, setShowConfig] = useState(true);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [sheetExpanded, setSheetExpanded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -232,28 +235,39 @@ const AgentBuilder = () => {
   return (
     <PageLayout>
       <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents with chat + visual config." canonicalPath="/builder" />
-      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[1100px] flex">
+      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[1100px] flex flex-col md:flex-row relative">
         {/* Chat Panel */}
-        <div className={`flex flex-col ${showConfig ? 'w-1/2' : 'flex-1'} border-r border-border transition-all`}>
+        <div className={`flex flex-col flex-1 ${!isMobile && showConfig ? 'md:w-1/2' : ''} border-r border-border transition-all`}>
           <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-accent" />
                 <h1 className="text-lg font-bold text-foreground font-display">Agent Builder</h1>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowConfig(!showConfig)}
-                className="h-8 w-8"
-              >
-                {showConfig ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-              </Button>
+              {isMobile ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setSheetExpanded(!sheetExpanded)}
+                  className="h-8 w-8"
+                >
+                  <ChevronUp className={`w-4 h-4 transition-transform ${sheetExpanded ? 'rotate-180' : ''}`} />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowConfig(!showConfig)}
+                  className="h-8 w-8"
+                >
+                  {showConfig ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                </Button>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">Chat to design • Config panel to customize</p>
           </header>
 
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div ref={scrollRef} className={`flex-1 overflow-y-auto px-4 py-4 space-y-4 ${isMobile && sheetExpanded ? 'pb-[55vh]' : ''}`}>
             {messages.map((msg, i) => (
               <motion.div
                 key={i}
@@ -289,7 +303,7 @@ const AgentBuilder = () => {
             )}
           </div>
 
-          <div className="border-t border-border px-4 py-3">
+          <div className={`border-t border-border px-4 py-3 ${isMobile ? 'pb-20' : ''}`}>
             <div className="flex gap-2">
               <input
                 value={input}
@@ -309,25 +323,66 @@ const AgentBuilder = () => {
           </div>
         </div>
 
-        {/* Config Panel */}
-        <AnimatePresence>
-          {showConfig && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: '50%', opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <ConfigSidebar
-                config={config}
-                onConfigChange={setConfig}
-                onDeploy={handleDeploy}
-                isDeploying={isDeploying}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Desktop: Side panel */}
+        {!isMobile && (
+          <AnimatePresence>
+            {showConfig && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: '50%', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <ConfigSidebar
+                  config={config}
+                  onConfigChange={setConfig}
+                  onDeploy={handleDeploy}
+                  isDeploying={isDeploying}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )}
+
+        {/* Mobile: Bottom sheet */}
+        {isMobile && (
+          <AnimatePresence>
+            {sheetExpanded && (
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.4 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-background z-40"
+                  onClick={() => setSheetExpanded(false)}
+                />
+                <motion.div
+                  initial={{ y: '100%' }}
+                  animate={{ y: 0 }}
+                  exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border rounded-t-2xl max-h-[70vh] flex flex-col"
+                >
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                    <p className="text-sm font-semibold text-foreground">Config</p>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSheetExpanded(false)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto">
+                    <ConfigSidebar
+                      config={config}
+                      onConfigChange={setConfig}
+                      onDeploy={handleDeploy}
+                      isDeploying={isDeploying}
+                    />
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        )}
       </main>
     </PageLayout>
   );
