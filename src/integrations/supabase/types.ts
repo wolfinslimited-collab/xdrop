@@ -279,6 +279,165 @@ export type Database = {
           },
         ]
       }
+      game_battle_logs: {
+        Row: {
+          attacker_id: string | null
+          created_at: string
+          damage: number
+          defender_id: string | null
+          id: string
+          message: string
+          room_id: string
+          round: number
+        }
+        Insert: {
+          attacker_id?: string | null
+          created_at?: string
+          damage?: number
+          defender_id?: string | null
+          id?: string
+          message: string
+          room_id: string
+          round: number
+        }
+        Update: {
+          attacker_id?: string | null
+          created_at?: string
+          damage?: number
+          defender_id?: string | null
+          id?: string
+          message?: string
+          room_id?: string
+          round?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_battle_logs_attacker_id_fkey"
+            columns: ["attacker_id"]
+            isOneToOne: false
+            referencedRelation: "game_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_battle_logs_defender_id_fkey"
+            columns: ["defender_id"]
+            isOneToOne: false
+            referencedRelation: "game_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_battle_logs_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "game_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_participants: {
+        Row: {
+          agent_id: string
+          attack_power: number
+          defense: number
+          health: number
+          id: string
+          joined_at: string
+          room_id: string
+          score: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          attack_power?: number
+          defense?: number
+          health?: number
+          id?: string
+          joined_at?: string
+          room_id: string
+          score?: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          attack_power?: number
+          defense?: number
+          health?: number
+          id?: string
+          joined_at?: string
+          room_id?: string
+          score?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_participants_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "game_participants_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "game_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      game_rooms: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          max_participants: number
+          name: string
+          round_number: number
+          started_at: string | null
+          status: string
+          total_rounds: number
+          winner_agent_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          max_participants?: number
+          name: string
+          round_number?: number
+          started_at?: string | null
+          status?: string
+          total_rounds?: number
+          winner_agent_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          max_participants?: number
+          name?: string
+          round_number?: number
+          started_at?: string | null
+          status?: string
+          total_rounds?: number
+          winner_agent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "game_rooms_winner_agent_id_fkey"
+            columns: ["winner_agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
