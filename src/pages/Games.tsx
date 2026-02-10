@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, Shield, Zap, Crown, Users, Plus, RefreshCw, Eye } from 'lucide-react';
+import { Swords, Shield, Crown, Users, Plus, RefreshCw, Eye } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
@@ -8,6 +8,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import BettingPanel from '@/components/arena/BettingPanel';
+
+const Arena3D = lazy(() => import('@/components/arena/Arena3D'));
 
 interface GameRoom {
   id: string;
@@ -54,57 +57,16 @@ const ARENA_NAMES = [
   'Digital Thunderdome', 'Matrix Battleground', 'Void Chamber', 'Apex Arena',
 ];
 
-// Positions around the arena circle for up to 6 agents
-const ARENA_POSITIONS = [
-  { top: '8%', left: '50%', transform: 'translate(-50%, 0)' },    // top center
-  { top: '8%', right: '8%' },                                      // top right
-  { bottom: '18%', right: '8%' },                                   // bottom right
-  { bottom: '8%', left: '50%', transform: 'translate(-50%, 0)' },  // bottom center
-  { bottom: '18%', left: '8%' },                                    // bottom left
-  { top: '8%', left: '8%' },                                        // top left
-];
-
-// Robot colors for combatants
-const ROBOT_COLORS = ['text-orange-400', 'text-purple-400', 'text-blue-400', 'text-green-400', 'text-pink-400', 'text-yellow-400'];
-
-const PixelRobot = ({ color, size = 48, eliminated = false }: { color: string; size?: number; eliminated?: boolean }) => (
-  <div className={`flex flex-col items-center ${eliminated ? 'opacity-30' : ''}`}>
-    <svg width={size} height={size} viewBox="0 0 16 16" className={color} style={{ imageRendering: 'pixelated' }}>
-      {/* Head */}
-      <rect x="4" y="1" width="8" height="6" fill="currentColor" />
-      {/* Eyes */}
-      <rect x="5" y="3" width="2" height="2" fill="black" />
-      <rect x="9" y="3" width="2" height="2" fill="black" />
-      {/* Body */}
-      <rect x="3" y="7" width="10" height="5" fill="currentColor" opacity="0.8" />
-      {/* Arms */}
-      <rect x="1" y="8" width="2" height="3" fill="currentColor" opacity="0.6" />
-      <rect x="13" y="8" width="2" height="3" fill="currentColor" opacity="0.6" />
-      {/* Legs */}
-      <rect x="5" y="12" width="2" height="3" fill="currentColor" opacity="0.7" />
-      <rect x="9" y="12" width="2" height="3" fill="currentColor" opacity="0.7" />
-      {/* Antenna */}
-      <rect x="7" y="0" width="2" height="1" fill="currentColor" opacity="0.5" />
-    </svg>
-    {/* Base/Stand */}
-    <div className="w-10 h-1.5 rounded-full bg-foreground/10 mt-0.5" />
-  </div>
-);
-
 const CrossedSwords = () => (
   <svg width="48" height="48" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
-    {/* Left sword blade (green) */}
     <rect x="2" y="1" width="2" height="2" fill="#4ade80" />
     <rect x="4" y="3" width="2" height="2" fill="#4ade80" />
     <rect x="6" y="5" width="2" height="2" fill="#4ade80" />
-    {/* Right sword blade (green) */}
     <rect x="12" y="1" width="2" height="2" fill="#4ade80" />
     <rect x="10" y="3" width="2" height="2" fill="#4ade80" />
     <rect x="8" y="5" width="2" height="2" fill="#4ade80" />
-    {/* Center cross / guard (gold) */}
     <rect x="6" y="7" width="4" height="2" fill="#facc15" />
     <rect x="5" y="8" width="6" height="1" fill="#facc15" />
-    {/* Handles */}
     <rect x="4" y="9" width="2" height="3" fill="#a16207" />
     <rect x="10" y="9" width="2" height="3" fill="#a16207" />
   </svg>
@@ -166,7 +128,7 @@ const Games = () => {
     const roomChannel = supabase
       .channel('game-rooms-live')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_rooms' }, () => fetchRooms())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_participants' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_participants' }, () => {
         if (selectedRoom) fetchParticipants(selectedRoom.id);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_battle_logs' }, () => {
@@ -286,6 +248,26 @@ const Games = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
+  // Map participants for 3D arena
+  const arenaParticipants = participants.map(p => ({
+    id: p.id,
+    name: p.agents?.name || 'Agent',
+    health: p.health,
+    maxHealth: 100,
+    status: p.status,
+    color: '#f97316',
+  }));
+
+  // Map for betting panel
+  const betParticipants = participants.map(p => ({
+    agent_id: p.agent_id,
+    agent_name: p.agents?.name || 'Agent',
+    agent_avatar: p.agents?.avatar || '🤖',
+    health: p.health,
+    attack_power: p.attack_power,
+    defense: p.defense,
+  }));
+
   return (
     <PageLayout>
       <SEOHead title="Agent Wars — XDROP" description="AI agent battle arena." canonicalPath="/games" />
@@ -310,124 +292,27 @@ const Games = () => {
 
         {selectedRoom ? (
           <div className="flex flex-col">
-            {/* Arena View */}
-            <div className="relative w-full aspect-square max-h-[420px] overflow-hidden"
-              style={{
-                background: 'radial-gradient(ellipse at center, hsl(0 0% 10%) 0%, hsl(0 0% 4%) 100%)',
-              }}
-            >
-              {/* Grid Pattern */}
-              <div className="absolute inset-0 opacity-15"
-                style={{
-                  backgroundImage: `
-                    linear-gradient(hsl(0 0% 30%) 1px, transparent 1px),
-                    linear-gradient(90deg, hsl(0 0% 30%) 1px, transparent 1px)
-                  `,
-                  backgroundSize: '24px 24px',
-                }}
+            {/* 3D Arena */}
+            <Suspense fallback={
+              <div className="w-full aspect-[4/3] max-h-[420px] bg-background flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            }>
+              <Arena3D
+                participants={arenaParticipants}
+                fighting={fighting}
+                winner={selectedRoom.winner_agent_id}
               />
+            </Suspense>
 
-              {/* Arena Ring */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[65%] aspect-square">
-                {/* Outer ring glow */}
-                <div className="absolute inset-0 rounded-full border-2 border-green-500/20" />
-                <motion.div
-                  className="absolute inset-1 rounded-full border border-green-500/40"
-                  animate={{ scale: [1, 1.02, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                {/* Inner arena floor */}
-                <div className="absolute inset-4 rounded-full"
-                  style={{
-                    background: 'radial-gradient(ellipse at center, hsl(0 10% 12%) 0%, hsl(0 0% 6%) 100%)',
-                    boxShadow: 'inset 0 0 60px hsl(0 0% 0% / 0.5)',
-                  }}
-                />
+            {/* LIVE Badge overlay */}
+            {(selectedRoom.status === 'in_progress' || fighting) && (
+              <div className="flex justify-center -mt-10 relative z-10 mb-2">
+                <div className="bg-destructive text-destructive-foreground text-[10px] font-bold px-4 py-1 rounded-full tracking-wider shadow-lg">
+                  🔴 LIVE
+                </div>
               </div>
-
-              {/* LIVE badge */}
-              {(selectedRoom.status === 'in_progress' || fighting) && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="absolute top-4 left-1/2 -translate-x-1/2 z-20"
-                >
-                  <div className="bg-destructive text-destructive-foreground text-[10px] font-bold px-3 py-1 rounded tracking-wider">
-                    LIVE
-                  </div>
-                </motion.div>
-              )}
-
-              {/* VS text */}
-              <div className="absolute top-[22%] left-1/2 -translate-x-1/2 z-20">
-                <motion.span
-                  className="text-3xl font-black text-destructive font-display tracking-widest"
-                  animate={fighting ? { scale: [1, 1.15, 1], opacity: [1, 0.7, 1] } : {}}
-                  transition={{ duration: 0.6, repeat: fighting ? Infinity : 0 }}
-                >
-                  VS
-                </motion.span>
-              </div>
-
-              {/* Crossed Swords Center */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <motion.div
-                  animate={fighting ? { rotate: [0, 10, -10, 0] } : {}}
-                  transition={{ duration: 0.5, repeat: fighting ? Infinity : 0 }}
-                >
-                  <CrossedSwords />
-                </motion.div>
-              </div>
-
-              {/* Combatants positioned around the ring */}
-              {participants.map((p, i) => {
-                const pos = ARENA_POSITIONS[i % ARENA_POSITIONS.length];
-                const isEliminated = p.status === 'eliminated';
-                return (
-                  <motion.div
-                    key={p.id}
-                    className="absolute z-10 flex flex-col items-center"
-                    style={pos as any}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{
-                      opacity: 1,
-                      scale: 1,
-                      ...(fighting && !isEliminated ? { y: [0, -6, 0] } : {}),
-                    }}
-                    transition={{
-                      delay: i * 0.15,
-                      ...(fighting ? { y: { duration: 0.4, repeat: Infinity, delay: i * 0.1 } } : {}),
-                    }}
-                  >
-                    <PixelRobot color={ROBOT_COLORS[i % ROBOT_COLORS.length]} size={40} eliminated={isEliminated} />
-                    <span className="text-[9px] text-foreground/70 mt-1 font-medium truncate max-w-[60px] text-center">
-                      {p.agents?.name || 'Agent'}
-                    </span>
-                    {/* Health pip */}
-                    <div className="w-10 h-1 bg-secondary rounded-full mt-0.5 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          p.health > 60 ? 'bg-green-500' : p.health > 30 ? 'bg-accent' : 'bg-destructive'
-                        }`}
-                        style={{ width: `${p.health}%` }}
-                      />
-                    </div>
-                  </motion.div>
-                );
-              })}
-
-              {/* Empty slots */}
-              {Array.from({ length: Math.max(0, 2 - participants.length) }).map((_, i) => {
-                const pos = ARENA_POSITIONS[(participants.length + i) % ARENA_POSITIONS.length];
-                return (
-                  <div key={`empty-${i}`} className="absolute z-10" style={pos as any}>
-                    <div className="w-10 h-12 border border-dashed border-muted-foreground/20 rounded-lg flex items-center justify-center">
-                      <span className="text-muted-foreground/30 text-lg">?</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            )}
 
             {/* Action Bar */}
             <div className="flex items-center justify-center gap-3 px-4 py-4 border-b border-border">
@@ -494,6 +379,17 @@ const Games = () => {
                 </div>
               )}
             </div>
+
+            {/* Betting Panel */}
+            {participants.length >= 2 && (
+              <BettingPanel
+                roomId={selectedRoom.id}
+                userId={user!.id}
+                participants={betParticipants}
+                roomStatus={selectedRoom.status}
+                winnerAgentId={selectedRoom.winner_agent_id}
+              />
+            )}
 
             {/* Winner Banner */}
             <AnimatePresence>
