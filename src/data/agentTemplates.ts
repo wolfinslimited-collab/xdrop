@@ -55,6 +55,10 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
   // Misc
   { id: 'ai-copywriter', name: 'AI Copywriter', icon: '✍️', category: 'Content', description: 'Generate high-converting copy for ads, landing pages, and email campaigns.', monthlyReturnMin: 17, monthlyReturnMax: 25, yearlyPrice: 100, features: ['Ad copy', 'Landing pages', 'A/B testing'] },
   { id: 'seo-agent', name: 'SEO Agent', icon: '🔎', category: 'Content', description: 'Automated SEO audits, keyword research, and content optimization.', monthlyReturnMin: 16, monthlyReturnMax: 24, yearlyPrice: 100, features: ['Site audits', 'Keyword tracking', 'Content briefs'] },
+
+  // AI E-commerce
+  { id: 'ai-dropshipping', name: 'AI Dropshipping Agent', icon: '🚚', category: 'AI E-commerce', description: 'End-to-end AI dropshipping: product research, store setup, ad creatives, and order fulfillment.', monthlyReturnMin: 20, monthlyReturnMax: 30, yearlyPrice: 100, features: ['Winning product finder', 'Auto-list to store', 'Ad creative AI', 'Order routing'], popular: true },
+  { id: 'ai-ecommerce', name: 'AI E-commerce Manager', icon: '🏪', category: 'AI E-commerce', description: 'Full AI-powered e-commerce automation: pricing, inventory, customer service, and marketing.', monthlyReturnMin: 18, monthlyReturnMax: 28, yearlyPrice: 100, features: ['Dynamic pricing', 'Inventory forecasting', 'AI customer support', 'Email campaigns'], popular: true },
 ];
 
 export const TEMPLATE_CATEGORIES = [...new Set(AGENT_TEMPLATES.map(t => t.category))];
