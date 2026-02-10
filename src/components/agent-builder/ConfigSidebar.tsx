@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Wrench, Link2, Clock, Shield, Rocket, ChevronRight } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
 import GuardrailsPanel from './GuardrailsPanel';
 import TestDeployPanel from './TestDeployPanel';
+import WorkflowGraph from './WorkflowGraph';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface ConfigSidebarProps {
@@ -14,9 +15,10 @@ interface ConfigSidebarProps {
   isDeploying: boolean;
 }
 
-type Tab = 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'deploy';
+type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'deploy';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'workflow', label: 'Flow', icon: <GitBranch className="w-3.5 h-3.5" /> },
   { id: 'skills', label: 'Skills', icon: <Wrench className="w-3.5 h-3.5" /> },
   { id: 'integrations', label: 'Connect', icon: <Link2 className="w-3.5 h-3.5" /> },
   { id: 'triggers', label: 'Triggers', icon: <Clock className="w-3.5 h-3.5" /> },
@@ -25,7 +27,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying }: ConfigSidebarProps) => {
-  const [activeTab, setActiveTab] = useState<Tab>('skills');
+  const [activeTab, setActiveTab] = useState<Tab>('workflow');
 
   const toggleSkill = (skillId: string) => {
     onConfigChange({
@@ -96,6 +98,7 @@ const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying }: Config
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === 'workflow' && <WorkflowGraph config={config} />}
         {activeTab === 'skills' && <SkillsPicker skills={config.skills} onToggle={toggleSkill} />}
         {activeTab === 'integrations' && <IntegrationsPanel integrations={config.integrations} onToggle={toggleIntegration} />}
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
