@@ -2,7 +2,6 @@ import NavSidebar from '@/components/NavSidebar';
 import Sidebar from '@/components/Sidebar';
 import MobileHeader from '@/components/MobileHeader';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import ParticlesBackground from '@/components/ParticlesBackground';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -10,8 +9,7 @@ interface PageLayoutProps {
 
 const PageLayout = ({ children }: PageLayoutProps) => {
   return (
-    <div className="flex flex-col min-h-screen bg-background scanline relative">
-      <ParticlesBackground />
+    <div className="flex flex-col min-h-screen bg-background relative">
       <MobileHeader />
       <div className="flex justify-center flex-1">
         <nav aria-label="Main navigation">

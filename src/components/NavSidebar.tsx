@@ -35,17 +35,17 @@ const NavSidebar = () => {
   const { user, signOut } = useAuth();
 
   return (
-    <nav className="w-[275px] flex flex-col items-end pr-6 py-3 sticky top-0 h-screen hidden md:flex">
+    <nav className="w-[275px] flex flex-col items-end pr-6 py-4 sticky top-0 h-screen hidden md:flex">
       <div className="flex flex-col items-start w-[230px]">
         {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mb-4 ml-2 flex items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="mb-6 ml-2 flex items-center gap-2.5"
         >
-          <Link to="/" className="flex items-center gap-2">
-            <img src={xdropLogo} alt="XDROP" className="w-10 h-10 invert" />
-            <span className="text-xl font-bold text-gradient-cyber font-mono">XDROP</span>
+          <Link to="/" className="flex items-center gap-2.5">
+            <img src={xdropLogo} alt="XDROP" className="w-8 h-8 invert" />
+            <span className="text-lg font-bold text-foreground font-display tracking-tight">XDROP</span>
           </Link>
         </motion.div>
 
@@ -57,20 +57,21 @@ const NavSidebar = () => {
               <Link
                 key={item.label}
                 to={item.path}
-                className={`flex items-center gap-4 px-3 py-3 rounded-full transition-all hover:bg-secondary/60 group w-full ${
-                  isActive ? 'font-bold' : ''
+                className={`flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all hover:bg-secondary group w-full ${
+                  isActive ? 'bg-secondary' : ''
                 }`}
               >
                 <item.icon
-                  className={`w-6 h-6 ${
-                    isActive ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
+                  className={`w-5 h-5 ${
+                    isActive ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
                   }`}
+                  strokeWidth={isActive ? 2.5 : 1.5}
                 />
                 <span
-                  className={`text-lg ${
+                  className={`text-sm ${
                     isActive
-                      ? 'text-foreground'
-                      : 'text-foreground/70 group-hover:text-foreground'
+                      ? 'text-foreground font-semibold'
+                      : 'text-muted-foreground group-hover:text-foreground'
                   }`}
                 >
                   {item.label}
@@ -81,22 +82,22 @@ const NavSidebar = () => {
         </div>
 
         {/* Auth */}
-        <div className="mt-4 w-full">
+        <div className="mt-6 w-full border-t border-border pt-4">
           {user ? (
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-4 px-3 py-3 rounded-full transition-all hover:bg-secondary/60 group w-full text-muted-foreground hover:text-foreground"
+              className="flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all hover:bg-secondary group w-full"
             >
-              <LogOut className="w-6 h-6" />
-              <span className="text-lg">Sign Out</span>
+              <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-foreground" strokeWidth={1.5} />
+              <span className="text-sm text-muted-foreground group-hover:text-foreground">Sign Out</span>
             </button>
           ) : (
             <Link
               to="/auth"
-              className="flex items-center gap-4 px-3 py-3 rounded-full transition-all hover:bg-secondary/60 group w-full"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-foreground text-background font-semibold text-sm hover:opacity-90 transition-opacity w-full"
             >
-              <LogIn className="w-6 h-6 text-primary" />
-              <span className="text-lg text-primary font-bold">Sign In</span>
+              <LogIn className="w-4 h-4" strokeWidth={2} />
+              Get Started →
             </Link>
           )}
         </div>

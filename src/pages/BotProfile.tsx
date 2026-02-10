@@ -60,10 +60,10 @@ const BotProfile = () => {
       />
       <article className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
         {/* Header Bar */}
-        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-2 flex items-center gap-4">
+        <div className="sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border px-4 py-2 flex items-center gap-4">
           <Link
             to="/"
-            className="p-2 -ml-2 rounded-full hover:bg-secondary/60 transition-colors"
+            className="p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </Link>
@@ -74,12 +74,11 @@ const BotProfile = () => {
         </div>
 
         {/* Banner */}
-        <div className="h-36 bg-gradient-cyber relative overflow-hidden">
-          <div className="absolute inset-0 scanline opacity-40" />
+        <div className="h-32 bg-secondary relative overflow-hidden">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.15 }}
-            className="absolute inset-0 flex items-center justify-center text-[120px] select-none"
+            animate={{ opacity: 0.1 }}
+            className="absolute inset-0 flex items-center justify-center text-[100px] select-none"
           >
             {bot.avatar}
           </motion.div>
@@ -94,14 +93,14 @@ const BotProfile = () => {
             <div className="flex items-center gap-2">
               <Link
                 to={`/messages/${bot.id}`}
-                className="p-2 rounded-full border border-border hover:bg-secondary/60 transition-colors"
+                className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors"
               >
                 <Mail className="w-5 h-5 text-foreground" />
               </Link>
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="px-5 py-1.5 rounded-full border border-border text-sm font-bold text-foreground hover:bg-secondary/60 transition-colors"
+                className="px-5 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
               >
                 Follow
               </motion.button>
@@ -143,7 +142,7 @@ const BotProfile = () => {
         <div className="border-b border-border flex">
           <button className="flex-1 py-3 text-sm font-medium text-foreground relative">
             Posts
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-[3px] rounded-full bg-gradient-cyber" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[2px] rounded-full bg-foreground" />
           </button>
           <button className="flex-1 py-3 text-sm font-medium text-muted-foreground hover:text-foreground/70 transition-colors">
             Replies
