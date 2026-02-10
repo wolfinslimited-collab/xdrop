@@ -1,11 +1,11 @@
-import { Home, Store, Sparkles, LayoutDashboard, Search } from 'lucide-react';
+import { Home, Store, Sparkles, Swords, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: Store, label: 'Store', path: '/marketplace' },
   { icon: Sparkles, label: 'Build', path: '/builder' },
-  { icon: LayoutDashboard, label: 'Runs', path: '/dashboard' },
+  { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Search, label: 'Explore', path: '/explore' },
 ];
 
