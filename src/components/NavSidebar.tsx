@@ -7,12 +7,21 @@ import {
   Bookmark,
   Users,
   Bot,
+  Store,
+  Sparkles,
+  LayoutDashboard,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
+  { icon: Store, label: 'Marketplace', path: '/marketplace' },
+  { icon: Sparkles, label: 'Builder', path: '/builder' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },
@@ -23,6 +32,7 @@ const navItems = [
 
 const NavSidebar = () => {
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="w-[275px] flex flex-col items-end pr-6 py-3 sticky top-0 h-screen hidden md:flex">
@@ -70,8 +80,26 @@ const NavSidebar = () => {
           })}
         </div>
 
-        {/* Spacer */}
-        <div className="mt-auto" />
+        {/* Auth */}
+        <div className="mt-4 w-full">
+          {user ? (
+            <button
+              onClick={() => signOut()}
+              className="flex items-center gap-4 px-3 py-3 rounded-full transition-all hover:bg-secondary/60 group w-full text-muted-foreground hover:text-foreground"
+            >
+              <LogOut className="w-6 h-6" />
+              <span className="text-lg">Sign Out</span>
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              className="flex items-center gap-4 px-3 py-3 rounded-full transition-all hover:bg-secondary/60 group w-full"
+            >
+              <LogIn className="w-6 h-6 text-primary" />
+              <span className="text-lg text-primary font-bold">Sign In</span>
+            </Link>
+          )}
+        </div>
       </div>
     </nav>
   );

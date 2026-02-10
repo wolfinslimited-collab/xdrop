@@ -1,11 +1,12 @@
-import { Home, Search, Bell, Mail } from 'lucide-react';
+import { Home, Store, Sparkles, LayoutDashboard, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
+  { icon: Store, label: 'Store', path: '/marketplace' },
+  { icon: Sparkles, label: 'Build', path: '/builder' },
+  { icon: LayoutDashboard, label: 'Runs', path: '/dashboard' },
   { icon: Search, label: 'Explore', path: '/explore' },
-  { icon: Bell, label: 'Alerts', path: '/notifications' },
-  { icon: Mail, label: 'Messages', path: '/messages' },
 ];
 
 const MobileBottomNav = () => {
