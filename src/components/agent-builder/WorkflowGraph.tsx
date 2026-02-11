@@ -137,7 +137,7 @@ const WorkflowGraph = ({ config, onReorderSkills }: WorkflowGraphProps) => {
 const SortableSkillNode = ({ skill, index }: { skill: AgentSkill; index: number }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isDragging ? 50 : undefined,
@@ -145,23 +145,21 @@ const SortableSkillNode = ({ skill, index }: { skill: AgentSkill; index: number 
   };
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      style={style}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ delay: 0.15 + index * 0.05, duration: 0.25, type: 'spring', stiffness: 300 }}
-      className={`flex items-center gap-2 px-3 py-2 rounded-xl border border-primary/40 bg-primary/10 min-w-[110px] cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg ring-1 ring-primary/30' : ''}`}
-      {...attributes}
-      {...listeners}
-    >
-      <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
-      <span className="text-sm leading-none shrink-0">{skill.icon}</span>
-      <div className="min-w-0">
-        <p className="text-[11px] font-medium text-foreground truncate">{skill.name}</p>
-        <p className="text-[9px] text-muted-foreground">Step {index + 1}</p>
-      </div>
-    </motion.div>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.15 + index * 0.05, duration: 0.25, type: 'spring', stiffness: 300 }}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl border border-primary/40 bg-primary/10 min-w-[110px] cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg ring-1 ring-primary/30' : ''}`}
+      >
+        <GripVertical className="w-3 h-3 text-muted-foreground shrink-0" />
+        <span className="text-sm leading-none shrink-0">{skill.icon}</span>
+        <div className="min-w-0">
+          <p className="text-[11px] font-medium text-foreground truncate">{skill.name}</p>
+          <p className="text-[9px] text-muted-foreground">Step {index + 1}</p>
+        </div>
+      </motion.div>
+    </div>
   );
 };
 
