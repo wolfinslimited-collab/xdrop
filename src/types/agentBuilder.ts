@@ -84,6 +84,12 @@ export const DEFAULT_SKILLS: AgentSkill[] = [
 ];
 
 export const DEFAULT_INTEGRATIONS: AgentIntegration[] = [
+  // Lovable Cloud supported
+  { id: 'elevenlabs', name: 'ElevenLabs', icon: '🔊', description: 'AI voice generation, text-to-speech', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'firecrawl', name: 'Firecrawl', icon: '🔥', description: 'AI-powered web scraping & search', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'perplexity', name: 'Perplexity', icon: '🔍', description: 'AI-powered search & answers', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'resend', name: 'Resend', icon: '✉️', description: 'Transactional email delivery', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  // Third-party
   { id: 'telegram', name: 'Telegram', icon: '✈️', description: 'Send/receive messages via Telegram bot', connected: false, requiresApiKey: true, apiKeyLabel: 'Bot Token' },
   { id: 'discord', name: 'Discord', icon: '💬', description: 'Connect to Discord channels and DMs', connected: false, requiresApiKey: true, apiKeyLabel: 'Bot Token' },
   { id: 'twitter', name: 'Twitter/X', icon: '🐦', description: 'Post tweets and monitor mentions', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
