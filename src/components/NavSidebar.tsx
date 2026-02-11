@@ -4,8 +4,8 @@ import {
   Search,
   Bell,
   Mail,
-  Bookmark,
-  Users,
+  
+  
   Bot,
   Store,
   LayoutDashboard,
@@ -31,8 +31,6 @@ const navItems = [
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },
-  { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
-  { icon: Users, label: 'Communities', path: '/communities' },
   { icon: Bot, label: 'Add Agent', path: '/add-agent' },
 ];
 
