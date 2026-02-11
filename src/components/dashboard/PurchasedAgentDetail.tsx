@@ -52,10 +52,10 @@ function generateRevenueData(agent: Agent) {
 
 function getAgentHealth(agent: Agent): { score: number; label: string; color: string } {
   const avgReturn = ((agent.monthly_return_min || 0) + (agent.monthly_return_max || 0)) / 2;
-  if (avgReturn >= 20) return { score: 95, label: 'Excellent', color: 'text-green-500' };
-  if (avgReturn >= 12) return { score: 82, label: 'Good', color: 'text-green-400' };
-  if (avgReturn >= 5) return { score: 65, label: 'Fair', color: 'text-accent' };
-  return { score: 40, label: 'Low', color: 'text-destructive' };
+  if (avgReturn >= 20) return { score: 95, label: 'Excellent', color: 'text-foreground' };
+  if (avgReturn >= 12) return { score: 82, label: 'Good', color: 'text-foreground' };
+  if (avgReturn >= 5) return { score: 65, label: 'Fair', color: 'text-muted-foreground' };
+  return { score: 40, label: 'Low', color: 'text-muted-foreground' };
 }
 
 function getEarnings(agent: Agent) {
@@ -102,7 +102,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
           <div>
             <h1 className="text-lg font-bold text-foreground">{agent.name}</h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium">Running</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">Running</span>
               <span className="text-[10px] text-muted-foreground">Active {daysActive}d</span>
             </div>
           </div>
@@ -116,7 +116,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
             <DollarSign className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Total Earned</span>
           </div>
-          <p className="text-xl font-bold text-green-500">+${earnings.total}</p>
+          <p className="text-xl font-bold text-foreground">+${earnings.total}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">from ${agent.price} invested</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
@@ -169,8 +169,8 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
               <AreaChart data={filteredData}>
                 <defs>
                   <linearGradient id="earningsGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(142 71% 45%)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(142 71% 45%)" stopOpacity={0} />
+                    <stop offset="5%" stopColor="hsl(0 0% 95%)" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="hsl(0 0% 95%)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 14%)" />
@@ -184,7 +184,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
                     name === 'earnings' ? 'Cumulative' : 'Daily'
                   ]}
                 />
-                <Area type="monotone" dataKey="earnings" stroke="hsl(142 71% 45%)" fill="url(#earningsGrad)" strokeWidth={2} />
+                <Area type="monotone" dataKey="earnings" stroke="hsl(0 0% 95%)" fill="url(#earningsGrad)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
@@ -235,10 +235,8 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
                   initial={{ width: 0 }}
                   animate={{ width: `${value}%` }}
                   transition={{ duration: 0.8, ease: 'easeOut' }}
-                  className="h-full rounded-full"
-                  style={{
-                    background: value >= 90 ? 'hsl(142 71% 45%)' : value >= 70 ? 'hsl(38 90% 55%)' : 'hsl(0 72% 51%)',
-                  }}
+                  className="h-full rounded-full bg-foreground/70"
+                  style={{}}
                 />
               </div>
               <p className="text-[9px] text-muted-foreground mt-0.5">{desc}</p>

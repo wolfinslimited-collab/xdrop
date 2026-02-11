@@ -44,10 +44,10 @@ const statusIcons: Record<string, any> = {
 };
 
 const statusColors: Record<string, string> = {
-  running: 'text-primary',
-  completed: 'text-green-500',
-  failed: 'text-destructive',
-  paused: 'text-accent',
+  running: 'text-foreground',
+  completed: 'text-foreground',
+  failed: 'text-muted-foreground',
+  paused: 'text-muted-foreground',
   pending: 'text-muted-foreground',
 };
 
@@ -126,17 +126,17 @@ const Dashboard = () => {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 px-4 py-4 border-b border-border">
           <div className="bg-card rounded-xl border border-border p-3 text-center">
-            <DollarSign className="w-5 h-5 text-green-500 mx-auto mb-1" />
+            <DollarSign className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">${(totalSimulatedEarnings + totalRealEarnings).toFixed(0)}</p>
             <p className="text-[10px] text-muted-foreground">Total Earnings</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-3 text-center">
-            <Activity className="w-5 h-5 text-primary mx-auto mb-1" />
+            <Activity className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">{purchasedAgents.length + activeRuns}</p>
             <p className="text-[10px] text-muted-foreground">Active Agents</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-3 text-center">
-            <TrendingUp className="w-5 h-5 text-accent mx-auto mb-1" />
+            <TrendingUp className="w-5 h-5 text-muted-foreground mx-auto mb-1" />
             <p className="text-lg font-bold text-foreground">{completedRuns}</p>
             <p className="text-[10px] text-muted-foreground">Completed</p>
           </div>
@@ -172,13 +172,13 @@ const Dashboard = () => {
                           <p className="text-[10px] text-muted-foreground">Active for {daysActive} days</p>
                         </div>
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">
                         Running
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-secondary rounded-lg p-2 text-center">
-                        <p className="text-xs font-bold text-green-500">+${earnings.total}</p>
+                        <p className="text-xs font-bold text-foreground">+${earnings.total}</p>
                         <p className="text-[9px] text-muted-foreground">Total Earned</p>
                       </div>
                       <div className="bg-secondary rounded-lg p-2 text-center">
@@ -231,7 +231,7 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${
-                      agent.status === 'published' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+                      agent.status === 'published' ? 'bg-muted text-foreground' : 'bg-muted text-muted-foreground'
                     }`}>
                       {agent.status}
                     </span>
@@ -282,7 +282,7 @@ const Dashboard = () => {
                       </p>
                     </div>
                     {run.earnings > 0 && (
-                      <span className="text-sm font-bold text-green-500">+${run.earnings.toFixed(2)}</span>
+                      <span className="text-sm font-bold text-foreground">+${run.earnings.toFixed(2)}</span>
                     )}
                   </div>
                 </motion.div>
