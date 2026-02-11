@@ -376,6 +376,9 @@ const Dashboard = () => {
                         agentName={agent?.name}
                         agentCategory={agent?.template_id ? 'Marketplace' : 'Custom'}
                         pricePaid={agent?.price}
+                        onRetrySuccess={(updatedNft) => {
+                          setNfts(prev => prev.map(n => n.id === nft.id ? { ...n, ...updatedNft } : n));
+                        }}
                       />
                     </motion.div>
                   );
