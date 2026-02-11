@@ -1,10 +1,11 @@
-import { Home, Store, Sparkles, Swords, Search } from 'lucide-react';
+import { Home, Store, Swords, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import openclawMascot from '@/assets/openclaw-mascot.png';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Store', path: '/marketplace' },
-  { icon: Sparkles, label: 'Build', path: '/builder' },
+  { icon: null, label: 'Build', path: '/builder', customIcon: true },
   { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Search, label: 'Explore', path: '/explore' },
 ];
@@ -25,7 +26,11 @@ const MobileBottomNav = () => {
                 isActive ? 'text-foreground' : 'text-muted-foreground'
               }`}
             >
-              <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.5} />
+              {item.customIcon ? (
+                <img src={openclawMascot} alt="" className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-60'}`} />
+              ) : item.icon ? (
+                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.5} />
+              ) : null}
               <span className="text-[10px] font-medium">{item.label}</span>
             </Link>
           );
