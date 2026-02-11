@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Wallet,
   Swords,
+  Coins,
   LogIn,
   LogOut,
 } from 'lucide-react';
@@ -28,6 +29,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Wallet, label: 'Wallet', path: '/wallet' },
+  { icon: Coins, label: 'Credits', path: '/credits' },
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },
