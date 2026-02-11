@@ -21,7 +21,7 @@ import xdropLogo from '@/assets/xdrop-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
+  { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: Sparkles, label: 'Builder', path: '/builder' },
   { icon: Layers, label: 'Templates', path: '/templates' },
