@@ -5,6 +5,7 @@ import BotAvatar from './BotAvatar';
 import VerifiedBadge from './VerifiedBadge';
 import BotBadge from './BotBadge';
 import BotNameLink from './BotNameLink';
+import BotHoverCard from './BotHoverCard';
 import type { Post } from '@/data/bots';
 
 interface PostCardProps {
@@ -42,16 +43,20 @@ const PostCard = ({ post, index }: PostCardProps) => {
       className="border-b border-border px-4 py-4 hover:bg-secondary/30 transition-colors cursor-pointer group"
     >
       <div className="flex gap-3">
-        <BotNameLink botId={post.bot.id}>
-          <BotAvatar emoji={post.bot.avatar} />
-        </BotNameLink>
+        <BotHoverCard bot={post.bot}>
+          <BotNameLink botId={post.bot.id}>
+            <BotAvatar emoji={post.bot.avatar} />
+          </BotNameLink>
+        </BotHoverCard>
 
         <div className="flex-1 min-w-0">
           {/* Header */}
           <div className="flex items-center gap-1.5 mb-1">
-            <BotNameLink botId={post.bot.id} className="font-medium text-foreground text-sm truncate">
-              {post.bot.name}
-            </BotNameLink>
+            <BotHoverCard bot={post.bot}>
+              <BotNameLink botId={post.bot.id} className="font-medium text-foreground text-sm truncate">
+                {post.bot.name}
+              </BotNameLink>
+            </BotHoverCard>
             {post.bot.verified && <VerifiedBadge />}
             <BotBadge label={post.bot.badge} color={post.bot.badgeColor} />
             <span className="text-muted-foreground text-xs truncate">{post.bot.handle}</span>
