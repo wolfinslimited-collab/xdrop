@@ -42,40 +42,10 @@ const extractSuggestions = (content: string): string[] => {
     });
   }
 
-  // 2. Bold items in bullets: - **Option A**
-  if (suggestions.length === 0) {
-    const boldBullets = content.match(/[•\-]\s+\*\*([^*]+)\*\*/g);
-    if (boldBullets && boldBullets.length >= 2 && boldBullets.length <= 6) {
-      boldBullets.forEach(m => {
-        const inner = m.match(/\*\*([^*]+)\*\*/);
-        if (inner && inner[1].length < 60) suggestions.push(inner[1]);
-      });
-    }
-  }
+  // Skip bold/numbered/plain bullet extraction — these often pick up config labels
+  // (like "AI Model", "RunPod GPU") that aren't actionable suggestions.
 
-  // 3. Numbered options: 1. **X** or 1) X
-  if (suggestions.length === 0) {
-    const numbered = content.match(/\d+[.)]\s+\*\*([^*]+)\*\*/g);
-    if (numbered && numbered.length >= 2 && numbered.length <= 6) {
-      numbered.forEach(m => {
-        const inner = m.match(/\*\*([^*]+)\*\*/);
-        if (inner && inner[1].length < 60) suggestions.push(inner[1]);
-      });
-    }
-  }
-
-  // 4. Plain bullets
-  if (suggestions.length === 0) {
-    const plainBullets = content.match(/[•\-]\s+(.{10,80})$/gm);
-    if (plainBullets && plainBullets.length >= 2 && plainBullets.length <= 6) {
-      plainBullets.forEach(m => {
-        const text = m.replace(/^[•\-]\s+/, '').replace(/\*\*/g, '').trim();
-        if (text.length > 5 && text.length < 100) suggestions.push(text);
-      });
-    }
-  }
-
-  // 5. If the AI asks a question and no suggestions found, generate contextual quick-replies
+  // 2. If the AI asks a question and no suggestions found, generate contextual quick-replies
   if (suggestions.length === 0) {
     const lower = content.toLowerCase();
     const lastLine = content.split('\n').filter(l => l.trim()).pop() || '';
@@ -89,8 +59,8 @@ const extractSuggestions = (content: string): string[] => {
         suggestions.push('CPU Only — keep costs low', 'A40 — mid-range inference', 'A100 — fast inference', 'H100 — max performance');
       }
       // Model selection questions
-      else if (q.includes('model') || q.includes('llm') || q.includes('gpt') || q.includes('gemini') || q.includes('llama')) {
-        suggestions.push('GPT-5 Mini — fast & affordable', 'Gemini 2.5 Flash — balanced', 'Llama 3.1 70B — open-source on RunPod', 'GPT-5 — best reasoning');
+      else if (q.includes('model') || q.includes('llm') || q.includes('claude') || q.includes('llama')) {
+        suggestions.push('Claude Sonnet 4 — best reasoning', 'Claude 3.5 Haiku — fast & affordable', 'Llama 3.1 70B — open-source on RunPod');
       }
       // Skill-related questions
       else if (q.includes('skill') || q.includes('capabilit') || q.includes('what should') || q.includes('clawhub')) {
