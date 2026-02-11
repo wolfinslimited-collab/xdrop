@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle, Terminal, XCircle } from 'lucide-react';
+import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle, Terminal, XCircle, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AI_MODEL, type AgentConfig } from '@/types/agentBuilder';
 
@@ -15,11 +15,12 @@ interface TestDeployPanelProps {
   isDeploying: boolean;
   onNavigateTab?: (tab: string) => void;
   deployLogs: DeployLog[];
+  onTryFix?: (errorMessage: string) => void;
 }
 
 type TestStatus = 'idle' | 'running' | 'success' | 'error';
 
-const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployLogs }: TestDeployPanelProps) => {
+const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployLogs, onTryFix }: TestDeployPanelProps) => {
   const [testInput, setTestInput] = useState('');
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testOutput, setTestOutput] = useState('');
@@ -176,26 +177,40 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
       )}
 
       {/* Deploy Logs */}
-      {deployLogs.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
-            <h4 className="text-xs font-medium text-foreground">Deploy Logs</h4>
-          </div>
-          <div className="rounded-lg border border-border bg-background/80 max-h-48 overflow-y-auto">
-            <div className="p-2 space-y-1">
-              {deployLogs.map((log, i) => (
-                <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
-                  <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
-                  <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
-                  <span className="break-all">{log.message}</span>
-                </div>
-              ))}
-              <div ref={logsEndRef} />
+      {deployLogs.length > 0 && (() => {
+        const hasError = deployLogs.some(l => l.type === 'error');
+        const lastError = [...deployLogs].reverse().find(l => l.type === 'error');
+        return (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+              <h4 className="text-xs font-medium text-foreground">Deploy Logs</h4>
             </div>
+            <div className={`rounded-lg border bg-background/80 max-h-48 overflow-y-auto ${hasError ? 'border-red-500/40' : 'border-border'}`}>
+              <div className="p-2 space-y-1">
+                {deployLogs.map((log, i) => (
+                  <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
+                    <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
+                    <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
+                    <span className="break-all">{log.message}</span>
+                  </div>
+                ))}
+                <div ref={logsEndRef} />
+              </div>
+            </div>
+            {hasError && lastError && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full gap-2"
+                onClick={() => onTryFix?.(lastError.message)}
+              >
+                <Wrench className="w-3.5 h-3.5" /> Try to Fix
+              </Button>
+            )}
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Links */}
       <div className="flex items-center justify-center gap-3 pt-1">

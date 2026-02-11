@@ -16,6 +16,7 @@ interface ConfigSidebarProps {
   onDeploy: () => void;
   isDeploying: boolean;
   deployLogs: DeployLog[];
+  onTryFix?: (errorMessage: string) => void;
 }
 
 type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy';
@@ -30,7 +31,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'deploy', label: 'Deploy', icon: <Rocket className="w-3.5 h-3.5" /> },
 ];
 
-const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs }: ConfigSidebarProps) => {
+const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix }: ConfigSidebarProps) => {
 const [activeTab, setActiveTab] = useState<Tab>('workflow');
 
   const handleNavigateTab = (tab: string) => {
@@ -126,7 +127,7 @@ const [activeTab, setActiveTab] = useState<Tab>('workflow');
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
         {activeTab === 'guardrails' && <GuardrailsPanel guardrails={config.guardrails} onUpdate={(guardrails) => onConfigChange({ ...config, guardrails })} />}
         {activeTab === 'runpod' && <RunPodPanel config={config.runpodConfig} onUpdate={(runpodConfig) => onConfigChange({ ...config, runpodConfig })} />}
-        {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} deployLogs={deployLogs} />}
+        {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} deployLogs={deployLogs} onTryFix={onTryFix} />}
       </div>
     </div>
   );
