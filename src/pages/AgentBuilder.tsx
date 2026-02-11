@@ -247,7 +247,7 @@ const AgentBuilder = () => {
       const connectedIntegrations = config.integrations.filter(i => i.connected);
 
       // Save agent to DB
-      const { data: agent, error: agentErr } = await supabase.from('agents').insert({ name: config.name, description: config.description || `AI agent with ${enabledSkills.length} skills`, creator_id: user.id, price: 0, status: 'active', short_description: config.description, required_integrations: connectedIntegrations.map(i => i.id) }).select().single();
+      const { data: agent, error: agentErr } = await supabase.from('agents').insert({ name: config.name, description: config.description || `AI agent with ${enabledSkills.length} skills`, creator_id: user.id, price: 0, status: 'published', short_description: config.description, required_integrations: connectedIntegrations.map(i => i.id) }).select().single();
       if (agentErr) throw agentErr;
 
       const { error: manifestErr } = await supabase.from('agent_manifests').insert([{ agent_id: agent.id, version: '1.0.0', workflow_steps: enabledSkills.map(s => ({ skill: s.id, config: s.config })) as unknown as import('@/integrations/supabase/types').Json, triggers: config.triggers as unknown as import('@/integrations/supabase/types').Json, guardrails: config.guardrails as unknown as import('@/integrations/supabase/types').Json, tool_permissions: connectedIntegrations.map(i => ({ integration: i.id })) as unknown as import('@/integrations/supabase/types').Json }]);
