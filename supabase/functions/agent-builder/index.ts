@@ -86,7 +86,7 @@ Format responses with markdown. Use **bold** for key concepts and bullet points 
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-3-5-haiku-20241022",
         max_tokens: 4096,
         system: systemPrompt,
         messages: anthropicMessages,
