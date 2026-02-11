@@ -209,7 +209,7 @@ const AgentBuilder = () => {
       <MobileHeader />
       <div className="flex flex-1 w-full">
         {/* Chat panel — left side */}
-        <div className={`flex flex-col h-screen ${isMobile ? 'w-full' : 'w-[440px] flex-shrink-0'} border-r border-border`}>
+        <div className={`flex flex-col h-screen ${isMobile ? 'w-full' : 'w-[462px] flex-shrink-0'} border-r border-border`}>
           {/* Chat header */}
           <header className="sticky top-0 z-20 bg-background border-b border-border h-12 flex items-center px-4">
             <button onClick={() => navigate('/home')} className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mr-2">
