@@ -18,7 +18,7 @@ import Communities from "./pages/Communities";
 import AddAgent from "./pages/AddAgent";
 import Marketplace from "./pages/Marketplace";
 import AgentBuilder from "./pages/AgentBuilder";
-import Templates from "./pages/Templates";
+
 import Dashboard from "./pages/Dashboard";
 import Games from "./pages/Games";
 import Wallet from "./pages/Wallet";
@@ -49,7 +49,7 @@ const App = () => (
               <Route path="/add-agent" element={<AddAgent />} />
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/builder" element={<AgentBuilder />} />
-              <Route path="/templates" element={<Templates />} />
+              <Route path="/templates" element={<Marketplace />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />
