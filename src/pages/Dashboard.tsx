@@ -6,6 +6,7 @@ import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import PurchasedAgentDetail from '@/components/dashboard/PurchasedAgentDetail';
 
 interface Agent {
   id: string;
@@ -68,6 +69,7 @@ const Dashboard = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loadingRuns, setLoadingRuns] = useState(true);
   const [loadingAgents, setLoadingAgents] = useState(true);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -97,6 +99,14 @@ const Dashboard = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
+  if (selectedAgent) {
+    return (
+      <PageLayout>
+        <SEOHead title={`${selectedAgent.name} — XDROP`} description="Agent details" canonicalPath="/dashboard" />
+        <PurchasedAgentDetail agent={selectedAgent} onBack={() => setSelectedAgent(null)} />
+      </PageLayout>
+    );
+  }
   const purchasedAgents = agents.filter(a => a.template_id);
   const customAgents = agents.filter(a => !a.template_id);
   const totalSimulatedEarnings = purchasedAgents.reduce((sum, a) => sum + getSimulatedEarnings(a).total, 0);
@@ -151,7 +161,8 @@ const Dashboard = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/30 transition-colors"
+                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/30 transition-colors cursor-pointer"
+                    onClick={() => setSelectedAgent(agent)}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2.5">
