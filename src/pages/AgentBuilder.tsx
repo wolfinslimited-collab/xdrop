@@ -506,14 +506,14 @@ const AgentBuilder = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} />
+                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} />
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
         ) : (
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} />
+            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} />
           </div>
         )}
       </div>

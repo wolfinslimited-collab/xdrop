@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DeployLog } from './TestDeployPanel';
-import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
@@ -8,6 +8,8 @@ import GuardrailsPanel from './GuardrailsPanel';
 import TestDeployPanel from './TestDeployPanel';
 import WorkflowGraph from './WorkflowGraph';
 import RunPodPanel from './RunPodPanel';
+import LogsPanel from './LogsPanel';
+import MonetizePanel from './MonetizePanel';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface ConfigSidebarProps {
@@ -17,9 +19,10 @@ interface ConfigSidebarProps {
   isDeploying: boolean;
   deployLogs: DeployLog[];
   onTryFix?: (errorMessage: string) => void;
+  onClearLogs?: () => void;
 }
 
-type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy';
+type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'workflow', label: 'Flow', icon: <GitBranch className="w-3.5 h-3.5" /> },
@@ -29,9 +32,11 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'guardrails', label: 'Safety', icon: <Shield className="w-3.5 h-3.5" /> },
   { id: 'runpod', label: 'RunPod', icon: <Cpu className="w-3.5 h-3.5" /> },
   { id: 'deploy', label: 'Deploy', icon: <Rocket className="w-3.5 h-3.5" /> },
+  { id: 'logs', label: 'Logs', icon: <ScrollText className="w-3.5 h-3.5" /> },
+  { id: 'monetize', label: 'Monetize', icon: <DollarSign className="w-3.5 h-3.5" /> },
 ];
 
-const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix }: ConfigSidebarProps) => {
+const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix, onClearLogs }: ConfigSidebarProps) => {
 const [activeTab, setActiveTab] = useState<Tab>('workflow');
 
   const handleNavigateTab = (tab: string) => {
@@ -128,6 +133,8 @@ const [activeTab, setActiveTab] = useState<Tab>('workflow');
         {activeTab === 'guardrails' && <GuardrailsPanel guardrails={config.guardrails} onUpdate={(guardrails) => onConfigChange({ ...config, guardrails })} />}
         {activeTab === 'runpod' && <RunPodPanel config={config.runpodConfig} onUpdate={(runpodConfig) => onConfigChange({ ...config, runpodConfig })} />}
         {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} deployLogs={deployLogs} onTryFix={onTryFix} />}
+        {activeTab === 'logs' && <LogsPanel logs={deployLogs} onClear={onClearLogs} />}
+        {activeTab === 'monetize' && <MonetizePanel config={config} onConfigChange={onConfigChange} />}
       </div>
     </div>
   );
