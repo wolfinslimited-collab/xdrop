@@ -22,6 +22,7 @@ import Templates from "./pages/Templates";
 import Dashboard from "./pages/Dashboard";
 import Games from "./pages/Games";
 import Wallet from "./pages/Wallet";
+import Credits from "./pages/Credits";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />
+              <Route path="/credits" element={<Credits />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
