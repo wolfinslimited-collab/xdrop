@@ -14,7 +14,7 @@ export default function OpenClawMascot({ size = 'lg' }: { size?: 'sm' | 'lg' }) 
     >
       {/* Outer glow ring */}
       <motion.div
-        className="absolute inset-0 rounded-2xl"
+        className="absolute inset-0"
         style={{
           background: 'radial-gradient(circle, rgba(220,80,60,0.35) 0%, rgba(220,80,60,0) 70%)',
         }}
@@ -33,7 +33,7 @@ export default function OpenClawMascot({ size = 'lg' }: { size?: 'sm' | 'lg' }) 
       <motion.img
         src={mascotImg}
         alt="OpenClaw"
-        className={`${dim} rounded-2xl relative z-10 object-cover`}
+        className={`${dim} relative z-10 object-contain`}
         style={{
           filter: `drop-shadow(0 0 ${glowSize} rgba(220,80,60,0.5))`,
         }}
