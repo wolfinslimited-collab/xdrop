@@ -286,19 +286,19 @@ const AgentBuilder = () => {
                 key={i}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                  msg.role === 'assistant' ? 'bg-accent/20' : 'bg-secondary'
-                }`}>
-                  {msg.role === 'assistant' ? <Bot className="w-3.5 h-3.5 text-accent" /> : <User className="w-3.5 h-3.5 text-foreground" />}
-                </div>
-                <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
+                {msg.role === 'assistant' && (
+                  <div className="w-7 h-7 rounded-lg bg-accent/15 flex items-center justify-center shrink-0 mt-0.5 border border-accent/20">
+                    <Bot className="w-3.5 h-3.5 text-accent" />
+                  </div>
+                )}
+                <div className={`text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary text-foreground'
+                    ? 'max-w-[80%] bg-secondary rounded-2xl px-4 py-3 text-foreground'
+                    : 'flex-1 text-foreground'
                 }`}>
-                  <div className="prose prose-sm prose-invert max-w-none [&>p]:my-1.5 [&>ul]:my-1.5 [&>ol]:my-1.5 [&>ul]:pl-4 [&>ol]:pl-4 [&>li]:my-0.5 [&_strong]:text-foreground [&_strong]:font-semibold [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_code]:bg-background/50 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_pre]:bg-background/50 [&_pre]:rounded-lg [&_pre]:p-3">
+                  <div className="prose prose-sm prose-invert max-w-none [&>p]:my-2.5 [&>ul]:my-2 [&>ol]:my-2 [&>ul]:pl-5 [&>ol]:pl-5 [&>li]:my-1 [&_strong]:text-foreground [&_strong]:font-semibold [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_code]:bg-secondary [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_code]:text-xs [&_code]:font-mono [&_code]:border [&_code]:border-border [&_pre]:bg-secondary [&_pre]:rounded-lg [&_pre]:p-3 [&_pre]:border [&_pre]:border-border [&>blockquote]:border-l-2 [&>blockquote]:border-accent/40 [&>blockquote]:pl-4 [&>blockquote]:text-muted-foreground [&_h1]:text-base [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-bold [&_h2]:mt-3 [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-2.5 [&_h3]:mb-1">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                 </div>
