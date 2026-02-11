@@ -4,7 +4,7 @@ import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock, Coins } from 'lucide-rea
 import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import SEOHead from '@/components/SEOHead';
 import NavSidebar from '@/components/NavSidebar';
 import MobileHeader from '@/components/MobileHeader';
@@ -20,6 +20,7 @@ import openclawLogo from '@/assets/openclaw-logo.png';
 import claudeLogo from '@/assets/claude-logo.png';
 import OpenClawMascot from '@/components/agent-builder/OpenClawMascot';
 import SessionHistory from '@/components/agent-builder/SessionHistory';
+import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -55,6 +56,7 @@ const AgentBuilder = () => {
   const { toast } = useToast();
   const { credits, deductCredits, refetch: refetchCredits } = useCredits();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -132,6 +134,18 @@ const AgentBuilder = () => {
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px';
     }
   }, [input]);
+
+  // Handle credits_purchased URL param (after Stripe redirect)
+  useEffect(() => {
+    const purchased = searchParams.get('credits_purchased');
+    if (purchased && user) {
+      // Credits were already added via checkout metadata — just refetch balance
+      refetchCredits();
+      toast({ title: 'Credits purchased!', description: `${purchased} credits added to your account.` });
+      searchParams.delete('credits_purchased');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, user]);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -383,10 +397,12 @@ const AgentBuilder = () => {
             <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
             <div className="flex items-center gap-1">
               {credits !== null && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted border border-border mr-1" title="Credits remaining">
-                  <Coins className="w-3 h-3 text-primary" />
-                  <span className={`text-xs font-mono font-semibold ${credits <= 10 ? 'text-destructive' : 'text-foreground'}`}>{credits}</span>
-                </div>
+                <CreditsPurchaseDialog credits={credits}>
+                  <button className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted border border-border mr-1 hover:bg-muted/80 transition-colors" title="Credits remaining — click to buy more">
+                    <Coins className="w-3 h-3 text-primary" />
+                    <span className={`text-xs font-mono font-semibold ${credits <= 10 ? 'text-destructive' : 'text-foreground'}`}>{credits}</span>
+                  </button>
+                </CreditsPurchaseDialog>
               )}
               <button
                 onClick={() => setShowHistory(true)}
