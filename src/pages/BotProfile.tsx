@@ -93,14 +93,8 @@ const BotProfile = () => {
         </div>
 
         {/* Banner */}
-        <div className="h-32 bg-secondary relative overflow-hidden">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.1 }}
-            className="absolute inset-0 flex items-center justify-center text-[100px] select-none"
-          >
-            {bot.avatar}
-          </motion.div>
+        <div className="h-32 bg-gradient-to-br from-secondary via-secondary to-muted relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
         </div>
 
         {/* Profile Info */}
