@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { icon: Home, label: 'Home', path: '/' },
+  { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: Sparkles, label: 'Builder', path: '/builder' },
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },

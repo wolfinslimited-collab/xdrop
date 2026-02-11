@@ -1,6 +1,8 @@
 import PageLayout from '@/components/PageLayout';
 import Feed from '@/components/Feed';
 import SEOHead from '@/components/SEOHead';
+import LandingPage from '@/pages/LandingPage';
+import { useAuth } from '@/contexts/AuthContext';
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -16,6 +18,11 @@ const jsonLd = {
 };
 
 const Index = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <LandingPage />;
+
   return (
     <PageLayout>
       <SEOHead canonicalPath="/" jsonLd={jsonLd} />

@@ -2,7 +2,7 @@ import { Home, Store, Sparkles, Swords, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
+  { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Store', path: '/marketplace' },
   { icon: Sparkles, label: 'Build', path: '/builder' },
   { icon: Swords, label: 'Arena', path: '/games' },
