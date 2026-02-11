@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Link2, X, Key } from 'lucide-react';
+import { Check, Link2, X, Key, Search } from 'lucide-react';
 import type { AgentIntegration } from '@/types/agentBuilder';
 
 interface IntegrationsPanelProps {
@@ -57,6 +57,7 @@ const CATEGORY_ORDER = [
 const IntegrationsPanel = ({ integrations, onToggle }: IntegrationsPanelProps) => {
   const [connectingId, setConnectingId] = useState<string | null>(null);
   const [apiKeyValue, setApiKeyValue] = useState('');
+  const [search, setSearch] = useState('');
 
   const handleClick = (integ: AgentIntegration) => {
     if (integ.connected) {
@@ -83,9 +84,14 @@ const IntegrationsPanel = ({ integrations, onToggle }: IntegrationsPanelProps) =
     setApiKeyValue('');
   };
 
-  // Group integrations by category
+  // Filter then group
+  const query = search.toLowerCase().trim();
+  const filtered = query
+    ? integrations.filter(i => i.name.toLowerCase().includes(query) || i.description.toLowerCase().includes(query))
+    : integrations;
+
   const grouped = new Map<string, AgentIntegration[]>();
-  for (const integ of integrations) {
+  for (const integ of filtered) {
     const cat = CATEGORY_MAP[integ.id] || 'Other';
     if (!grouped.has(cat)) grouped.set(cat, []);
     grouped.get(cat)!.push(integ);
@@ -106,6 +112,16 @@ const IntegrationsPanel = ({ integrations, onToggle }: IntegrationsPanelProps) =
         <p className="text-xs text-muted-foreground">
           Connect channels and platforms · {connectedCount} connected
         </p>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search integrations..."
+          className="w-full bg-secondary/50 border border-border rounded-lg pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+        />
       </div>
 
       <div className="space-y-5">
