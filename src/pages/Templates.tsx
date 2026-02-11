@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Server, TrendingUp, Search, Zap } from 'lucide-react';
+import {
+  Server, TrendingUp, Search, Zap,
+  CandlestickChart, Crosshair, Scale, Sprout, Grid3x3, Flame, Palette,
+  Heart, Camera, Clapperboard, Play,
+  Briefcase, Wrench,
+  Package, Tag, Gift,
+  Globe,
+  Receipt, Share2, Star, Truck,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
@@ -8,6 +17,31 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge';
 import { AGENT_TEMPLATES, TEMPLATE_CATEGORIES, type AgentTemplate } from '@/data/agentTemplates';
 import { useToast } from '@/hooks/use-toast';
+
+const iconMap: Record<string, LucideIcon> = {
+  'candlestick-chart': CandlestickChart,
+  'crosshair': Crosshair,
+  'scale': Scale,
+  'sprout': Sprout,
+  'zap': Zap,
+  'grid-3x3': Grid3x3,
+  'flame': Flame,
+  'palette': Palette,
+  'heart': Heart,
+  'camera': Camera,
+  'clapperboard': Clapperboard,
+  'play': Play,
+  'briefcase': Briefcase,
+  'wrench': Wrench,
+  'package': Package,
+  'tag': Tag,
+  'gift': Gift,
+  'globe': Globe,
+  'receipt': Receipt,
+  'share-2': Share2,
+  'star': Star,
+  'truck': Truck,
+};
 
 const Templates = () => {
   const [activeCategory, setActiveCategory] = useState<string>('All');
@@ -25,6 +59,11 @@ const Templates = () => {
       title: `🚀 Deploying ${template.name}`,
       description: 'Setting up your RunPod server and agent. This may take a few minutes.',
     });
+  };
+
+  const getIcon = (lucideIcon: string) => {
+    const IconComponent = iconMap[lucideIcon];
+    return IconComponent ? <IconComponent className="w-5 h-5 text-primary" /> : <Zap className="w-5 h-5 text-primary" />;
   };
 
   return (
@@ -81,7 +120,9 @@ const Templates = () => {
                 <CardHeader className="pb-3 pt-5 px-5">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-2xl">{template.icon}</span>
+                      <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                        {getIcon(template.lucideIcon)}
+                      </div>
                       <div>
                         <h3 className="text-sm font-semibold text-foreground leading-tight">{template.name}</h3>
                         <span className="text-[10px] text-muted-foreground">{template.category}</span>
