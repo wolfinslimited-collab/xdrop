@@ -31,7 +31,13 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying }: ConfigSidebarProps) => {
-  const [activeTab, setActiveTab] = useState<Tab>('workflow');
+const [activeTab, setActiveTab] = useState<Tab>('workflow');
+
+  const handleNavigateTab = (tab: string) => {
+    if (TABS.some(t => t.id === tab)) {
+      setActiveTab(tab as Tab);
+    }
+  };
 
   const toggleSkill = (skillId: string) => {
     onConfigChange({
@@ -130,7 +136,7 @@ const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying }: Config
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
         {activeTab === 'guardrails' && <GuardrailsPanel guardrails={config.guardrails} onUpdate={(guardrails) => onConfigChange({ ...config, guardrails })} />}
         {activeTab === 'runpod' && <RunPodPanel config={config.runpodConfig} onUpdate={(runpodConfig) => onConfigChange({ ...config, runpodConfig })} />}
-        {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} />}
+        {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} />}
       </div>
     </div>
   );

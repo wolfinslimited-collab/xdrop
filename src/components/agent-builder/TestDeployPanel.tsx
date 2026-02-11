@@ -7,11 +7,12 @@ interface TestDeployPanelProps {
   config: AgentConfig;
   onDeploy: () => void;
   isDeploying: boolean;
+  onNavigateTab?: (tab: string) => void;
 }
 
 type TestStatus = 'idle' | 'running' | 'success' | 'error';
 
-const TestDeployPanel = ({ config, onDeploy, isDeploying }: TestDeployPanelProps) => {
+const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestDeployPanelProps) => {
   const [testInput, setTestInput] = useState('');
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testOutput, setTestOutput] = useState('');
@@ -120,12 +121,15 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying }: TestDeployPanelProps
 
       {/* RunPod connection warning */}
       {!isRunPodReady && (
-        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+        <button
+          onClick={() => onNavigateTab?.('runpod')}
+          className="w-full p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2 text-left hover:bg-destructive/10 transition-colors cursor-pointer"
+        >
           <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
           <p className="text-[11px] text-destructive">
-            RunPod API key not connected. Go to the <strong>RunPod</strong> tab to add your API key before deploying.
+            RunPod API key not connected. <strong className="underline underline-offset-2">Click here</strong> to go to the RunPod tab and add your API key.
           </p>
-        </div>
+        </button>
       )}
 
       {/* Deploy */}
