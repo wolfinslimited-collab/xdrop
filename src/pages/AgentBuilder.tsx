@@ -306,6 +306,11 @@ const AgentBuilder = () => {
     finally { setIsDeploying(false); }
   };
 
+  const handleTryFix = (errorMessage: string) => {
+    const fixPrompt = `My deployment failed with this error: "${errorMessage}". Can you help me diagnose and fix this issue?`;
+    handleSend(fixPrompt);
+  };
+
   const handleNewChat = () => { setMessages([]); setConfig({ ...DEFAULT_CONFIG }); setInput(''); setSessionId(null); };
 
   const handleSelectSession = (session: { id: string; name: string; messages: unknown[]; config?: unknown }) => {
@@ -501,14 +506,14 @@ const AgentBuilder = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} />
+                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} />
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
         ) : (
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} />
+            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} />
           </div>
         )}
       </div>
