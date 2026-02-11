@@ -35,6 +35,29 @@ Use the **config panel** on the right to manually pick skills and integrations, 
   },
 ];
 
+const extractSuggestions = (content: string): string[] => {
+  const suggestions: string[] = [];
+  // Match bullet points starting with • or - followed by quoted text or plain text
+  const bulletMatches = content.match(/[•\-]\s*"([^"]+)"/g);
+  if (bulletMatches) {
+    bulletMatches.forEach(m => {
+      const inner = m.match(/"([^"]+)"/);
+      if (inner) suggestions.push(inner[1]);
+    });
+  }
+  // If no quoted bullets, try plain bullets that look like actionable suggestions
+  if (suggestions.length === 0) {
+    const plainBullets = content.match(/[•\-]\s+(.{10,80})$/gm);
+    if (plainBullets && plainBullets.length <= 6) {
+      plainBullets.forEach(m => {
+        const text = m.replace(/^[•\-]\s+/, '').replace(/\*\*/g, '').trim();
+        if (text.length > 5 && text.length < 100) suggestions.push(text);
+      });
+    }
+  }
+  return suggestions.slice(0, 4);
+};
+
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
@@ -304,6 +327,31 @@ const AgentBuilder = () => {
                 </div>
               </motion.div>
             ))}
+
+
+            {/* Suggestion chips */}
+            {!isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && (() => {
+              const suggestions = extractSuggestions(messages[messages.length - 1].content);
+              if (suggestions.length === 0) return null;
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex flex-wrap gap-2 pl-10"
+                >
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => { setInput(s); }}
+                      className="px-3.5 py-2 text-[13px] rounded-full border border-border bg-secondary/50 text-foreground hover:bg-secondary hover:border-accent/40 transition-all cursor-pointer text-left leading-snug"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </motion.div>
+              );
+            })()}
             {isStreaming && messages[messages.length - 1]?.role === 'user' && (
               <div className="flex gap-3">
                 <div className="w-7 h-7 rounded-full bg-accent/20 flex items-center justify-center">
