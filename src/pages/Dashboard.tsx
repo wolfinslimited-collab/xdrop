@@ -15,6 +15,12 @@ interface Agent {
   total_runs: number | null;
   total_earnings: number | null;
   created_at: string;
+  template_id: string | null;
+  monthly_return_min: number | null;
+  monthly_return_max: number | null;
+  purchased_at: string | null;
+  usdc_earnings: number | null;
+  price: number;
 }
 
 interface AgentRun {
@@ -44,6 +50,18 @@ const statusColors: Record<string, string> = {
   pending: 'text-muted-foreground',
 };
 
+function getSimulatedEarnings(agent: Agent): { total: number; monthly: number; dailyRate: number } {
+  if (!agent.purchased_at || !agent.monthly_return_min) return { total: 0, monthly: 0, dailyRate: 0 };
+  const purchasedDate = new Date(agent.purchased_at);
+  const now = new Date();
+  const daysSincePurchase = Math.max(1, Math.floor((now.getTime() - purchasedDate.getTime()) / (1000 * 60 * 60 * 24)));
+  const avgMonthlyReturn = ((agent.monthly_return_min || 0) + (agent.monthly_return_max || 0)) / 2;
+  const dailyRate = (avgMonthlyReturn / 30) / 100 * (agent.price || 100);
+  const total = +(dailyRate * daysSincePurchase).toFixed(2);
+  const monthly = +(dailyRate * 30).toFixed(2);
+  return { total, monthly, dailyRate: +dailyRate.toFixed(2) };
+}
+
 const Dashboard = () => {
   const { user, loading } = useAuth();
   const [runs, setRuns] = useState<AgentRun[]>([]);
@@ -66,10 +84,10 @@ const Dashboard = () => {
     const fetchAgents = async () => {
       const { data } = await supabase
         .from('agents')
-        .select('id, name, avatar, status, total_runs, total_earnings, created_at')
+        .select('id, name, avatar, status, total_runs, total_earnings, created_at, template_id, monthly_return_min, monthly_return_max, purchased_at, usdc_earnings, price')
         .eq('creator_id', user.id)
         .order('created_at', { ascending: false });
-      if (data) setAgents(data as Agent[]);
+      if (data) setAgents(data as any);
       setLoadingAgents(false);
     };
     fetchRuns();
@@ -79,7 +97,10 @@ const Dashboard = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  const totalEarnings = runs.reduce((sum, r) => sum + (r.earnings || 0), 0);
+  const purchasedAgents = agents.filter(a => a.template_id);
+  const customAgents = agents.filter(a => !a.template_id);
+  const totalSimulatedEarnings = purchasedAgents.reduce((sum, a) => sum + getSimulatedEarnings(a).total, 0);
+  const totalRealEarnings = runs.reduce((sum, r) => sum + (r.earnings || 0), 0);
   const activeRuns = runs.filter((r) => r.status === 'running').length;
   const completedRuns = runs.filter((r) => r.status === 'completed').length;
 
@@ -89,20 +110,20 @@ const Dashboard = () => {
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
           <h1 className="text-xl font-bold text-foreground">Dashboard</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Monitor your agent runs</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Monitor your agent runs & earnings</p>
         </header>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 px-4 py-4 border-b border-border">
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <DollarSign className="w-5 h-5 text-green-500 mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">${totalEarnings.toFixed(0)}</p>
+            <p className="text-lg font-bold text-foreground">${(totalSimulatedEarnings + totalRealEarnings).toFixed(0)}</p>
             <p className="text-[10px] text-muted-foreground">Total Earnings</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <Activity className="w-5 h-5 text-primary mx-auto mb-1" />
-            <p className="text-lg font-bold text-foreground">{activeRuns}</p>
-            <p className="text-[10px] text-muted-foreground">Active Runs</p>
+            <p className="text-lg font-bold text-foreground">{purchasedAgents.length + activeRuns}</p>
+            <p className="text-[10px] text-muted-foreground">Active Agents</p>
           </div>
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <TrendingUp className="w-5 h-5 text-accent mx-auto mb-1" />
@@ -111,7 +132,61 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* My Agents */}
+        {/* Purchased Agents (from Marketplace) */}
+        {purchasedAgents.length > 0 && (
+          <div className="border-b border-border">
+            <div className="flex items-center justify-between px-4 py-3">
+              <h2 className="text-sm font-semibold text-foreground">Purchased Agents</h2>
+              <Link to="/marketplace" className="text-xs text-primary hover:underline">Browse More →</Link>
+            </div>
+            <div className="space-y-3 px-4 pb-4">
+              {purchasedAgents.map((agent, i) => {
+                const earnings = getSimulatedEarnings(agent);
+                const daysActive = agent.purchased_at
+                  ? Math.floor((Date.now() - new Date(agent.purchased_at).getTime()) / (1000 * 60 * 60 * 24))
+                  : 0;
+                return (
+                  <motion.div
+                    key={agent.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-card rounded-xl border border-border p-4 hover:border-primary/30 transition-colors"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-2xl">{agent.avatar || '🤖'}</span>
+                        <div>
+                          <h3 className="text-sm font-semibold text-foreground">{agent.name}</h3>
+                          <p className="text-[10px] text-muted-foreground">Active for {daysActive} days</p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-medium">
+                        Running
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <p className="text-xs font-bold text-green-500">+${earnings.total}</p>
+                        <p className="text-[9px] text-muted-foreground">Total Earned</p>
+                      </div>
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <p className="text-xs font-bold text-foreground">${earnings.monthly}/mo</p>
+                        <p className="text-[9px] text-muted-foreground">Monthly Rate</p>
+                      </div>
+                      <div className="bg-secondary rounded-lg p-2 text-center">
+                        <p className="text-xs font-bold text-foreground">{agent.monthly_return_min}–{agent.monthly_return_max}%</p>
+                        <p className="text-[9px] text-muted-foreground">ROI Range</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* My Custom Agents */}
         <div className="border-b border-border">
           <div className="flex items-center justify-between px-4 py-3">
             <h2 className="text-sm font-semibold text-foreground">My Agents</h2>
@@ -123,15 +198,15 @@ const Dashboard = () => {
             <div className="flex items-center justify-center py-10">
               <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : agents.length === 0 ? (
+          ) : customAgents.length === 0 ? (
             <div className="text-center py-10 px-4">
               <Bot className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No agents yet.</p>
+              <p className="text-sm text-muted-foreground">No custom agents yet.</p>
               <Link to="/builder" className="text-xs text-primary hover:underline mt-1 inline-block">Create your first agent →</Link>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 px-4 pb-4">
-              {agents.map((agent, i) => (
+              {customAgents.map((agent, i) => (
                 <motion.div
                   key={agent.id}
                   initial={{ opacity: 0, scale: 0.95 }}

@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { AGENT_TEMPLATES, TEMPLATE_CATEGORIES, type AgentTemplate } from '@/data/agentTemplates';
 import { useToast } from '@/hooks/use-toast';
+import PurchaseDialog from '@/components/marketplace/PurchaseDialog';
 
 const iconMap: Record<string, LucideIcon> = {
   'candlestick-chart': CandlestickChart,
@@ -79,6 +80,7 @@ const Marketplace = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [purchaseTemplate, setPurchaseTemplate] = useState<AgentTemplate | null>(null);
 
   // Fetch community agents when tab switches
   useEffect(() => {
@@ -111,10 +113,7 @@ const Marketplace = () => {
   });
 
   const handleDeploy = (template: AgentTemplate) => {
-    toast({
-      title: `🚀 Deploying ${template.name}`,
-      description: 'Setting up your RunPod server and agent. This may take a few minutes.',
-    });
+    setPurchaseTemplate(template);
   };
 
   const getIcon = (lucideIcon: string) => {
@@ -343,6 +342,11 @@ const Marketplace = () => {
           </div>
         )}
       </main>
+      <PurchaseDialog
+        template={purchaseTemplate}
+        open={!!purchaseTemplate}
+        onOpenChange={(open) => { if (!open) setPurchaseTemplate(null); }}
+      />
     </PageLayout>
   );
 };
