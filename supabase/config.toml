@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.purchase-template]
 verify_jwt = false
+
+[functions.mint-agent-nft]
+verify_jwt = false
