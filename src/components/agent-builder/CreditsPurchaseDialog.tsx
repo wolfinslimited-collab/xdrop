@@ -8,29 +8,38 @@ const CREDIT_PACKS = [
   {
     id: 'price_1Sze7MDlHg9BacxzHcvgf1no',
     name: '500 Credits',
-    credits: 500,
+    baseCredits: 500,
+    bonusCredits: 100,
+    totalCredits: 600,
+    bonusPercent: 20,
     price: '$9.99',
     icon: <Zap className="w-5 h-5" />,
     popular: false,
-    perCredit: '$0.020',
+    perCredit: '$0.017',
   },
   {
     id: 'price_1Sze7uDlHg9Bacxzfb8GbnuD',
     name: '1,500 Credits',
-    credits: 1500,
+    baseCredits: 1500,
+    bonusCredits: 525,
+    totalCredits: 2025,
+    bonusPercent: 35,
     price: '$24.99',
     icon: <Sparkles className="w-5 h-5" />,
     popular: true,
-    perCredit: '$0.017',
+    perCredit: '$0.012',
   },
   {
     id: 'price_1Sze8FDlHg9Bacxz8woqdTgr',
     name: '5,000 Credits',
-    credits: 5000,
+    baseCredits: 5000,
+    bonusCredits: 2500,
+    totalCredits: 7500,
+    bonusPercent: 50,
     price: '$49.99',
     icon: <Crown className="w-5 h-5" />,
     popular: false,
-    perCredit: '$0.010',
+    perCredit: '$0.007',
   },
 ];
 
@@ -103,12 +112,13 @@ const CreditsPurchaseDialog = ({ credits, children }: CreditsPurchaseDialogProps
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">{pack.name}</span>
+                    <span className="text-sm font-semibold text-foreground">{pack.totalCredits.toLocaleString()} Credits</span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-primary/10 text-primary uppercase">+{pack.bonusPercent}% bonus</span>
                     {pack.popular && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-primary/10 text-primary uppercase">Best Value</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-muted text-muted-foreground uppercase">Popular</span>
                     )}
                   </div>
-                  <span className="text-[10px] text-muted-foreground">{pack.perCredit} per credit</span>
+                  <span className="text-[10px] text-muted-foreground">{pack.baseCredits.toLocaleString()} base + {pack.bonusCredits.toLocaleString()} bonus · {pack.perCredit}/credit</span>
                 </div>
                 <div className="text-right">
                   {loadingPack === pack.id ? (
