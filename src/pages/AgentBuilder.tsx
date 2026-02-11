@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import ConfigSidebar from '@/components/agent-builder/ConfigSidebar';
 
 import { DEFAULT_CONFIG, type AgentConfig } from '@/types/agentBuilder';
+import type { DeployLog } from '@/components/agent-builder/TestDeployPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import openclawLogo from '@/assets/openclaw-logo.png';
@@ -60,6 +61,7 @@ const AgentBuilder = () => {
   const [showConfig, setShowConfig] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [deployLogs, setDeployLogs] = useState<DeployLog[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -238,20 +240,35 @@ const AgentBuilder = () => {
     } finally { setIsStreaming(false); }
   };
 
+  const addLog = (message: string, type: DeployLog['type'] = 'info') => {
+    setDeployLogs(prev => [...prev, { timestamp: new Date(), message, type }]);
+  };
+
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
     if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and add your API key first.', variant: 'destructive' }); return; }
     setIsDeploying(true);
+    setDeployLogs([]);
+    addLog('Starting deployment...');
     try {
       const enabledSkills = config.skills.filter(s => s.enabled);
       const connectedIntegrations = config.integrations.filter(i => i.connected);
+
+      addLog(`Agent: ${config.name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
+      addLog('Saving agent to database...');
 
       // Save agent to DB
       const { data: agent, error: agentErr } = await supabase.from('agents').insert({ name: config.name, description: config.description || `AI agent with ${enabledSkills.length} skills`, creator_id: user.id, price: 0, status: 'published', short_description: config.description, required_integrations: connectedIntegrations.map(i => i.id) }).select().single();
       if (agentErr) throw agentErr;
 
+      addLog(`Agent saved (ID: ${agent.id})`, 'success');
+      addLog('Saving agent manifest...');
+
       const { error: manifestErr } = await supabase.from('agent_manifests').insert([{ agent_id: agent.id, version: '1.0.0', workflow_steps: enabledSkills.map(s => ({ skill: s.id, config: s.config })) as unknown as import('@/integrations/supabase/types').Json, triggers: config.triggers as unknown as import('@/integrations/supabase/types').Json, guardrails: config.guardrails as unknown as import('@/integrations/supabase/types').Json, tool_permissions: connectedIntegrations.map(i => ({ integration: i.id })) as unknown as import('@/integrations/supabase/types').Json }]);
       if (manifestErr) throw manifestErr;
+
+      addLog('Manifest saved', 'success');
+      addLog('Deploying to RunPod endpoint...');
 
       // Deploy to RunPod
       const session = await supabase.auth.getSession();
@@ -265,16 +282,27 @@ const AgentBuilder = () => {
       });
 
       const result = await resp.json();
-      if (!resp.ok) throw new Error(result.error || 'RunPod deployment failed');
+      if (!resp.ok) {
+        addLog(`RunPod error: ${result.error || 'Unknown error'}`, 'error');
+        throw new Error(result.error || 'RunPod deployment failed');
+      }
 
       const endpointInfo = result.endpoint;
       if (endpointInfo?.id && !config.runpodConfig.endpointId) {
         setConfig(prev => ({ ...prev, runpodConfig: { ...prev.runpodConfig, endpointId: endpointInfo.id } }));
       }
 
+      addLog(`Deployed to RunPod endpoint: ${endpointInfo?.id || 'created'}`, 'success');
+      addLog(`Workers: ${endpointInfo?.workersMin ?? 0}–${endpointInfo?.workersMax ?? 3}`, 'info');
+      addLog('Deployment complete! 🚀', 'success');
+
       toast({ title: 'Agent deployed to RunPod', description: `Endpoint: ${endpointInfo?.id || 'created'}` });
       setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod successfully! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\n\nYou can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
-    } catch (err: any) { console.error('Deploy error:', err); toast({ title: 'Deploy failed', description: err.message || 'Something went wrong.', variant: 'destructive' }); }
+    } catch (err: any) {
+      console.error('Deploy error:', err);
+      addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');
+      toast({ title: 'Deploy failed', description: err.message || 'Something went wrong.', variant: 'destructive' });
+    }
     finally { setIsDeploying(false); }
   };
 
@@ -473,14 +501,14 @@ const AgentBuilder = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
+                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} />
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
         ) : (
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
+            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} />
           </div>
         )}
       </div>

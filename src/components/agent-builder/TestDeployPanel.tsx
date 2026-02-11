@@ -1,26 +1,38 @@
-import { useState } from 'react';
-import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle, Terminal, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AI_MODEL, type AgentConfig } from '@/types/agentBuilder';
+
+export interface DeployLog {
+  timestamp: Date;
+  message: string;
+  type: 'info' | 'success' | 'error' | 'warning';
+}
 
 interface TestDeployPanelProps {
   config: AgentConfig;
   onDeploy: () => void;
   isDeploying: boolean;
   onNavigateTab?: (tab: string) => void;
+  deployLogs: DeployLog[];
 }
 
 type TestStatus = 'idle' | 'running' | 'success' | 'error';
 
-const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestDeployPanelProps) => {
+const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployLogs }: TestDeployPanelProps) => {
   const [testInput, setTestInput] = useState('');
   const [testStatus, setTestStatus] = useState<TestStatus>('idle');
   const [testOutput, setTestOutput] = useState('');
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   const enabledSkills = config.skills.filter(s => s.enabled);
   const connectedIntegrations = config.integrations.filter(i => i.connected);
   const isConfigValid = config.name.trim() && enabledSkills.length > 0;
   const isRunPodReady = config.runpodConfig.apiKeyConfigured;
+
+  useEffect(() => {
+    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [deployLogs]);
 
   const handleTest = () => {
     setTestStatus('running');
@@ -39,6 +51,24 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestD
         (testInput ? `\n\nTest input: "${testInput}"` : '')
       );
     }, 1500);
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  const logTypeStyles: Record<DeployLog['type'], string> = {
+    info: 'text-muted-foreground',
+    success: 'text-emerald-400',
+    error: 'text-red-400',
+    warning: 'text-amber-400',
+  };
+
+  const logTypeIcons: Record<DeployLog['type'], React.ReactNode> = {
+    info: <Terminal className="w-3 h-3" />,
+    success: <CheckCircle2 className="w-3 h-3" />,
+    error: <XCircle className="w-3 h-3" />,
+    warning: <AlertTriangle className="w-3 h-3" />,
   };
 
   return (
@@ -143,6 +173,28 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestD
         <p className="text-[10px] text-muted-foreground text-center">
           Add a name and at least one skill to deploy
         </p>
+      )}
+
+      {/* Deploy Logs */}
+      {deployLogs.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <Terminal className="w-3.5 h-3.5 text-muted-foreground" />
+            <h4 className="text-xs font-medium text-foreground">Deploy Logs</h4>
+          </div>
+          <div className="rounded-lg border border-border bg-background/80 max-h-48 overflow-y-auto">
+            <div className="p-2 space-y-1">
+              {deployLogs.map((log, i) => (
+                <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
+                  <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
+                  <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
+                  <span className="break-all">{log.message}</span>
+                </div>
+              ))}
+              <div ref={logsEndRef} />
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Links */}
