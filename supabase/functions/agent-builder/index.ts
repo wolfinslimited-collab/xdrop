@@ -70,7 +70,18 @@ Telegram, Discord, Twitter/X, Shopify, Gmail, Slack, Notion, GitHub.
 - Trigger: ${currentConfig?.triggers?.[0]?.type || 'manual'}
 - RunPod GPU: ${currentConfig?.runpodConfig?.gpuTier || 'Not selected'}
 
-Format responses with markdown. Use **bold** for key concepts and bullet points for lists. Be conversational but structured. Ask one clarifying question at a time. Always move toward a deployable configuration. When recommending skills or integrations, mention them by exact name so the UI auto-enables them.`;
+Format responses with markdown. Use **bold** for key concepts and bullet points for lists. Be conversational but structured. Ask one clarifying question at a time. Always move toward a deployable configuration. When recommending skills or integrations, mention them by exact name so the UI auto-enables them.
+
+## IMPORTANT: Suggestion Chips
+At the END of every response, include 2-4 contextual quick-reply suggestions relevant to your message. Use this exact format on separate lines:
+[suggest: suggestion text here]
+
+Examples:
+- If you asked about their goal: [suggest: Build a crypto trading bot] [suggest: Create a customer support agent] [suggest: Deploy a social media bot]
+- If you asked about GPU tier: [suggest: CPU Only — keep costs low] [suggest: A40 — mid-range] [suggest: A100 — fast inference]
+- If you asked a yes/no question: [suggest: Yes, go ahead] [suggest: No, skip this] [suggest: Tell me more]
+
+Always make suggestions directly answer or relate to the question you just asked. Never include generic suggestions.`;
 
     // Convert messages to Anthropic format (separate system from user/assistant)
     const anthropicMessages = messages.map((m: any) => ({
