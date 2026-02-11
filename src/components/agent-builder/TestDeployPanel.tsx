@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GPU_TIERS, AI_MODELS, type AgentConfig } from '@/types/agentBuilder';
 
@@ -21,6 +21,7 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying }: TestDeployPanelProps
   const selectedModel = AI_MODELS.find(m => m.id === config.model);
   const selectedGpu = GPU_TIERS.find(g => g.id === config.runpodConfig.gpuTier);
   const isConfigValid = config.name.trim() && enabledSkills.length > 0;
+  const isRunPodReady = config.runpodConfig.apiKeyConfigured;
 
   const handleTest = () => {
     setTestStatus('running');
@@ -117,10 +118,20 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying }: TestDeployPanelProps
         </div>
       )}
 
+      {/* RunPod connection warning */}
+      {!isRunPodReady && (
+        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
+          <p className="text-[11px] text-destructive">
+            RunPod API key not connected. Go to the <strong>RunPod</strong> tab to add your API key before deploying.
+          </p>
+        </div>
+      )}
+
       {/* Deploy */}
       <Button
         onClick={onDeploy}
-        disabled={!isConfigValid || isDeploying}
+        disabled={!isConfigValid || !isRunPodReady || isDeploying}
         className="w-full gap-2"
       >
         {isDeploying ? (

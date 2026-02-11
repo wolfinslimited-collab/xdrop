@@ -32,6 +32,8 @@ export interface RunPodConfig {
   minWorkers: number;
   idleTimeout: number; // seconds
   volumeSize: number; // GB
+  endpointId: string;
+  apiKeyConfigured: boolean;
 }
 
 export interface AgentConfig {
@@ -106,6 +108,8 @@ export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
   minWorkers: 0,
   idleTimeout: 60,
   volumeSize: 20,
+  endpointId: '',
+  apiKeyConfigured: false,
 };
 
 export const DEFAULT_CONFIG: AgentConfig = {
