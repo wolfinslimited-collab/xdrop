@@ -15,6 +15,7 @@ import { DEFAULT_CONFIG, type AgentConfig } from '@/types/agentBuilder';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import openclawLogo from '@/assets/openclaw-logo.png';
+import claudeLogo from '@/assets/claude-logo.png';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -369,8 +370,11 @@ const AgentBuilder = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className={mdClasses}>
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        <div className="flex gap-3 items-start">
+                          <img src={claudeLogo} alt="Claude" className="w-6 h-6 rounded-full mt-1 flex-shrink-0" />
+                          <div className={mdClasses}>
+                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          </div>
                         </div>
                       )}
                     </div>
