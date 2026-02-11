@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, Bookmark, Users, Store, LayoutDashboard, LogIn } from 'lucide-react';
+import { Menu, Store, LayoutDashboard, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
 import openclawMascot from '@/assets/openclaw-mascot.png';
@@ -26,8 +26,6 @@ const menuItems = [
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },
-  { icon: Bookmark, label: 'Bookmarks', path: '/bookmarks' },
-  { icon: Users, label: 'Communities', path: '/communities' },
   { icon: Bot, label: 'Add Agent', path: '/add-agent' },
 ];
 
