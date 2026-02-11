@@ -160,7 +160,6 @@ serve(async (req) => {
                   workersMin: ${config.runpodConfig?.minWorkers || 0}
                   workersMax: ${config.runpodConfig?.maxWorkers || 3}
                   idleTimeout: ${config.runpodConfig?.idleTimeout || 60}
-                  volumeInGb: ${config.runpodConfig?.volumeSize || 20}
                 }) {
                   id
                   name
