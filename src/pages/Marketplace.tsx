@@ -131,9 +131,12 @@ const Marketplace = () => {
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[900px]">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
-          <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-5 h-5 text-accent" />
-            <h1 className="text-lg font-bold text-foreground font-display">Marketplace</h1>
+          <div className="flex flex-col gap-0.5 mb-2">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-accent" />
+              <h1 className="text-lg font-bold text-foreground font-display">Marketplace</h1>
+            </div>
+            <p className="text-xs text-muted-foreground pl-7">Prebuild OpenClaw Bots</p>
           </div>
 
           {/* Tabs */}
