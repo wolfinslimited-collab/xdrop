@@ -85,15 +85,41 @@ export const DEFAULT_INTEGRATIONS: AgentIntegration[] = [
   { id: 'firecrawl', name: 'Firecrawl', icon: '🔥', description: 'AI-powered web scraping & search', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
   { id: 'perplexity', name: 'Perplexity', icon: '🔍', description: 'AI-powered search & answers', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
   { id: 'resend', name: 'Resend', icon: '✉️', description: 'Transactional email delivery', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
-  // Third-party
+  // Messaging & Social
   { id: 'telegram', name: 'Telegram', icon: '✈️', description: 'Send/receive messages via Telegram bot', connected: false, requiresApiKey: true, apiKeyLabel: 'Bot Token' },
   { id: 'discord', name: 'Discord', icon: '💬', description: 'Connect to Discord channels and DMs', connected: false, requiresApiKey: true, apiKeyLabel: 'Bot Token' },
   { id: 'twitter', name: 'Twitter/X', icon: '🐦', description: 'Post tweets and monitor mentions', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
-  { id: 'shopify', name: 'Shopify', icon: '🛒', description: 'Manage orders, products, and customers', connected: false, requiresApiKey: true, apiKeyLabel: 'Access Token' },
-  { id: 'gmail', name: 'Gmail', icon: '📧', description: 'Read and send emails via Gmail', connected: false, requiresApiKey: true, apiKeyLabel: 'OAuth Token' },
   { id: 'slack', name: 'Slack', icon: '💼', description: 'Post messages and respond in Slack', connected: false, requiresApiKey: true, apiKeyLabel: 'Bot Token' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: '📲', description: 'Send messages via WhatsApp Business API', connected: false, requiresApiKey: true, apiKeyLabel: 'Access Token' },
+  // Email & Productivity
+  { id: 'gmail', name: 'Gmail', icon: '📧', description: 'Read and send emails via Gmail', connected: false, requiresApiKey: true, apiKeyLabel: 'OAuth Token' },
+  { id: 'outlook', name: 'Outlook', icon: '📬', description: 'Microsoft Outlook email integration', connected: false, requiresApiKey: true, apiKeyLabel: 'OAuth Token' },
   { id: 'notion', name: 'Notion', icon: '📝', description: 'Read and write Notion pages and databases', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'google-sheets', name: 'Google Sheets', icon: '📊', description: 'Read and write spreadsheet data', connected: false, requiresApiKey: true, apiKeyLabel: 'OAuth Token' },
+  { id: 'google-calendar', name: 'Google Calendar', icon: '📅', description: 'Create and manage calendar events', connected: false, requiresApiKey: true, apiKeyLabel: 'OAuth Token' },
+  { id: 'airtable', name: 'Airtable', icon: '🗂️', description: 'Database-style spreadsheet integration', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  // Developer & DevOps
   { id: 'github', name: 'GitHub', icon: '🐙', description: 'Manage repos, issues, and PRs', connected: false, requiresApiKey: true, apiKeyLabel: 'Personal Access Token' },
+  { id: 'gitlab', name: 'GitLab', icon: '🦊', description: 'Manage repos, CI/CD, and merge requests', connected: false, requiresApiKey: true, apiKeyLabel: 'Personal Access Token' },
+  { id: 'jira', name: 'Jira', icon: '📋', description: 'Track issues, sprints, and projects', connected: false, requiresApiKey: true, apiKeyLabel: 'API Token' },
+  { id: 'linear', name: 'Linear', icon: '⚡', description: 'Modern issue tracking and project management', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  // E-commerce & Payments
+  { id: 'shopify', name: 'Shopify', icon: '🛒', description: 'Manage orders, products, and customers', connected: false, requiresApiKey: true, apiKeyLabel: 'Access Token' },
+  { id: 'stripe', name: 'Stripe', icon: '💳', description: 'Process payments, subscriptions, invoices', connected: false, requiresApiKey: true, apiKeyLabel: 'Secret Key' },
+  // Crypto & Web3
+  { id: 'coingecko', name: 'CoinGecko', icon: '🦎', description: 'Crypto price data, market caps, volume', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'birdeye', name: 'Birdeye', icon: '🦅', description: 'Solana token analytics and DeFi data', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'helius', name: 'Helius', icon: '☀️', description: 'Solana RPC, webhooks, and NFT APIs', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  { id: 'jupiter', name: 'Jupiter', icon: '🪐', description: 'Solana DEX aggregator for token swaps', connected: false, requiresApiKey: false },
+  // Storage & CMS
+  { id: 'aws-s3', name: 'AWS S3', icon: '☁️', description: 'Cloud file storage and retrieval', connected: false, requiresApiKey: true, apiKeyLabel: 'Access Key' },
+  { id: 'pinecone', name: 'Pinecone', icon: '🌲', description: 'Vector database for AI embeddings', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  // CRM & Marketing
+  { id: 'hubspot', name: 'HubSpot', icon: '🧲', description: 'CRM, contacts, deals, and marketing', connected: false, requiresApiKey: true, apiKeyLabel: 'Access Token' },
+  { id: 'mailchimp', name: 'Mailchimp', icon: '🐵', description: 'Email marketing campaigns and lists', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
+  // Webhooks & Custom
+  { id: 'webhook', name: 'Custom Webhook', icon: '🔗', description: 'Send/receive data via custom webhooks', connected: false, requiresApiKey: false },
+  { id: 'rest-api', name: 'REST API', icon: '🌐', description: 'Connect to any REST API endpoint', connected: false, requiresApiKey: true, apiKeyLabel: 'API Key' },
 ];
 
 export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
