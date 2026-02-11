@@ -14,6 +14,7 @@ import ConfigSidebar from '@/components/agent-builder/ConfigSidebar';
 import { DEFAULT_CONFIG, type AgentConfig } from '@/types/agentBuilder';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import openclawLogo from '@/assets/openclaw-logo.png';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -339,6 +340,7 @@ const AgentBuilder = () => {
             {!hasMessages ? (
               <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] px-4">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-md">
+                  <img src={openclawLogo} alt="OpenClaw" className="w-20 h-20 mx-auto mb-5 rounded-2xl opacity-90" />
                   <h2 className="text-xl font-semibold text-foreground font-display mb-1">Build your OpenClaw agent</h2>
                   <p className="text-sm text-muted-foreground mb-1">Describe what you need — I'll configure skills, model, and RunPod deployment.</p>
                   <p className="text-[10px] text-muted-foreground/50 mb-8">Powered by OpenClaw · Deployed on RunPod</p>
