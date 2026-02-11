@@ -74,28 +74,74 @@ const extractSuggestions = (content: string): string[] => {
 
   // 5. If the AI asks a question and no suggestions found, generate contextual quick-replies
   if (suggestions.length === 0) {
+    const lower = content.toLowerCase();
     const lastLine = content.split('\n').filter(l => l.trim()).pop() || '';
     const isQuestion = /\?[\s]*$/.test(lastLine.trim());
     
     if (isQuestion) {
-      const lower = lastLine.toLowerCase();
+      const q = lastLine.toLowerCase();
+
+      // GPU / RunPod tier questions
+      if (q.includes('gpu') || q.includes('runpod') || q.includes('compute') || q.includes('server') || lower.includes('gpu tier')) {
+        suggestions.push('CPU Only — keep costs low', 'A40 — mid-range inference', 'A100 — fast inference', 'H100 — max performance');
+      }
+      // Model selection questions
+      else if (q.includes('model') || q.includes('llm') || q.includes('gpt') || q.includes('gemini') || q.includes('llama')) {
+        suggestions.push('GPT-5 Mini — fast & affordable', 'Gemini 2.5 Flash — balanced', 'Llama 3.1 70B — open-source on RunPod', 'GPT-5 — best reasoning');
+      }
+      // Skill-related questions
+      else if (q.includes('skill') || q.includes('capabilit') || q.includes('what should') || q.includes('clawhub')) {
+        suggestions.push('Web Scraping + Data Analysis', 'Crypto Trading + DCA Bot', 'Lead Gen + Social Posting', 'Customer Support + Email');
+      }
+      // Integration / platform questions
+      else if (q.includes('integration') || q.includes('platform') || q.includes('connect') || q.includes('channel')) {
+        suggestions.push('Telegram', 'Discord', 'Twitter/X', 'Slack + Gmail');
+      }
+      // Trigger / schedule questions
+      else if (q.includes('trigger') || q.includes('schedule') || q.includes('cron') || q.includes('how often') || q.includes('frequency')) {
+        suggestions.push('Every 5 minutes', 'Every hour', 'Once a day', 'Manual trigger only');
+      }
+      // Guardrails / safety / limits
+      else if (q.includes('guardrail') || q.includes('limit') || q.includes('safety') || q.includes('approval') || q.includes('cap')) {
+        suggestions.push('Require approval for all actions', 'Auto-run with $10 cap', 'No limits — full autonomy', 'Set custom guardrails');
+      }
+      // Scaling / workers
+      else if (q.includes('scal') || q.includes('worker') || q.includes('concurrent') || q.includes('traffic')) {
+        suggestions.push('1–3 workers (light usage)', '3–10 workers (moderate)', '10–50 workers (heavy)', 'Scale to zero when idle');
+      }
+      // Memory / context
+      else if (q.includes('memory') || q.includes('context') || q.includes('remember') || q.includes('history')) {
+        suggestions.push('Enable long-term memory', 'Session-only memory', '8K context window', '32K context window');
+      }
+      // Name questions
+      else if (q.includes('name') || q.includes('call it') || q.includes('call your')) {
+        suggestions.push('Use the suggested name', 'Let me choose a name', 'Generate a creative name');
+      }
+      // Deploy / ready questions
+      else if (q.includes('deploy') || q.includes('ready') || q.includes('launch') || q.includes('go live')) {
+        suggestions.push('Yes, deploy now', 'Run a test first', 'Review config before deploying', 'Not yet, keep configuring');
+      }
       // Email-related questions
-      if (lower.includes('email')) {
+      else if (q.includes('email')) {
         suggestions.push('Use my personal email', 'Use a business email', 'Skip email for now');
       }
+      // Cost / pricing questions
+      else if (q.includes('cost') || q.includes('price') || q.includes('expensive') || q.includes('cheap') || q.includes('budget')) {
+        suggestions.push('Keep it under $10/month', 'Optimize for cost', 'Performance over cost', 'Show cost breakdown');
+      }
       // Yes/no questions
-      else if (lower.includes('would you like') || lower.includes('do you want') || lower.includes('should i') || lower.includes('shall i')) {
+      else if (q.includes('would you like') || q.includes('do you want') || q.includes('should i') || q.includes('shall i') || q.includes('ready to')) {
         suggestions.push('Yes, go ahead', 'No, skip this', 'Tell me more first');
       }
       // "Which" or "what" choice questions
-      else if (lower.includes('which') || lower.includes('what')) {
-        suggestions.push('You decide — use the best option', 'Let me think about it', 'Show me the options');
+      else if (q.includes('which') || q.includes('what') || q.includes('prefer')) {
+        suggestions.push('You decide — use the best option', 'Show me the trade-offs', 'Let me think about it');
       }
       // How many / how much
-      else if (lower.includes('how many') || lower.includes('how much') || lower.includes('budget')) {
+      else if (q.includes('how many') || q.includes('how much')) {
         suggestions.push('Keep it minimal', 'Go with the default', 'Maximum performance');
       }
-      // Generic fallback for any question
+      // Generic fallback
       else {
         suggestions.push('Yes', 'No', 'Tell me more');
       }
