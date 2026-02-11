@@ -107,6 +107,7 @@ export default function OpenClawMascot({ size = 'lg' }: { size?: 'sm' | 'lg' }) 
         />
 
         {/* Left eye — larger, more prominent with teal glow */}
+        {/* Left eye */}
         <motion.div
           className="absolute"
           style={{
@@ -119,13 +120,16 @@ export default function OpenClawMascot({ size = 'lg' }: { size?: 'sm' | 'lg' }) 
             boxShadow: `0 0 ${8 * s}px rgba(62,235,212,0.4)`,
           }}
           animate={{
+            scaleY: [1, 1, 0.1, 1, 1],
             boxShadow: [
               `0 0 ${6 * s}px rgba(62,235,212,0.3)`,
+              `0 0 ${12 * s}px rgba(62,235,212,0.6)`,
+              `0 0 ${4 * s}px rgba(62,235,212,0.1)`,
               `0 0 ${12 * s}px rgba(62,235,212,0.6)`,
               `0 0 ${6 * s}px rgba(62,235,212,0.3)`,
             ],
           }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
         />
 
         {/* Right eye */}
@@ -141,22 +145,45 @@ export default function OpenClawMascot({ size = 'lg' }: { size?: 'sm' | 'lg' }) 
             boxShadow: `0 0 ${8 * s}px rgba(62,235,212,0.4)`,
           }}
           animate={{
+            scaleY: [1, 1, 0.1, 1, 1],
             boxShadow: [
               `0 0 ${6 * s}px rgba(62,235,212,0.3)`,
+              `0 0 ${12 * s}px rgba(62,235,212,0.6)`,
+              `0 0 ${4 * s}px rgba(62,235,212,0.1)`,
               `0 0 ${12 * s}px rgba(62,235,212,0.6)`,
               `0 0 ${6 * s}px rgba(62,235,212,0.3)`,
             ],
           }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut', delay: 0.3 }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
         />
 
-        {/* Eye pupils — dark, slightly off-center for character */}
-        <div className="absolute" style={{ width: 7 * s, height: 7 * s, background: '#111', borderRadius: '50%', left: 42 * s, top: 54 * s }} />
-        <div className="absolute" style={{ width: 7 * s, height: 7 * s, background: '#111', borderRadius: '50%', right: 42 * s, top: 54 * s }} />
+        {/* Eye pupils — blink with eyes */}
+        <motion.div
+          className="absolute"
+          style={{ width: 7 * s, height: 7 * s, background: '#111', borderRadius: '50%', left: 42 * s, top: 54 * s }}
+          animate={{ scaleY: [1, 1, 0.1, 1, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
+        />
+        <motion.div
+          className="absolute"
+          style={{ width: 7 * s, height: 7 * s, background: '#111', borderRadius: '50%', right: 42 * s, top: 54 * s }}
+          animate={{ scaleY: [1, 1, 0.1, 1, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
+        />
 
-        {/* Eye highlights — small white dots */}
-        <div className="absolute" style={{ width: 3 * s, height: 3 * s, background: 'rgba(255,255,255,0.7)', borderRadius: '50%', left: 41 * s, top: 52 * s }} />
-        <div className="absolute" style={{ width: 3 * s, height: 3 * s, background: 'rgba(255,255,255,0.7)', borderRadius: '50%', right: 41 * s, top: 52 * s }} />
+        {/* Eye highlights */}
+        <motion.div
+          className="absolute"
+          style={{ width: 3 * s, height: 3 * s, background: 'rgba(255,255,255,0.7)', borderRadius: '50%', left: 41 * s, top: 52 * s }}
+          animate={{ opacity: [1, 1, 0, 1, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
+        />
+        <motion.div
+          className="absolute"
+          style={{ width: 3 * s, height: 3 * s, background: 'rgba(255,255,255,0.7)', borderRadius: '50%', right: 41 * s, top: 52 * s }}
+          animate={{ opacity: [1, 1, 0, 1, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', times: [0, 0.42, 0.46, 0.50, 1] }}
+        />
       </motion.div>
 
       {/* Sparkle particles */}
