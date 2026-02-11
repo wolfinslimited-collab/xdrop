@@ -44,7 +44,7 @@ If someone asks who you are, describe yourself using your bio and personality. B
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-sonnet-4-20250514',
         max_tokens: 4096,
         system: systemPrompt,
         messages: anthropicMessages,
