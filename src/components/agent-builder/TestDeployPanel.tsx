@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { GPU_TIERS, AI_MODELS, type AgentConfig } from '@/types/agentBuilder';
+import { AI_MODEL, type AgentConfig } from '@/types/agentBuilder';
 
 interface TestDeployPanelProps {
   config: AgentConfig;
@@ -19,8 +19,6 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestD
 
   const enabledSkills = config.skills.filter(s => s.enabled);
   const connectedIntegrations = config.integrations.filter(i => i.connected);
-  const selectedModel = AI_MODELS.find(m => m.id === config.model);
-  const selectedGpu = GPU_TIERS.find(g => g.id === config.runpodConfig.gpuTier);
   const isConfigValid = config.name.trim() && enabledSkills.length > 0;
   const isRunPodReady = config.runpodConfig.apiKeyConfigured;
 
@@ -32,11 +30,11 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestD
       setTestOutput(
         `✅ OpenClaw agent "${config.name}" validated successfully.\n\n` +
         `Framework: OpenClaw v3.2\n` +
-        `Model: ${selectedModel?.name || 'Not selected'}\n` +
+        `Model: ${AI_MODEL.name}\n` +
         `Skills: ${enabledSkills.map(s => s.name).join(', ')}\n` +
         `Integrations: ${connectedIntegrations.length > 0 ? connectedIntegrations.map(i => i.name).join(', ') : 'None'}\n` +
         `Trigger: ${config.triggers[0]?.type || 'manual'}\n` +
-        `RunPod: ${selectedGpu?.name || 'CPU'} · ${config.runpodConfig.maxWorkers} max workers\n` +
+        `RunPod Endpoint: ${config.runpodConfig.endpointId || 'Not set'}\n` +
         `Guardrails: Max $${config.guardrails.maxSpendPerRun}/run, ${config.guardrails.maxRunsPerDay} runs/day` +
         (testInput ? `\n\nTest input: "${testInput}"` : '')
       );
@@ -58,15 +56,11 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab }: TestD
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <span>Model:</span>
-            <span className="text-foreground">{selectedModel?.name || '—'}</span>
+            <span className="text-foreground">{AI_MODEL.name}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span>GPU:</span>
-            <span className="text-foreground">{selectedGpu?.name || '—'} {selectedGpu?.price ? `(${selectedGpu.price})` : ''}</span>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span>Scaling:</span>
-            <span className="text-foreground">{config.runpodConfig.minWorkers}–{config.runpodConfig.maxWorkers} workers</span>
+            <span>Endpoint:</span>
+            <span className="text-foreground font-mono">{config.runpodConfig.endpointId || '—'}</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-1 pt-1">

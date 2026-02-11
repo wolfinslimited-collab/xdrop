@@ -40,7 +40,7 @@ export interface AgentConfig {
   name: string;
   description: string;
   category: string;
-  model: string;
+  model: 'claude-sonnet-4';
   memoryEnabled: boolean;
   contextWindow: number;
   skills: AgentSkill[];
@@ -55,13 +55,7 @@ export interface AgentConfig {
   runpodConfig: RunPodConfig;
 }
 
-export const AI_MODELS = [
-  { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', description: 'Best for complex reasoning', tier: 'premium' },
-  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', description: 'Speed/quality balance', tier: 'standard' },
-  { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', description: 'Fast and cost-effective', tier: 'standard' },
-  { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'Meta', description: 'Open-source, runs on RunPod', tier: 'open' },
-  { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral', description: 'Fast, multilingual', tier: 'standard' },
-];
+export const AI_MODEL = { id: 'claude-sonnet-4' as const, name: 'Claude Sonnet 4', provider: 'Anthropic' };
 
 export const GPU_TIERS = [
   { id: 'cpu' as const, name: 'CPU Only', price: '$0.003/sec', description: 'Lightweight tasks, no inference', vram: '—' },
@@ -116,7 +110,7 @@ export const DEFAULT_CONFIG: AgentConfig = {
   name: '',
   description: '',
   category: '',
-  model: '',
+  model: 'claude-sonnet-4',
   memoryEnabled: true,
   contextWindow: 8192,
   skills: DEFAULT_SKILLS,

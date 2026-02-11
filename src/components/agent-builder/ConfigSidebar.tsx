@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, Brain } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
 import GuardrailsPanel from './GuardrailsPanel';
 import TestDeployPanel from './TestDeployPanel';
 import WorkflowGraph from './WorkflowGraph';
-import ModelSelector from './ModelSelector';
 import RunPodPanel from './RunPodPanel';
 import type { AgentConfig } from '@/types/agentBuilder';
 
@@ -17,12 +16,11 @@ interface ConfigSidebarProps {
   isDeploying: boolean;
 }
 
-type Tab = 'workflow' | 'skills' | 'model' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy';
+type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'workflow', label: 'Flow', icon: <GitBranch className="w-3.5 h-3.5" /> },
   { id: 'skills', label: 'Skills', icon: <Wrench className="w-3.5 h-3.5" /> },
-  { id: 'model', label: 'Model', icon: <Brain className="w-3.5 h-3.5" /> },
   { id: 'integrations', label: 'Connect', icon: <Link2 className="w-3.5 h-3.5" /> },
   { id: 'triggers', label: 'Triggers', icon: <Clock className="w-3.5 h-3.5" /> },
   { id: 'guardrails', label: 'Safety', icon: <Shield className="w-3.5 h-3.5" /> },
@@ -80,12 +78,8 @@ const [activeTab, setActiveTab] = useState<Tab>('workflow');
           <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">OpenClaw</span>
           <span className="text-[9px] text-muted-foreground/30">·</span>
           <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">RunPod</span>
-          {config.model && (
-            <>
-              <span className="text-[9px] text-muted-foreground/30">·</span>
-              <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">{config.model}</span>
-            </>
-          )}
+          <span className="text-[9px] text-muted-foreground/30">·</span>
+          <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">Claude Sonnet 4</span>
         </div>
       </div>
 
@@ -126,12 +120,6 @@ const [activeTab, setActiveTab] = useState<Tab>('workflow');
           />
         )}
         {activeTab === 'skills' && <SkillsPicker skills={config.skills} onToggle={toggleSkill} />}
-        {activeTab === 'model' && (
-          <ModelSelector
-            selectedModel={config.model}
-            onSelect={(model) => onConfigChange({ ...config, model })}
-          />
-        )}
         {activeTab === 'integrations' && <IntegrationsPanel integrations={config.integrations} onToggle={toggleIntegration} />}
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
         {activeTab === 'guardrails' && <GuardrailsPanel guardrails={config.guardrails} onUpdate={(guardrails) => onConfigChange({ ...config, guardrails })} />}
