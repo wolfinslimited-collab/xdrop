@@ -204,12 +204,12 @@ const AgentBuilder = () => {
   const mdClasses = "prose prose-invert max-w-none text-sm leading-[1.7] [&>p]:my-2.5 [&>ul]:my-2.5 [&>ol]:my-2.5 [&>ul]:pl-5 [&>ol]:pl-5 [&_li]:my-1 [&_li]:leading-[1.65] [&_strong]:text-foreground [&_strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-3.5 [&_pre]:my-3 [&>blockquote]:border-l-2 [&>blockquote]:border-muted-foreground/20 [&>blockquote]:pl-3 [&>blockquote]:my-3 [&>blockquote]:text-muted-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-5 [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-3 [&_h3]:mb-1 [&>ul]:list-disc [&>ol]:list-decimal [&_em]:text-muted-foreground";
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background overflow-hidden">
       <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents." canonicalPath="/builder" />
       <MobileHeader />
       <div className="flex flex-1 w-full">
         {/* Chat panel — left side */}
-        <div className={`flex flex-col min-h-screen border-r border-border ${isMobile ? 'w-full' : 'w-[400px] flex-shrink-0'}`}>
+        <div className={`flex flex-col h-screen ${isMobile ? 'w-full' : 'w-[400px] flex-shrink-0'} border-r border-border`}>
           {/* Chat header */}
           <header className="sticky top-0 z-20 bg-background border-b border-border h-12 flex items-center px-4">
             <button onClick={() => navigate('/home')} className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mr-2">
@@ -364,7 +364,7 @@ const AgentBuilder = () => {
             )}
           </AnimatePresence>
         ) : (
-          <div className="flex-1 flex flex-col min-h-screen">
+          <div className="flex-1 flex flex-col h-screen overflow-y-auto">
             <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
           </div>
         )}
