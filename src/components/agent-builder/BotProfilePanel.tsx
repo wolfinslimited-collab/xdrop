@@ -244,40 +244,16 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Resource Costs</p>
         <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">GPU Tier</span>
-            <span className="text-foreground font-medium">{gpu?.name || 'CPU Only'} — {gpu?.price || '$0.003/sec'}</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">VRAM</span>
-            <span className="text-foreground font-medium">{gpu?.vram || '—'}</span>
-          </div>
-          <div className="h-px bg-border/50" />
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Est. per run</span>
+            <span className="text-muted-foreground">Cost / hour</span>
             <span className="text-foreground font-medium">
-              ~${config.runpodConfig?.gpuTier === 'cpu' ? '0.002' : config.runpodConfig?.gpuTier === 'a40' ? '0.02' : config.runpodConfig?.gpuTier === 'a100' ? '0.05' : '0.15'}
+              ${config.runpodConfig?.gpuTier === 'cpu' ? '0.01' : config.runpodConfig?.gpuTier === 'a40' ? '0.69' : config.runpodConfig?.gpuTier === 'a100' ? '1.64' : '4.49'}/hr
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Daily ({config.triggers?.[0]?.type === 'cron' ? 'cron' : 'manual'})</span>
-            <span className="text-foreground font-medium">
-              ~${config.triggers?.[0]?.type === 'cron'
-                ? (config.runpodConfig?.gpuTier === 'cpu' ? '0.58' : config.runpodConfig?.gpuTier === 'a40' ? '5.76' : config.runpodConfig?.gpuTier === 'a100' ? '14.40' : '43.20')
-                : '0.00'}
-              /day
+            <span className="text-muted-foreground">Est. monthly</span>
+            <span className="text-foreground font-semibold">
+              ~${config.runpodConfig?.gpuTier === 'cpu' ? '7' : config.runpodConfig?.gpuTier === 'a40' ? '497' : config.runpodConfig?.gpuTier === 'a100' ? '1,181' : '3,233'}
             </span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Workers</span>
-            <span className="text-foreground font-medium">{config.runpodConfig?.minWorkers ?? 0} min / {config.runpodConfig?.maxWorkers ?? 3} max</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Idle timeout</span>
-            <span className="text-foreground font-medium">{config.runpodConfig?.idleTimeout ?? 60}s</span>
-          </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Volume</span>
-            <span className="text-foreground font-medium">{config.runpodConfig?.volumeSize ?? 20} GB</span>
           </div>
         </div>
       </div>
