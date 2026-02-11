@@ -207,11 +207,9 @@ const AgentBuilder = () => {
       <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents." canonicalPath="/builder" />
       <MobileHeader />
       <div className="flex flex-1 w-full">
-        <nav aria-label="Main navigation"><NavSidebar /></nav>
-
-        {/* Main chat area */}
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* Minimal header */}
+        {/* Chat panel — left side */}
+        <div className={`flex flex-col min-h-screen border-r border-border ${isMobile ? 'w-full' : 'w-[400px] flex-shrink-0'}`}>
+          {/* Chat header */}
           <header className="sticky top-0 z-20 bg-background border-b border-border h-12 flex items-center px-4">
             <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
             <div className="flex items-center gap-1">
@@ -220,13 +218,14 @@ const AgentBuilder = () => {
                   <Plus className="w-3.5 h-3.5" /> New
                 </button>
               )}
-              <button
-                onClick={() => setShowConfig(!showConfig)}
-                className={`h-7 px-2 text-xs flex items-center gap-1 rounded-md transition-colors ${showConfig ? 'text-foreground bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Config</span>
-              </button>
+              {isMobile && (
+                <button
+                  onClick={() => setShowConfig(!showConfig)}
+                  className={`h-7 px-2 text-xs flex items-center gap-1 rounded-md transition-colors ${showConfig ? 'text-foreground bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                >
+                  <Settings2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </header>
 
@@ -258,7 +257,7 @@ const AgentBuilder = () => {
               <div className="py-4">
                 {messages.map((msg, i) => (
                   <div key={i} className={`px-4 py-2 ${msg.role === 'user' ? '' : 'bg-muted/30'}`}>
-                    <div className="max-w-2xl mx-auto">
+                    <div className="max-w-full">
                       {msg.role === 'user' ? (
                         <div className="flex justify-end">
                           <div className="max-w-[85%] text-sm text-foreground leading-relaxed">
@@ -283,7 +282,7 @@ const AgentBuilder = () => {
                   if (suggestions.length === 0) return null;
                   return (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="px-4 py-3">
-                      <div className="max-w-2xl mx-auto flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-1.5">
                         {suggestions.map((s, idx) => (
                           <button key={idx} onClick={() => handleSend(s)} className="px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 transition-colors">
                             {s}
@@ -297,7 +296,7 @@ const AgentBuilder = () => {
                 {/* Typing */}
                 {isStreaming && messages[messages.length - 1]?.role === 'user' && (
                   <div className="px-4 py-3 bg-muted/30">
-                    <div className="max-w-2xl mx-auto flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:150ms]" />
                       <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:300ms]" />
@@ -310,7 +309,7 @@ const AgentBuilder = () => {
 
           {/* Input */}
           <div className={`border-t border-border px-4 py-3 ${isMobile ? 'pb-20' : ''}`}>
-            <div className="max-w-2xl mx-auto">
+            <div>
               <div className="relative flex items-end rounded-xl border border-border bg-muted/40 focus-within:border-muted-foreground/30 transition-colors">
                 <textarea
                   ref={textareaRef}
@@ -337,30 +336,34 @@ const AgentBuilder = () => {
           </div>
         </div>
 
-        {/* Config side panel */}
-        <AnimatePresence>
-          {showConfig && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: isMobile ? '100%' : 360, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className={`border-l border-border bg-background overflow-hidden flex-shrink-0 ${isMobile ? 'fixed inset-0 z-50' : ''}`}
-            >
-              <div className="h-screen overflow-y-auto">
-                {isMobile && (
+        {/* Config panel — center/main area (hidden on mobile unless toggled) */}
+        {isMobile ? (
+          <AnimatePresence>
+            {showConfig && (
+              <motion.aside
+                initial={{ x: '100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '100%' }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="fixed inset-0 z-50 bg-background"
+              >
+                <div className="h-screen overflow-y-auto">
                   <div className="flex items-center justify-between px-4 h-12 border-b border-border">
                     <span className="text-sm font-medium text-foreground">Config</span>
                     <button onClick={() => setShowConfig(false)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                )}
-                <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
+                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
+                </div>
+              </motion.aside>
+            )}
+          </AnimatePresence>
+        ) : (
+          <div className="flex-1 flex flex-col min-h-screen">
+            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} />
+          </div>
+        )}
       </div>
       <MobileBottomNav />
     </div>
