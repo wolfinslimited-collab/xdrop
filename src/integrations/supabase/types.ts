@@ -82,6 +82,62 @@ export type Database = {
           },
         ]
       }
+      agent_nfts: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          metadata_uri: string | null
+          mint_address: string | null
+          mint_tx_hash: string | null
+          minted_at: string | null
+          serial_number: number
+          status: string
+          token_name: string
+          token_symbol: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata_uri?: string | null
+          mint_address?: string | null
+          mint_tx_hash?: string | null
+          minted_at?: string | null
+          serial_number: number
+          status?: string
+          token_name: string
+          token_symbol?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          metadata_uri?: string | null
+          mint_address?: string | null
+          mint_tx_hash?: string | null
+          minted_at?: string | null
+          serial_number?: number
+          status?: string
+          token_name?: string
+          token_symbol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_nfts_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_purchases: {
         Row: {
           agent_id: string
@@ -776,6 +832,7 @@ export type Database = {
         Returns: boolean
       }
       is_agent_creator: { Args: { _agent_id: string }; Returns: boolean }
+      next_nft_serial: { Args: { p_agent_name: string }; Returns: number }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"

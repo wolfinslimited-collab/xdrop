@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Wallet, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { Wallet, AlertTriangle, CheckCircle, Loader2, Hexagon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import type { AgentTemplate } from '@/data/agentTemplates';
+import NftCard from './NftCard';
 
 interface PurchaseDialogProps {
   template: AgentTemplate | null;
@@ -19,10 +20,13 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  const [mintedNft, setMintedNft] = useState<any>(null);
+  const [mintingNft, setMintingNft] = useState(false);
 
   useEffect(() => {
     if (!open || !user) return;
     setLoadingWallet(true);
+    setMintedNft(null);
     supabase
       .from('wallets')
       .select('balance')
@@ -62,14 +66,66 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
-      toast({ title: '✅ Agent Purchased!', description: `${template.name} is now active on your Dashboard.` });
-      onOpenChange(false);
+      toast({ title: '✅ Agent Purchased!', description: `${template.name} is now active. Generating NFT card...` });
+
+      // Mint NFT after successful purchase
+      setMintingNft(true);
+      setPurchasing(false);
+      try {
+        const { data: nftData, error: nftError } = await supabase.functions.invoke('mint-agent-nft', {
+          body: {
+            agentId: data.agent.id,
+            agentName: template.name,
+            agentDescription: template.description,
+            agentCategory: template.category,
+            agentAvatar: template.icon,
+            pricePaid: price,
+          },
+        });
+        if (nftError) throw nftError;
+        if (nftData?.nft) {
+          setMintedNft(nftData.nft);
+          toast({ title: '🎨 NFT Card Generated!', description: `Your ${template.name} NFT has been created.` });
+        }
+      } catch (nftErr: any) {
+        console.error('NFT minting error:', nftErr);
+        toast({ title: 'NFT Generation Issue', description: 'Agent purchased but NFT card had an issue. You can retry later.', variant: 'destructive' });
+      } finally {
+        setMintingNft(false);
+      }
     } catch (err: any) {
       toast({ title: 'Purchase Failed', description: err.message, variant: 'destructive' });
-    } finally {
       setPurchasing(false);
     }
   };
+
+  // Show NFT result view
+  if (mintedNft) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hexagon className="w-5 h-5 text-primary" />
+              Your NFT Card
+            </DialogTitle>
+            <DialogDescription>Your agent NFT has been generated on Solana.</DialogDescription>
+          </DialogHeader>
+          <NftCard
+            nft={mintedNft}
+            agentName={template.name}
+            agentCategory={template.category}
+            pricePaid={price}
+          />
+          <DialogFooter>
+            <Button onClick={() => onOpenChange(false)} className="w-full bg-foreground text-background hover:bg-foreground/90">
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -97,7 +153,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             {loadingWallet ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : (
-              <span className={`text-lg font-bold ${hasEnough ? 'text-green-500' : 'text-destructive'}`}>
+              <span className={`text-lg font-bold ${hasEnough ? 'text-foreground' : 'text-destructive'}`}>
                 ${walletBalance?.toFixed(2)}
               </span>
             )}
@@ -108,16 +164,34 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
               <p className="text-xs text-destructive">
-                Insufficient balance. You need ${price - (walletBalance ?? 0)} more USDC. Deposit funds to your wallet first.
+                Insufficient balance. You need ${price - (walletBalance ?? 0)} more USDC.
               </p>
             </div>
           )}
 
           {!loadingWallet && hasEnough && (
-            <div className="flex items-center gap-2 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-              <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-              <p className="text-xs text-green-500">
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+              <CheckCircle className="w-4 h-4 text-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
                 Sufficient balance. After purchase: ${(walletBalance! - price).toFixed(2)} remaining.
+              </p>
+            </div>
+          )}
+
+          {/* NFT info */}
+          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+            <Hexagon className="w-4 h-4 text-muted-foreground shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              An AI-generated Solana NFT card will be minted to your wallet after purchase.
+            </p>
+          </div>
+
+          {/* Minting progress */}
+          {mintingNft && (
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Generating AI art and minting NFT card...
               </p>
             </div>
           )}
@@ -125,17 +199,17 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
           {/* Returns */}
           <div className="p-3 bg-secondary rounded-lg border border-border">
             <p className="text-xs text-muted-foreground mb-1">Estimated Monthly Return</p>
-            <p className="text-sm font-bold text-green-500">{template.monthlyReturnMin}–{template.monthlyReturnMax}%</p>
+            <p className="text-sm font-bold text-foreground">{template.monthlyReturnMin}–{template.monthlyReturnMax}%</p>
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={purchasing}>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={purchasing || mintingNft}>
             Cancel
           </Button>
           <Button
             onClick={handlePurchase}
-            disabled={!hasEnough || loadingWallet || purchasing}
+            disabled={!hasEnough || loadingWallet || purchasing || mintingNft}
             className="bg-foreground text-background hover:bg-foreground/90"
           >
             {purchasing ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Processing...</> : `Pay $${price} USDC`}
