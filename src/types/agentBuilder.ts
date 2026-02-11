@@ -54,10 +54,9 @@ export interface AgentConfig {
 }
 
 export const AI_MODELS = [
-  { id: 'gpt-5', name: 'GPT-5', provider: 'OpenAI', description: 'Best for complex reasoning', tier: 'premium' },
-  { id: 'gpt-5-mini', name: 'GPT-5 Mini', provider: 'OpenAI', description: 'Fast and affordable', tier: 'standard' },
-  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', description: 'Multimodal + big context', tier: 'premium' },
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Speed/quality balance', tier: 'standard' },
+  { id: 'claude-sonnet-4', name: 'Claude Sonnet 4', provider: 'Anthropic', description: 'Best for complex reasoning', tier: 'premium' },
+  { id: 'claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', description: 'Speed/quality balance', tier: 'standard' },
+  { id: 'claude-3.5-haiku', name: 'Claude 3.5 Haiku', provider: 'Anthropic', description: 'Fast and cost-effective', tier: 'standard' },
   { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'Meta', description: 'Open-source, runs on RunPod', tier: 'open' },
   { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral', description: 'Fast, multilingual', tier: 'standard' },
 ];

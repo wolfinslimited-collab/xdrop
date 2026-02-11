@@ -50,9 +50,9 @@ Web Scraping, Send Emails, Read Emails, Calendar Management, Crypto Trading, DCA
 Telegram, Discord, Twitter/X, Shopify, Gmail, Slack, Notion, GitHub.
 
 ## AI Models for Agent
-- GPT-5 / GPT-5-mini — best for complex reasoning
-- Gemini 2.5 Pro / Flash — good balance of speed and quality
-- Claude 3.5 Sonnet / Haiku — excellent instruction following
+- Claude Sonnet 4 — best for complex reasoning and instruction following
+- Claude 3.5 Sonnet — excellent balance of speed and quality
+- Claude 3.5 Haiku — fast and cost-effective for simpler tasks
 - Llama 3.1 70B — open-source, runs on RunPod GPU
 - Mistral Large — fast, multilingual
 
