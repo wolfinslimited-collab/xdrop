@@ -1,5 +1,9 @@
-import { ExternalLink, Hexagon, Hash, Coins, Clock, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { ExternalLink, Hexagon, Hash, Coins, Clock, CheckCircle, AlertCircle, Loader2, RotateCcw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface NftCardProps {
   nft: {
@@ -19,6 +23,7 @@ interface NftCardProps {
   agentName?: string;
   agentCategory?: string;
   pricePaid?: number;
+  onRetrySuccess?: (updatedNft: any) => void;
 }
 
 const statusConfig: Record<string, { label: string; icon: React.ReactNode; className: string }> = {
@@ -29,8 +34,36 @@ const statusConfig: Record<string, { label: string; icon: React.ReactNode; class
   no_wallet: { label: 'No Wallet', icon: <AlertCircle className="w-3 h-3" />, className: 'bg-muted text-muted-foreground' },
 };
 
-export default function NftCard({ nft, agentName, agentCategory, pricePaid }: NftCardProps) {
+export default function NftCard({ nft, agentName, agentCategory, pricePaid, onRetrySuccess }: NftCardProps) {
+  const { toast } = useToast();
+  const [retrying, setRetrying] = useState(false);
   const status = statusConfig[nft.status] || statusConfig.pending;
+  const canRetry = nft.status === 'mint_failed' || nft.status === 'no_wallet';
+
+  const handleRetryMint = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRetrying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('mint-agent-nft', {
+        body: {
+          agentId: nft.agent_id,
+          agentName: agentName || nft.token_name,
+          agentDescription: '',
+          agentCategory: agentCategory || 'AI Agent',
+          agentAvatar: '🤖',
+          pricePaid: pricePaid || 100,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: '🎨 NFT Minted!', description: `${nft.token_name} has been re-minted successfully.` });
+      if (data?.nft && onRetrySuccess) onRetrySuccess(data.nft);
+    } catch (err: any) {
+      toast({ title: 'Retry Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden hover:border-muted-foreground/30 transition-all">
@@ -104,6 +137,22 @@ export default function NftCard({ nft, agentName, agentCategory, pricePaid }: Nf
             <ExternalLink className="w-3 h-3 shrink-0" />
             View Transaction
           </a>
+        )}
+
+        {canRetry && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleRetryMint}
+            disabled={retrying}
+            className="w-full h-7 text-[10px] gap-1.5 mt-1"
+          >
+            {retrying ? (
+              <><Loader2 className="w-3 h-3 animate-spin" /> Retrying...</>
+            ) : (
+              <><RotateCcw className="w-3 h-3" /> Retry Mint</>
+            )}
+          </Button>
         )}
       </div>
     </div>
