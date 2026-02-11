@@ -309,6 +309,39 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_battle_logs: {
         Row: {
           attacker_id: string | null
@@ -521,6 +554,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          credits: number
           display_name: string | null
           id: string
           is_creator: boolean
@@ -530,6 +564,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          credits?: number
           display_name?: string | null
           id: string
           is_creator?: boolean
@@ -539,6 +574,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          credits?: number
           display_name?: string | null
           id?: string
           is_creator?: boolean
@@ -700,6 +736,25 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_metadata?: Json
+          p_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      deduct_credits: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       has_purchased_agent: { Args: { _agent_id: string }; Returns: boolean }
       has_role: {
         Args: {

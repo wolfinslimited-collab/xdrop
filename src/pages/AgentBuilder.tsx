@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock } from 'lucide-react';
+import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock, Coins } from 'lucide-react';
+import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -52,6 +53,7 @@ const stripSuggestionTags = (content: string): string => {
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const { credits, deductCredits, refetch: refetchCredits } = useCredits();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -180,11 +182,27 @@ const AgentBuilder = () => {
   const handleSend = async (overrideInput?: string) => {
     const text = overrideInput || input.trim();
     if (!text || isStreaming) return;
+
+    // Check credits before sending
+    if (credits !== null && credits < CREDIT_COSTS.CHAT_MESSAGE) {
+      toast({ title: 'No credits remaining', description: 'Purchase more credits to continue chatting.', variant: 'destructive' });
+      return;
+    }
+
     const userMsg: ChatMessage = { role: 'user', content: text };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput('');
     setIsStreaming(true);
+
+    // Deduct credit for chat message
+    const deductResult = await deductCredits(CREDIT_COSTS.CHAT_MESSAGE, 'chat_message', 'Builder chat message');
+    if (!deductResult.success) {
+      toast({ title: 'Credit deduction failed', description: deductResult.error || 'Try again.', variant: 'destructive' });
+      setMessages(messages); // rollback
+      setIsStreaming(false);
+      return;
+    }
 
     try {
       const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-builder`;
@@ -247,6 +265,12 @@ const AgentBuilder = () => {
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
     if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and add your API key first.', variant: 'destructive' }); return; }
+    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { toast({ title: 'Insufficient credits', description: `Agent creation requires ${CREDIT_COSTS.AGENT_CREATION} credits.`, variant: 'destructive' }); return; }
+
+    // Deduct credits for agent creation
+    const deductResult = await deductCredits(CREDIT_COSTS.AGENT_CREATION, 'agent_creation', `Deploy agent: ${config.name}`);
+    if (!deductResult.success) { toast({ title: 'Credit deduction failed', description: deductResult.error || 'Try again.', variant: 'destructive' }); return; }
+
     setIsDeploying(true);
     setDeployLogs([]);
     addLog('Starting deployment...');
@@ -358,6 +382,12 @@ const AgentBuilder = () => {
             </button>
             <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
             <div className="flex items-center gap-1">
+              {credits !== null && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted border border-border mr-1" title="Credits remaining">
+                  <Coins className="w-3 h-3 text-primary" />
+                  <span className={`text-xs font-mono font-semibold ${credits <= 10 ? 'text-destructive' : 'text-foreground'}`}>{credits}</span>
+                </div>
+              )}
               <button
                 onClick={() => setShowHistory(true)}
                 className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
