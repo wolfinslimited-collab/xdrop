@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp, Plus, Settings2, X, ArrowLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -58,8 +58,63 @@ const AgentBuilder = () => {
   const [config, setConfig] = useState<AgentConfig>({ ...DEFAULT_CONFIG });
   const [showConfig, setShowConfig] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load most recent session on mount
+  useEffect(() => {
+    if (!user) return;
+    const loadSession = async () => {
+      const { data } = await supabase
+        .from('builder_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (data) {
+        setSessionId(data.id);
+        setMessages((data.messages as unknown as ChatMessage[]) || []);
+        try {
+          const savedConfig = data.config as unknown as Partial<AgentConfig>;
+          if (savedConfig && typeof savedConfig === 'object' && 'skills' in savedConfig) {
+            setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
+          }
+        } catch { /* use default */ }
+      }
+      setSessionLoaded(true);
+    };
+    loadSession();
+  }, [user]);
+
+  // Auto-save session (debounced)
+  const saveSession = useCallback(async (msgs: ChatMessage[], cfg: AgentConfig, sid: string | null) => {
+    if (!user || msgs.length === 0) return;
+    const sessionData = {
+      user_id: user.id,
+      name: cfg.name || 'Untitled Agent',
+      messages: msgs as unknown as import('@/integrations/supabase/types').Json,
+      config: cfg as unknown as import('@/integrations/supabase/types').Json,
+    };
+    if (sid) {
+      await supabase.from('builder_sessions').update(sessionData).eq('id', sid);
+    } else {
+      const { data } = await supabase.from('builder_sessions').insert(sessionData).select('id').single();
+      if (data) setSessionId(data.id);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!sessionLoaded || messages.length === 0) return;
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveSession(messages, config, sessionId);
+    }, 1500);
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
+  }, [messages, config, sessionLoaded, sessionId, saveSession]);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -197,7 +252,7 @@ const AgentBuilder = () => {
     finally { setIsDeploying(false); }
   };
 
-  const handleNewChat = () => { setMessages([]); setConfig({ ...DEFAULT_CONFIG }); setInput(''); };
+  const handleNewChat = () => { setMessages([]); setConfig({ ...DEFAULT_CONFIG }); setInput(''); setSessionId(null); };
 
   const hasMessages = messages.length > 0;
 

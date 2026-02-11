@@ -279,6 +279,36 @@ export type Database = {
           },
         ]
       }
+      builder_sessions: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          messages: Json
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          messages?: Json
+          name?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          messages?: Json
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       game_battle_logs: {
         Row: {
           attacker_id: string | null
