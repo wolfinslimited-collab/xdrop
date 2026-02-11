@@ -113,7 +113,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
       <div className="grid grid-cols-2 gap-3 px-4 py-4 border-b border-border">
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
-            <DollarSign className="w-4 h-4 text-green-500" />
+            <DollarSign className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Total Earned</span>
           </div>
           <p className="text-xl font-bold text-green-500">+${earnings.total}</p>
@@ -121,7 +121,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
-            <TrendingUp className="w-4 h-4 text-accent" />
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">ROI</span>
           </div>
           <p className="text-xl font-bold text-foreground">{roi}%</p>
@@ -129,7 +129,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
-            <BarChart3 className="w-4 h-4 text-primary" />
+            <BarChart3 className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Monthly Rate</span>
           </div>
           <p className="text-xl font-bold text-foreground">${earnings.monthly}</p>
@@ -137,7 +137,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-4 h-4" style={{ color: health.score >= 80 ? 'hsl(142 71% 45%)' : 'hsl(38 90% 55%)' }} />
+            <Shield className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Health</span>
           </div>
           <p className={`text-xl font-bold ${health.color}`}>{health.score}%</p>
