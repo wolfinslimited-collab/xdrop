@@ -240,17 +240,41 @@ const AgentBuilder = () => {
 
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
+    if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and add your API key first.', variant: 'destructive' }); return; }
     setIsDeploying(true);
     try {
       const enabledSkills = config.skills.filter(s => s.enabled);
       const connectedIntegrations = config.integrations.filter(i => i.connected);
+
+      // Save agent to DB
       const { data: agent, error: agentErr } = await supabase.from('agents').insert({ name: config.name, description: config.description || `AI agent with ${enabledSkills.length} skills`, creator_id: user.id, price: 0, status: 'active', short_description: config.description, required_integrations: connectedIntegrations.map(i => i.id) }).select().single();
       if (agentErr) throw agentErr;
+
       const { error: manifestErr } = await supabase.from('agent_manifests').insert([{ agent_id: agent.id, version: '1.0.0', workflow_steps: enabledSkills.map(s => ({ skill: s.id, config: s.config })) as unknown as import('@/integrations/supabase/types').Json, triggers: config.triggers as unknown as import('@/integrations/supabase/types').Json, guardrails: config.guardrails as unknown as import('@/integrations/supabase/types').Json, tool_permissions: connectedIntegrations.map(i => ({ integration: i.id })) as unknown as import('@/integrations/supabase/types').Json }]);
       if (manifestErr) throw manifestErr;
-      toast({ title: 'Agent deployed', description: `${config.name} is now live.` });
-      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed successfully. You can monitor it from your Dashboard.` }]);
-    } catch (err) { console.error('Deploy error:', err); toast({ title: 'Deploy failed', description: 'Something went wrong.', variant: 'destructive' }); }
+
+      // Deploy to RunPod
+      const session = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.data.session?.access_token}`,
+        },
+        body: JSON.stringify({ action: 'deploy', config, agentId: agent.id }),
+      });
+
+      const result = await resp.json();
+      if (!resp.ok) throw new Error(result.error || 'RunPod deployment failed');
+
+      const endpointInfo = result.endpoint;
+      if (endpointInfo?.id && !config.runpodConfig.endpointId) {
+        setConfig(prev => ({ ...prev, runpodConfig: { ...prev.runpodConfig, endpointId: endpointInfo.id } }));
+      }
+
+      toast({ title: 'Agent deployed to RunPod', description: `Endpoint: ${endpointInfo?.id || 'created'}` });
+      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod successfully! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\n\nYou can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
+    } catch (err: any) { console.error('Deploy error:', err); toast({ title: 'Deploy failed', description: err.message || 'Something went wrong.', variant: 'destructive' }); }
     finally { setIsDeploying(false); }
   };
 

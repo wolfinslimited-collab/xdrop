@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.create-wallet]
 verify_jwt = false
+
+[functions.deploy-to-runpod]
+verify_jwt = false
