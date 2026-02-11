@@ -31,97 +31,20 @@ const STARTER_SUGGESTIONS = [
 ];
 
 const extractSuggestions = (content: string): string[] => {
-  const suggestions: string[] = [];
+  // Extract [suggest: text] tags from AI response
+  const matches = content.match(/\[suggest:\s*([^\]]+)\]/g);
+  if (!matches) return [];
+  return matches
+    .map(m => {
+      const inner = m.match(/\[suggest:\s*([^\]]+)\]/);
+      return inner ? inner[1].trim() : '';
+    })
+    .filter(Boolean)
+    .slice(0, 4);
+};
 
-  // 1. Quoted suggestions in bullets: - "Do X"
-  const bulletMatches = content.match(/[•\-]\s*"([^"]+)"/g);
-  if (bulletMatches) {
-    bulletMatches.forEach(m => {
-      const inner = m.match(/"([^"]+)"/);
-      if (inner) suggestions.push(inner[1]);
-    });
-  }
-
-  // Skip bold/numbered/plain bullet extraction — these often pick up config labels
-  // (like "AI Model", "RunPod GPU") that aren't actionable suggestions.
-
-  // 2. If the AI asks a question and no suggestions found, generate contextual quick-replies
-  if (suggestions.length === 0) {
-    const lower = content.toLowerCase();
-    const lastLine = content.split('\n').filter(l => l.trim()).pop() || '';
-    const isQuestion = /\?[\s]*$/.test(lastLine.trim());
-    
-    if (isQuestion) {
-      const q = lastLine.toLowerCase();
-
-      // GPU / RunPod tier questions
-      if (q.includes('gpu') || q.includes('runpod') || q.includes('compute') || q.includes('server') || lower.includes('gpu tier')) {
-        suggestions.push('CPU Only — keep costs low', 'A40 — mid-range inference', 'A100 — fast inference', 'H100 — max performance');
-      }
-      // Model selection questions
-      else if (q.includes('model') || q.includes('llm') || q.includes('claude') || q.includes('llama')) {
-        suggestions.push('Claude Sonnet 4 — best reasoning', 'Claude 3.5 Haiku — fast & affordable', 'Llama 3.1 70B — open-source on RunPod');
-      }
-      // Skill-related questions
-      else if (q.includes('skill') || q.includes('capabilit') || q.includes('what should') || q.includes('clawhub')) {
-        suggestions.push('Web Scraping + Data Analysis', 'Crypto Trading + DCA Bot', 'Lead Gen + Social Posting', 'Customer Support + Email');
-      }
-      // Integration / platform questions
-      else if (q.includes('integration') || q.includes('platform') || q.includes('connect') || q.includes('channel')) {
-        suggestions.push('Telegram', 'Discord', 'Twitter/X', 'Slack + Gmail');
-      }
-      // Trigger / schedule questions
-      else if (q.includes('trigger') || q.includes('schedule') || q.includes('cron') || q.includes('how often') || q.includes('frequency')) {
-        suggestions.push('Every 5 minutes', 'Every hour', 'Once a day', 'Manual trigger only');
-      }
-      // Guardrails / safety / limits
-      else if (q.includes('guardrail') || q.includes('limit') || q.includes('safety') || q.includes('approval') || q.includes('cap')) {
-        suggestions.push('Require approval for all actions', 'Auto-run with $10 cap', 'No limits — full autonomy', 'Set custom guardrails');
-      }
-      // Scaling / workers
-      else if (q.includes('scal') || q.includes('worker') || q.includes('concurrent') || q.includes('traffic')) {
-        suggestions.push('1–3 workers (light usage)', '3–10 workers (moderate)', '10–50 workers (heavy)', 'Scale to zero when idle');
-      }
-      // Memory / context
-      else if (q.includes('memory') || q.includes('context') || q.includes('remember') || q.includes('history')) {
-        suggestions.push('Enable long-term memory', 'Session-only memory', '8K context window', '32K context window');
-      }
-      // Name questions
-      else if (q.includes('name') || q.includes('call it') || q.includes('call your')) {
-        suggestions.push('Use the suggested name', 'Let me choose a name', 'Generate a creative name');
-      }
-      // Deploy / ready questions
-      else if (q.includes('deploy') || q.includes('ready') || q.includes('launch') || q.includes('go live')) {
-        suggestions.push('Yes, deploy now', 'Run a test first', 'Review config before deploying', 'Not yet, keep configuring');
-      }
-      // Email-related questions
-      else if (q.includes('email')) {
-        suggestions.push('Use my personal email', 'Use a business email', 'Skip email for now');
-      }
-      // Cost / pricing questions
-      else if (q.includes('cost') || q.includes('price') || q.includes('expensive') || q.includes('cheap') || q.includes('budget')) {
-        suggestions.push('Keep it under $10/month', 'Optimize for cost', 'Performance over cost', 'Show cost breakdown');
-      }
-      // Yes/no questions
-      else if (q.includes('would you like') || q.includes('do you want') || q.includes('should i') || q.includes('shall i') || q.includes('ready to')) {
-        suggestions.push('Yes, go ahead', 'No, skip this', 'Tell me more first');
-      }
-      // "Which" or "what" choice questions
-      else if (q.includes('which') || q.includes('what') || q.includes('prefer')) {
-        suggestions.push('You decide — use the best option', 'Show me the trade-offs', 'Let me think about it');
-      }
-      // How many / how much
-      else if (q.includes('how many') || q.includes('how much')) {
-        suggestions.push('Keep it minimal', 'Go with the default', 'Maximum performance');
-      }
-      // Generic fallback
-      else {
-        suggestions.push('Yes', 'No', 'Tell me more');
-      }
-    }
-  }
-
-  return suggestions.slice(0, 4);
+const stripSuggestionTags = (content: string): string => {
+  return content.replace(/\[suggest:\s*[^\]]+\]/g, '').trim();
 };
 
 const AgentBuilder = () => {
@@ -346,7 +269,7 @@ const AgentBuilder = () => {
                         <div className="flex gap-3 items-start">
                           <img src={claudeLogo} alt="Claude" className="w-6 h-6 rounded-full mt-1 flex-shrink-0" />
                           <div className={mdClasses}>
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            <ReactMarkdown>{stripSuggestionTags(msg.content)}</ReactMarkdown>
                           </div>
                         </div>
                       )}
