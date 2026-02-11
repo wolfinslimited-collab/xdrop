@@ -116,7 +116,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
             <DollarSign className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Total Earned</span>
           </div>
-          <p className="text-xl font-bold text-foreground">+${earnings.total}</p>
+          <p className="text-xl font-bold text-success">+${earnings.total}</p>
           <p className="text-[10px] text-muted-foreground mt-0.5">from ${agent.price} invested</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
