@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DeployLog } from './TestDeployPanel';
-import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign, Bot } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
@@ -10,6 +10,7 @@ import WorkflowGraph from './WorkflowGraph';
 import RunPodPanel from './RunPodPanel';
 import LogsPanel from './LogsPanel';
 import MonetizePanel from './MonetizePanel';
+import BotProfilePanel from './BotProfilePanel';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface ConfigSidebarProps {
@@ -22,9 +23,10 @@ interface ConfigSidebarProps {
   onClearLogs?: () => void;
 }
 
-type Tab = 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize';
+type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
+  { id: 'profile', label: 'Profile', icon: <Bot className="w-3.5 h-3.5" /> },
   { id: 'workflow', label: 'Flow', icon: <GitBranch className="w-3.5 h-3.5" /> },
   { id: 'skills', label: 'Skills', icon: <Wrench className="w-3.5 h-3.5" /> },
   { id: 'integrations', label: 'Connect', icon: <Link2 className="w-3.5 h-3.5" /> },
@@ -37,7 +39,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ];
 
 const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix, onClearLogs }: ConfigSidebarProps) => {
-const [activeTab, setActiveTab] = useState<Tab>('workflow');
+const [activeTab, setActiveTab] = useState<Tab>('profile');
 
   const handleNavigateTab = (tab: string) => {
     if (TABS.some(t => t.id === tab)) {
@@ -121,6 +123,7 @@ const [activeTab, setActiveTab] = useState<Tab>('workflow');
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === 'profile' && <BotProfilePanel config={config} />}
         {activeTab === 'workflow' && (
           <WorkflowGraph
             config={config}
