@@ -10,8 +10,8 @@ serve(async (req) => {
 
   try {
     const { messages, currentConfig } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+    if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY is not configured");
 
     const enabledSkills = currentConfig?.skills?.filter((s: any) => s.enabled)?.map((s: any) => s.name) || [];
     const connectedIntegrations = currentConfig?.integrations?.filter((i: any) => i.connected)?.map((i: any) => i.name) || [];
@@ -52,6 +52,7 @@ Telegram, Discord, Twitter/X, Shopify, Gmail, Slack, Notion, GitHub.
 ## AI Models for Agent
 - GPT-5 / GPT-5-mini — best for complex reasoning
 - Gemini 2.5 Pro / Flash — good balance of speed and quality
+- Claude 3.5 Sonnet / Haiku — excellent instruction following
 - Llama 3.1 70B — open-source, runs on RunPod GPU
 - Mistral Large — fast, multilingual
 
@@ -71,41 +72,66 @@ Telegram, Discord, Twitter/X, Shopify, Gmail, Slack, Notion, GitHub.
 
 Format responses with markdown. Use **bold** for key concepts and bullet points for lists. Be conversational but structured. Ask one clarifying question at a time. Always move toward a deployable configuration. When recommending skills or integrations, mention them by exact name so the UI auto-enables them.`;
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Convert messages to Anthropic format (separate system from user/assistant)
+    const anthropicMessages = messages.map((m: any) => ({
+      role: m.role === "system" ? "user" : m.role,
+      content: m.content,
+    }));
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: anthropicMessages,
         stream: true,
       }),
     });
 
     if (!response.ok) {
+      const t = await response.text();
+      console.error("Anthropic API error:", response.status, t);
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limited. Please try again later." }), {
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Credits required. Please add funds." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const t = await response.text();
-      console.error("AI gateway error:", response.status, t);
-      return new Response(JSON.stringify({ error: "AI gateway error" }), {
+      return new Response(JSON.stringify({ error: "AI API error" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(response.body, {
+    // Transform Anthropic SSE stream to OpenAI-compatible format
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split("\n");
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr || jsonStr === "[DONE]") continue;
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event.type === "content_block_delta" && event.delta?.text) {
+              const openaiChunk = {
+                choices: [{ delta: { content: event.delta.text } }],
+              };
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify(openaiChunk)}\n\n`));
+            } else if (event.type === "message_stop") {
+              controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+            }
+          } catch { /* skip malformed */ }
+        }
+      },
+    });
+
+    return new Response(response.body!.pipeThrough(transformStream), {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (e) {
