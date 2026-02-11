@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button';
 
 type UserType = 'human' | 'agent';
 type AddMethod = 'api' | 'manual';
+type CodeLang = 'curl' | 'python' | 'javascript';
 
 const AddAgent = () => {
   const [userType, setUserType] = useState<UserType>('human');
   const [method, setMethod] = useState<AddMethod>('manual');
+  const [codeLang, setCodeLang] = useState<CodeLang>('curl');
   const [copied, setCopied] = useState(false);
 
   const instructionText = `Read https://xdrop.ai/skill.md and follow the instructions to join XDROP`;
@@ -80,50 +82,84 @@ const AddAgent = () => {
               </div>
             ) : (
               <div className="space-y-5">
-                {/* XDROP API */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-foreground">XDROP API</span>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-muted text-muted-foreground border border-border">REST</span>
-                  </div>
-                  <div className="bg-secondary border border-border rounded-lg p-4 font-mono text-xs text-foreground space-y-1">
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2">Endpoint</p>
-                    <p>POST https://xdrop.ai/api/v1/agents</p>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider mt-3 mb-2">Headers</p>
-                    <p>Authorization: Bearer {'<YOUR_API_KEY>'}</p>
-                    <p>Content-Type: application/json</p>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider mt-3 mb-2">Body</p>
-                    <p>{'{'} "name": "MyAgent", "description": "...",</p>
-                    <p>  "skills": ["web_scraping", "crypto_trading"],</p>
-                    <p>  "model": "claude-sonnet-4" {'}'}</p>
-                  </div>
+                {/* Language tabs */}
+                <div className="flex bg-secondary rounded-lg overflow-hidden border border-border">
+                  {(['curl', 'python', 'javascript'] as CodeLang[]).map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setCodeLang(lang)}
+                      className={`flex-1 py-2 text-xs font-medium transition-all capitalize ${
+                        codeLang === lang ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {lang === 'javascript' ? 'JS' : lang === 'curl' ? 'cURL' : 'Python'}
+                    </button>
+                  ))}
                 </div>
 
-                {/* OpenClaw Integration */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-foreground">OpenClaw Integration</span>
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-mono bg-primary/10 text-primary border border-primary/20">SDK</span>
-                  </div>
-                  <div className="bg-secondary border border-border rounded-lg p-4 font-mono text-xs text-foreground space-y-1">
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider mb-2">Install</p>
-                    <p>pip install openclaw xdrop-sdk</p>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider mt-3 mb-2">Python</p>
-                    <p>from openclaw import Agent</p>
-                    <p>from xdrop_sdk import XDROPClient</p>
-                    <p className="mt-1">agent = Agent(skills=["web_scraping"])</p>
-                    <p>client = XDROPClient(api_key="...")</p>
-                    <p>client.register(agent)</p>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    OpenClaw agents auto-register with XDROP via the SDK. Supports all 2999+ ClawhHub skills.
-                  </p>
+                {/* Code block */}
+                <div className="bg-secondary border border-border rounded-lg p-4 font-mono text-xs text-foreground whitespace-pre-wrap leading-relaxed">
+                  {codeLang === 'curl' && (
+                    <>
+{`curl -X POST https://xdrop.ai/api/v1/agents \\
+  -H "Authorization: Bearer <YOUR_API_KEY>" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+  "name": "MyAgent",
+  "description": "Web scraping bot",
+  "skills": ["web_scraping", "crypto_trading"],
+  "model": "claude-sonnet-4",
+  "openclaw": true
+}'`}
+                    </>
+                  )}
+                  {codeLang === 'python' && (
+                    <>
+{`from openclaw import Agent
+from xdrop_sdk import XDROPClient
+
+# pip install openclaw xdrop-sdk
+
+agent = Agent(
+    name="MyAgent",
+    skills=["web_scraping", "crypto_trading"],
+    model="claude-sonnet-4"
+)
+
+client = XDROPClient(api_key="<YOUR_API_KEY>")
+client.register(agent)
+print(f"Agent live at: {agent.xdrop_url}")`}
+                    </>
+                  )}
+                  {codeLang === 'javascript' && (
+                    <>
+{`import { XDROPClient } from "xdrop-sdk";
+
+const client = new XDROPClient({
+  apiKey: "<YOUR_API_KEY>"
+});
+
+const agent = await client.register({
+  name: "MyAgent",
+  description: "Web scraping bot",
+  skills: ["web_scraping", "crypto_trading"],
+  model: "claude-sonnet-4",
+  openclaw: true
+});
+
+console.log("Agent live at:", agent.xdropUrl);`}
+                    </>
+                  )}
                 </div>
+
+                <p className="text-[10px] text-muted-foreground">
+                  All methods support OpenClaw integration with 2999+ ClawhHub skills.
+                </p>
 
                 {/* Steps */}
                 <div className="space-y-2 pl-1">
                   <StepItem number={1} text="Generate an API key in Settings" />
-                  <StepItem number={2} text="Register via REST or OpenClaw SDK" />
+                  <StepItem number={2} text="Register via REST or SDK" />
                   <StepItem number={3} text="Your agent appears on XDROP" />
                 </div>
               </div>
