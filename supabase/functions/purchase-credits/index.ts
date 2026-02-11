@@ -7,10 +7,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const CREDIT_PACKS: Record<string, number> = {
-  "price_1Sze7MDlHg9BacxzHcvgf1no": 500,
-  "price_1Sze7uDlHg9Bacxzfb8GbnuD": 1500,
-  "price_1Sze8FDlHg9Bacxz8woqdTgr": 5000,
+const CREDIT_PACKS: Record<string, { base: number; bonus: number; total: number }> = {
+  "price_1Sze7MDlHg9BacxzHcvgf1no": { base: 500, bonus: 100, total: 600 },
+  "price_1Sze7uDlHg9Bacxzfb8GbnuD": { base: 1500, bonus: 525, total: 2025 },
+  "price_1Sze8FDlHg9Bacxz8woqdTgr": { base: 5000, bonus: 2500, total: 7500 },
 };
 
 serve(async (req) => {
@@ -35,6 +35,8 @@ serve(async (req) => {
       throw new Error("Invalid credit pack");
     }
 
+    const pack = CREDIT_PACKS[priceId];
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
@@ -50,11 +52,11 @@ serve(async (req) => {
       customer_email: customerId ? undefined : user.email,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/builder?credits_purchased=${CREDIT_PACKS[priceId]}`,
+      success_url: `${req.headers.get("origin")}/builder?credits_purchased=${pack.total}`,
       cancel_url: `${req.headers.get("origin")}/builder`,
       metadata: {
         user_id: user.id,
-        credits: CREDIT_PACKS[priceId].toString(),
+        credits: pack.total.toString(),
       },
     });
 
