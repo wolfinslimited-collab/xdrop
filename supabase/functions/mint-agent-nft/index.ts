@@ -74,9 +74,43 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    const imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    console.log("AI response keys:", JSON.stringify(Object.keys(aiData)));
+    console.log("AI choices length:", aiData.choices?.length);
+    if (aiData.choices?.[0]?.message) {
+      const msg = aiData.choices[0].message;
+      console.log("Message keys:", JSON.stringify(Object.keys(msg)));
+      console.log("Has images:", !!msg.images, "images length:", msg.images?.length);
+      // Also check for inline_data format
+      if (msg.content && Array.isArray(msg.content)) {
+        console.log("Content is array, length:", msg.content.length);
+        for (const part of msg.content) {
+          console.log("Content part type:", part.type);
+        }
+      }
+    }
+
+    // Try multiple paths to find the image
+    let imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    // Fallback: check content array for image parts
+    if (!imageBase64 && aiData.choices?.[0]?.message?.content) {
+      const content = aiData.choices[0].message.content;
+      if (Array.isArray(content)) {
+        for (const part of content) {
+          if (part.type === "image_url" && part.image_url?.url) {
+            imageBase64 = part.image_url.url;
+            break;
+          }
+          if (part.type === "image" && part.image_url?.url) {
+            imageBase64 = part.image_url.url;
+            break;
+          }
+        }
+      }
+    }
 
     if (!imageBase64) {
+      console.error("Full AI response:", JSON.stringify(aiData).substring(0, 500));
       throw new Error("No image generated from AI");
     }
 
