@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp, Plus, Settings2, X, ArrowLeft } from 'lucide-react';
+import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import openclawLogo from '@/assets/openclaw-logo.png';
 import claudeLogo from '@/assets/claude-logo.png';
 import OpenClawMascot from '@/components/agent-builder/OpenClawMascot';
+import SessionHistory from '@/components/agent-builder/SessionHistory';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -57,6 +58,7 @@ const AgentBuilder = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [config, setConfig] = useState<AgentConfig>({ ...DEFAULT_CONFIG });
   const [showConfig, setShowConfig] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
@@ -254,6 +256,23 @@ const AgentBuilder = () => {
 
   const handleNewChat = () => { setMessages([]); setConfig({ ...DEFAULT_CONFIG }); setInput(''); setSessionId(null); };
 
+  const handleSelectSession = (session: { id: string; name: string; messages: unknown[]; config?: unknown }) => {
+    setSessionId(session.id);
+    setMessages((session.messages as ChatMessage[]) || []);
+    try {
+      const savedConfig = session.config as Partial<AgentConfig> | undefined;
+      if (savedConfig && typeof savedConfig === 'object' && 'skills' in savedConfig) {
+        setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
+      } else {
+        setConfig({ ...DEFAULT_CONFIG });
+      }
+    } catch { setConfig({ ...DEFAULT_CONFIG }); }
+  };
+
+  const handleDeleteSession = (deletedId: string) => {
+    if (deletedId === sessionId) { handleNewChat(); }
+  };
+
   const hasMessages = messages.length > 0;
 
   const mdClasses = "prose prose-invert max-w-none text-sm leading-[1.7] [&>p]:my-2.5 [&>ul]:my-2.5 [&>ol]:my-2.5 [&>ul]:pl-5 [&>ol]:pl-5 [&_li]:my-1 [&_li]:leading-[1.65] [&_strong]:text-foreground [&_strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-3.5 [&_pre]:my-3 [&>blockquote]:border-l-2 [&>blockquote]:border-muted-foreground/20 [&>blockquote]:pl-3 [&>blockquote]:my-3 [&>blockquote]:text-muted-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-5 [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-3 [&_h3]:mb-1 [&>ul]:list-disc [&>ol]:list-decimal [&_em]:text-muted-foreground";
@@ -262,6 +281,16 @@ const AgentBuilder = () => {
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents." canonicalPath="/builder" />
       <MobileHeader />
+      {user && (
+        <SessionHistory
+          userId={user.id}
+          currentSessionId={sessionId}
+          onSelectSession={handleSelectSession}
+          onDeleteSession={handleDeleteSession}
+          open={showHistory}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
       <div className="flex flex-1 w-full">
         {/* Chat panel — left side */}
         <div className={`flex flex-col h-screen ${isMobile ? 'w-full' : 'w-[462px] flex-shrink-0'} border-r border-border`}>
@@ -272,6 +301,13 @@ const AgentBuilder = () => {
             </button>
             <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
             <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Session history"
+              >
+                <Clock className="w-3.5 h-3.5" />
+              </button>
               {hasMessages && (
                 <button onClick={handleNewChat} className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md hover:bg-muted transition-colors">
                   <Plus className="w-3.5 h-3.5" /> New
