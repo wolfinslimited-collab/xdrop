@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUp, Plus, Settings2, X } from 'lucide-react';
+import { ArrowUp, Plus, Settings2, X, ArrowLeft } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import ReactMarkdown from 'react-markdown';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import SEOHead from '@/components/SEOHead';
 import NavSidebar from '@/components/NavSidebar';
 import MobileHeader from '@/components/MobileHeader';
@@ -50,6 +50,7 @@ const stripSuggestionTags = (content: string): string => {
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -211,6 +212,9 @@ const AgentBuilder = () => {
         <div className={`flex flex-col min-h-screen border-r border-border ${isMobile ? 'w-full' : 'w-[400px] flex-shrink-0'}`}>
           {/* Chat header */}
           <header className="sticky top-0 z-20 bg-background border-b border-border h-12 flex items-center px-4">
+            <button onClick={() => navigate('/home')} className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mr-2">
+              <ArrowLeft className="w-4 h-4" />
+            </button>
             <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
             <div className="flex items-center gap-1">
               {hasMessages && (
