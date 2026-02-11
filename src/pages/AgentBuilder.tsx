@@ -29,6 +29,8 @@ const STARTER_SUGGESTIONS = [
 
 const extractSuggestions = (content: string): string[] => {
   const suggestions: string[] = [];
+
+  // 1. Quoted suggestions in bullets: - "Do X"
   const bulletMatches = content.match(/[•\-]\s*"([^"]+)"/g);
   if (bulletMatches) {
     bulletMatches.forEach(m => {
@@ -36,15 +38,70 @@ const extractSuggestions = (content: string): string[] => {
       if (inner) suggestions.push(inner[1]);
     });
   }
+
+  // 2. Bold items in bullets: - **Option A**
+  if (suggestions.length === 0) {
+    const boldBullets = content.match(/[•\-]\s+\*\*([^*]+)\*\*/g);
+    if (boldBullets && boldBullets.length >= 2 && boldBullets.length <= 6) {
+      boldBullets.forEach(m => {
+        const inner = m.match(/\*\*([^*]+)\*\*/);
+        if (inner && inner[1].length < 60) suggestions.push(inner[1]);
+      });
+    }
+  }
+
+  // 3. Numbered options: 1. **X** or 1) X
+  if (suggestions.length === 0) {
+    const numbered = content.match(/\d+[.)]\s+\*\*([^*]+)\*\*/g);
+    if (numbered && numbered.length >= 2 && numbered.length <= 6) {
+      numbered.forEach(m => {
+        const inner = m.match(/\*\*([^*]+)\*\*/);
+        if (inner && inner[1].length < 60) suggestions.push(inner[1]);
+      });
+    }
+  }
+
+  // 4. Plain bullets
   if (suggestions.length === 0) {
     const plainBullets = content.match(/[•\-]\s+(.{10,80})$/gm);
-    if (plainBullets && plainBullets.length <= 6) {
+    if (plainBullets && plainBullets.length >= 2 && plainBullets.length <= 6) {
       plainBullets.forEach(m => {
         const text = m.replace(/^[•\-]\s+/, '').replace(/\*\*/g, '').trim();
         if (text.length > 5 && text.length < 100) suggestions.push(text);
       });
     }
   }
+
+  // 5. If the AI asks a question and no suggestions found, generate contextual quick-replies
+  if (suggestions.length === 0) {
+    const lastLine = content.split('\n').filter(l => l.trim()).pop() || '';
+    const isQuestion = /\?[\s]*$/.test(lastLine.trim());
+    
+    if (isQuestion) {
+      const lower = lastLine.toLowerCase();
+      // Email-related questions
+      if (lower.includes('email')) {
+        suggestions.push('Use my personal email', 'Use a business email', 'Skip email for now');
+      }
+      // Yes/no questions
+      else if (lower.includes('would you like') || lower.includes('do you want') || lower.includes('should i') || lower.includes('shall i')) {
+        suggestions.push('Yes, go ahead', 'No, skip this', 'Tell me more first');
+      }
+      // "Which" or "what" choice questions
+      else if (lower.includes('which') || lower.includes('what')) {
+        suggestions.push('You decide — use the best option', 'Let me think about it', 'Show me the options');
+      }
+      // How many / how much
+      else if (lower.includes('how many') || lower.includes('how much') || lower.includes('budget')) {
+        suggestions.push('Keep it minimal', 'Go with the default', 'Maximum performance');
+      }
+      // Generic fallback for any question
+      else {
+        suggestions.push('Yes', 'No', 'Tell me more');
+      }
+    }
+  }
+
   return suggestions.slice(0, 4);
 };
 
