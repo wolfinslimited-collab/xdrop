@@ -1,10 +1,48 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Star, Zap, TrendingUp, Filter } from 'lucide-react';
+import {
+  Search, Star, Zap, TrendingUp, Server,
+  CandlestickChart, Crosshair, Scale, Sprout, Grid3x3, Flame, Palette,
+  Heart, Camera, Clapperboard, Play,
+  Briefcase, Wrench,
+  Package, Tag, Gift,
+  Globe,
+  Receipt, Share2, Truck,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { AGENT_TEMPLATES, TEMPLATE_CATEGORIES, type AgentTemplate } from '@/data/agentTemplates';
+import { useToast } from '@/hooks/use-toast';
+
+const iconMap: Record<string, LucideIcon> = {
+  'candlestick-chart': CandlestickChart,
+  'crosshair': Crosshair,
+  'scale': Scale,
+  'sprout': Sprout,
+  'zap': Zap,
+  'grid-3x3': Grid3x3,
+  'flame': Flame,
+  'palette': Palette,
+  'heart': Heart,
+  'camera': Camera,
+  'clapperboard': Clapperboard,
+  'play': Play,
+  'briefcase': Briefcase,
+  'wrench': Wrench,
+  'package': Package,
+  'tag': Tag,
+  'gift': Gift,
+  'globe': Globe,
+  'receipt': Receipt,
+  'share-2': Share2,
+  'star': Star,
+  'truck': Truck,
+};
 
 interface AgentCategory {
   id: string;
@@ -31,14 +69,21 @@ interface Agent {
   agent_categories?: { name: string; icon: string } | null;
 }
 
+type Tab = 'templates' | 'community';
+
 const Marketplace = () => {
+  const [tab, setTab] = useState<Tab>('templates');
   const [categories, setCategories] = useState<AgentCategory[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
+  // Fetch community agents when tab switches
   useEffect(() => {
+    if (tab !== 'community') return;
+    setLoading(true);
     const fetchData = async () => {
       const [catRes, agentRes] = await Promise.all([
         supabase.from('agent_categories').select('*'),
@@ -49,21 +94,65 @@ const Marketplace = () => {
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [tab]);
 
-  const filtered = agents.filter((a) => {
+  // Filtering for templates tab
+  const filteredTemplates = AGENT_TEMPLATES.filter(t => {
+    const matchesCategory = !selectedCategory || t.category === selectedCategory;
+    const matchesSearch = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  // Filtering for community tab
+  const filteredAgents = agents.filter((a) => {
     if (selectedCategory && a.category_id !== selectedCategory) return false;
     if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
   });
 
+  const handleDeploy = (template: AgentTemplate) => {
+    toast({
+      title: `🚀 Deploying ${template.name}`,
+      description: 'Setting up your RunPod server and agent. This may take a few minutes.',
+    });
+  };
+
+  const getIcon = (lucideIcon: string) => {
+    const IconComponent = iconMap[lucideIcon];
+    return IconComponent ? <IconComponent className="w-5 h-5 text-primary" /> : <Zap className="w-5 h-5 text-primary" />;
+  };
+
+  const templateCategories = ['All', ...TEMPLATE_CATEGORIES];
+  const communityCategories = [{ id: null as string | null, name: 'All', icon: '' }, ...categories.map(c => ({ id: c.id, name: c.name, icon: c.icon || '' }))];
+
   return (
     <PageLayout>
-      <SEOHead title="Agent Marketplace — XDROP" description="Buy prebuilt AI agents that earn for you." canonicalPath="/marketplace" />
-      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
+      <SEOHead title="Marketplace — XDROP" description="Browse and deploy pre-built AI agents or discover community-created agents." canonicalPath="/marketplace" />
+      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[900px]">
+        {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
-          <h1 className="text-xl font-bold text-foreground">Agent Store</h1>
-          <p className="text-xs text-muted-foreground mt-0.5">Buy → Deploy → Earn</p>
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-5 h-5 text-accent" />
+            <h1 className="text-lg font-bold text-foreground font-display">Marketplace</h1>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-0 border-b border-border -mx-4 px-4">
+            <button
+              onClick={() => { setTab('templates'); setSelectedCategory(null); setSearchQuery(''); }}
+              className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === 'templates' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Templates
+              {tab === 'templates' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+            </button>
+            <button
+              onClick={() => { setTab('community'); setSelectedCategory(null); setSearchQuery(''); }}
+              className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === 'community' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Community
+              {tab === 'community' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
+            </button>
+          </div>
         </header>
 
         {/* Search */}
@@ -80,89 +169,176 @@ const Marketplace = () => {
           </div>
         </div>
 
-        {/* Categories */}
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-border">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-              !selectedCategory ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            All
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                selectedCategory === cat.id ? 'bg-primary text-primary-foreground' : 'bg-secondary text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {cat.icon} {cat.name}
-            </button>
-          ))}
-        </div>
-
-        {/* Agent listings */}
-        <div className="divide-y divide-border">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20">
-              <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <p className="text-muted-foreground">No agents found. Be the first to create one!</p>
-              <Link to="/builder" className="text-primary text-sm hover:underline mt-2 inline-block">
-                Build an Agent →
-              </Link>
-            </div>
-          ) : (
-            filtered.map((agent, i) => (
-              <motion.div
-                key={agent.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
+        {/* Category pills */}
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto border-b border-border scrollbar-hide">
+          {tab === 'templates' ? (
+            templateCategories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat === 'All' ? null : cat)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                  (cat === 'All' && !selectedCategory) || selectedCategory === cat
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+                }`}
               >
-                <Link
-                  to={`/agent/${agent.id}`}
-                  className="block px-4 py-4 hover:bg-secondary/50 transition-colors"
-                >
-                  <div className="flex gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl shrink-0">
-                      {agent.avatar}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-foreground truncate">{agent.name}</h3>
-                        {agent.agent_categories && (
-                          <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
-                            {agent.agent_categories.icon} {agent.agent_categories.name}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                        {agent.short_description || agent.description}
-                      </p>
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-xs font-bold text-gradient-cyber">${agent.price}</span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Star className="w-3 h-3 fill-accent text-accent" />
-                          {agent.reliability_score.toFixed(1)}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <TrendingUp className="w-3 h-3" />
-                          {agent.total_runs} runs
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
+                {cat}
+              </button>
+            ))
+          ) : (
+            communityCategories.map((cat) => (
+              <button
+                key={cat.id || 'all'}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`shrink-0 px-4 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                  selectedCategory === cat.id
+                    ? 'bg-foreground text-background border-foreground'
+                    : 'bg-secondary text-muted-foreground border-border hover:text-foreground'
+                }`}
+              >
+                {cat.icon ? `${cat.icon} ` : ''}{cat.name}
+              </button>
             ))
           )}
         </div>
+
+        {/* TEMPLATES TAB */}
+        {tab === 'templates' && (
+          <>
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {filteredTemplates.map((template, i) => (
+                <motion.div
+                  key={template.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <div className="bg-card border border-border rounded-xl hover:border-muted-foreground/30 transition-all h-full flex flex-col">
+                    <div className="pb-3 pt-5 px-5">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                            {getIcon(template.lucideIcon)}
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-semibold text-foreground leading-tight">{template.name}</h3>
+                            <span className="text-[10px] text-muted-foreground">{template.category}</span>
+                          </div>
+                        </div>
+                        {template.popular && (
+                          <Badge variant="secondary" className="text-[10px] bg-accent/15 text-accent border-accent/20">
+                            Popular
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1 px-5 pb-3">
+                      <p className="text-xs text-muted-foreground leading-relaxed mb-3">{template.description}</p>
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {template.features.map(f => (
+                          <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border">{f}</span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5">
+                          <TrendingUp className="w-3.5 h-3.5 text-success" />
+                          <span className="text-xs font-semibold text-success">{template.monthlyReturnMin}–{template.monthlyReturnMax}%</span>
+                          <span className="text-[10px] text-muted-foreground">/mo</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Server className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="text-[10px] text-muted-foreground">RunPod GPU</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
+                      <div>
+                        <span className="text-lg font-bold text-foreground">$100</span>
+                        <span className="text-xs text-muted-foreground">/year</span>
+                      </div>
+                      <Button
+                        onClick={() => handleDeploy(template)}
+                        size="sm"
+                        className="rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs px-4"
+                      >
+                        Deploy Agent
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {filteredTemplates.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                <Search className="w-8 h-8 mb-3 opacity-40" />
+                <p className="text-sm">No agents found matching your search.</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* COMMUNITY TAB */}
+        {tab === 'community' && (
+          <div className="divide-y divide-border">
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : filteredAgents.length === 0 ? (
+              <div className="text-center py-20">
+                <Zap className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No agents found. Be the first to create one!</p>
+                <Link to="/builder" className="text-primary text-sm hover:underline mt-2 inline-block">
+                  Build an Agent →
+                </Link>
+              </div>
+            ) : (
+              filteredAgents.map((agent, i) => (
+                <motion.div
+                  key={agent.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03 }}
+                >
+                  <Link
+                    to={`/agent/${agent.id}`}
+                    className="block px-4 py-4 hover:bg-secondary/50 transition-colors"
+                  >
+                    <div className="flex gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center text-2xl shrink-0">
+                        {agent.avatar}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-sm font-bold text-foreground truncate">{agent.name}</h3>
+                          {agent.agent_categories && (
+                            <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-secondary text-muted-foreground">
+                              {agent.agent_categories.icon} {agent.agent_categories.name}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                          {agent.short_description || agent.description}
+                        </p>
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="text-xs font-bold text-gradient-cyber">${agent.price}</span>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Star className="w-3 h-3 fill-accent text-accent" />
+                            {agent.reliability_score.toFixed(1)}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <TrendingUp className="w-3 h-3" />
+                            {agent.total_runs} runs
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            )}
+          </div>
+        )}
       </main>
     </PageLayout>
   );
