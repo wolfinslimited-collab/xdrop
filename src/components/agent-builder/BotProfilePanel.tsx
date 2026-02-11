@@ -14,14 +14,14 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
 
   // Derive "health" from config completeness
   const healthFactors = [
-    config.name.trim().length > 0,
+    (config.name || '').trim().length > 0,
     enabledSkills > 0,
     connectedIntegrations > 0,
-    config.runpodConfig.apiKeyConfigured,
-    config.runpodConfig.endpointId.length > 0,
-    config.guardrails.requireApproval,
-    config.triggers.some(t => t.enabled),
-    config.description.trim().length > 0,
+    config.runpodConfig?.apiKeyConfigured ?? false,
+    (config.runpodConfig?.endpointId || '').length > 0,
+    config.guardrails?.requireApproval ?? false,
+    config.triggers?.some(t => t.enabled) ?? false,
+    (config.description || '').trim().length > 0,
   ];
   const health = Math.round((healthFactors.filter(Boolean).length / healthFactors.length) * 100);
 
@@ -34,7 +34,7 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
     { icon: <DollarSign className="w-3.5 h-3.5" />, label: 'Earned', value: '$0.00', color: 'text-muted-foreground' },
     { icon: <Zap className="w-3.5 h-3.5" />, label: 'Runs', value: '0', color: 'text-muted-foreground' },
     { icon: <Activity className="w-3.5 h-3.5" />, label: 'Skills', value: `${enabledSkills}`, color: enabledSkills > 0 ? 'text-foreground' : 'text-muted-foreground' },
-    { icon: <Shield className="w-3.5 h-3.5" />, label: 'Safety', value: config.guardrails.requireApproval ? 'On' : 'Off', color: config.guardrails.requireApproval ? 'text-emerald-400' : 'text-amber-400' },
+    { icon: <Shield className="w-3.5 h-3.5" />, label: 'Safety', value: config.guardrails?.requireApproval ? 'On' : 'Off', color: config.guardrails?.requireApproval ? 'text-emerald-400' : 'text-amber-400' },
   ];
 
   return (
