@@ -178,7 +178,7 @@ const Dashboard = () => {
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="bg-secondary rounded-lg p-2 text-center">
-                        <p className="text-xs font-bold text-foreground">+${earnings.total}</p>
+                        <p className="text-xs font-bold text-success">+${earnings.total}</p>
                         <p className="text-[9px] text-muted-foreground">Total Earned</p>
                       </div>
                       <div className="bg-secondary rounded-lg p-2 text-center">
