@@ -219,13 +219,17 @@ export type Database = {
           creator_id: string
           description: string
           id: string
+          monthly_return_max: number | null
+          monthly_return_min: number | null
           name: string
           price: number
+          purchased_at: string | null
           reliability_score: number | null
           required_integrations: string[] | null
           short_description: string | null
           status: string
           subscription_price: number | null
+          template_id: string | null
           total_earnings: number | null
           total_runs: number | null
           updated_at: string
@@ -238,13 +242,17 @@ export type Database = {
           creator_id: string
           description: string
           id?: string
+          monthly_return_max?: number | null
+          monthly_return_min?: number | null
           name: string
           price?: number
+          purchased_at?: string | null
           reliability_score?: number | null
           required_integrations?: string[] | null
           short_description?: string | null
           status?: string
           subscription_price?: number | null
+          template_id?: string | null
           total_earnings?: number | null
           total_runs?: number | null
           updated_at?: string
@@ -257,13 +265,17 @@ export type Database = {
           creator_id?: string
           description?: string
           id?: string
+          monthly_return_max?: number | null
+          monthly_return_min?: number | null
           name?: string
           price?: number
+          purchased_at?: string | null
           reliability_score?: number | null
           required_integrations?: string[] | null
           short_description?: string | null
           status?: string
           subscription_price?: number | null
+          template_id?: string | null
           total_earnings?: number | null
           total_runs?: number | null
           updated_at?: string

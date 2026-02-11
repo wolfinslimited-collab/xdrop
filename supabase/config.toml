@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.verify-credits-payment]
 verify_jwt = false
+
+[functions.purchase-template]
+verify_jwt = false
