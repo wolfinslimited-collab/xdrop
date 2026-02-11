@@ -21,10 +21,10 @@ interface ChatMessage {
 }
 
 const STARTER_SUGGESTIONS = [
-  'Build a freelance lead finder that messages clients on Upwork',
-  'Create a crypto DCA bot with daily buying and stop-loss',
-  'Make a customer support agent for my Shopify store',
-  'Build a social media bot that auto-posts on Twitter',
+  'Build an OpenClaw crypto DCA bot with stop-loss on RunPod',
+  'Create a lead gen agent using ClawhHub skills + Telegram',
+  'Deploy a customer support bot on RunPod serverless',
+  'Build a social media agent that auto-posts via OpenClaw',
 ];
 
 const extractSuggestions = (content: string): string[] => {
@@ -236,8 +236,9 @@ const AgentBuilder = () => {
             {!hasMessages ? (
               <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] px-4">
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-md">
-                  <h2 className="text-xl font-semibold text-foreground font-display mb-1">What do you want to build?</h2>
-                  <p className="text-sm text-muted-foreground mb-8">Describe your agent and I'll configure everything.</p>
+                  <h2 className="text-xl font-semibold text-foreground font-display mb-1">Build your OpenClaw agent</h2>
+                  <p className="text-sm text-muted-foreground mb-1">Describe what you need — I'll configure skills, model, and RunPod deployment.</p>
+                  <p className="text-[10px] text-muted-foreground/50 mb-8">Powered by OpenClaw · Deployed on RunPod</p>
                   <div className="flex flex-col gap-2 max-w-sm mx-auto">
                     {STARTER_SUGGESTIONS.map((s, i) => (
                       <button

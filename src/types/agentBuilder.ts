@@ -26,10 +26,21 @@ export interface AgentTrigger {
   enabled: boolean;
 }
 
+export interface RunPodConfig {
+  gpuTier: 'cpu' | 'a40' | 'a100' | 'h100';
+  maxWorkers: number;
+  minWorkers: number;
+  idleTimeout: number; // seconds
+  volumeSize: number; // GB
+}
+
 export interface AgentConfig {
   name: string;
   description: string;
   category: string;
+  model: string;
+  memoryEnabled: boolean;
+  contextWindow: number;
   skills: AgentSkill[];
   integrations: AgentIntegration[];
   triggers: AgentTrigger[];
@@ -39,7 +50,24 @@ export interface AgentConfig {
     rateLimitPerHour: number;
     maxRunsPerDay: number;
   };
+  runpodConfig: RunPodConfig;
 }
+
+export const AI_MODELS = [
+  { id: 'gpt-5', name: 'GPT-5', provider: 'OpenAI', description: 'Best for complex reasoning', tier: 'premium' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', provider: 'OpenAI', description: 'Fast and affordable', tier: 'standard' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', provider: 'Google', description: 'Multimodal + big context', tier: 'premium' },
+  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', provider: 'Google', description: 'Speed/quality balance', tier: 'standard' },
+  { id: 'llama-3.1-70b', name: 'Llama 3.1 70B', provider: 'Meta', description: 'Open-source, runs on RunPod', tier: 'open' },
+  { id: 'mistral-large', name: 'Mistral Large', provider: 'Mistral', description: 'Fast, multilingual', tier: 'standard' },
+];
+
+export const GPU_TIERS = [
+  { id: 'cpu' as const, name: 'CPU Only', price: '$0.003/sec', description: 'Lightweight tasks, no inference', vram: '—' },
+  { id: 'a40' as const, name: 'A40', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB' },
+  { id: 'a100' as const, name: 'A100', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB' },
+  { id: 'h100' as const, name: 'H100', price: '$3.49/hr', description: 'Maximum performance', vram: '80 GB' },
+];
 
 export const DEFAULT_SKILLS: AgentSkill[] = [
   { id: 'web-scraping', name: 'Web Scraping', icon: '🌐', description: 'Extract data from websites and APIs', category: 'data', enabled: false, config: {} },
@@ -67,10 +95,21 @@ export const DEFAULT_INTEGRATIONS: AgentIntegration[] = [
   { id: 'github', name: 'GitHub', icon: '🐙', description: 'Manage repos, issues, and PRs', connected: false, requiresApiKey: true, apiKeyLabel: 'Personal Access Token' },
 ];
 
+export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
+  gpuTier: 'cpu',
+  maxWorkers: 3,
+  minWorkers: 0,
+  idleTimeout: 60,
+  volumeSize: 20,
+};
+
 export const DEFAULT_CONFIG: AgentConfig = {
   name: '',
   description: '',
   category: '',
+  model: '',
+  memoryEnabled: true,
+  contextWindow: 8192,
   skills: DEFAULT_SKILLS,
   integrations: DEFAULT_INTEGRATIONS,
   triggers: [{ type: 'manual', enabled: true }],
@@ -80,4 +119,5 @@ export const DEFAULT_CONFIG: AgentConfig = {
     rateLimitPerHour: 60,
     maxRunsPerDay: 100,
   },
+  runpodConfig: DEFAULT_RUNPOD_CONFIG,
 };
