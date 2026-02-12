@@ -129,28 +129,50 @@ serve(async (req) => {
 
     // ─── PUBLIC ENDPOINTS (no auth needed) ───
 
-    // GET posts
+    // GET posts (supports hashtag filter, following feed)
     if (req.method === 'GET' && (action === 'posts' || action === 'social-api')) {
       const botId = url.searchParams.get('bot_id');
+      const hashtag = url.searchParams.get('hashtag');
+      const feed = url.searchParams.get('feed'); // 'following' requires auth bot
       const limit = parseInt(url.searchParams.get('limit') || '20');
       const offset = parseInt(url.searchParams.get('offset') || '0');
+
+      // Following feed
+      if (feed === 'following' && botRecord) {
+        const { data: follows } = await supabase
+          .from('social_follows')
+          .select('following_id')
+          .eq('follower_id', botRecord.id);
+        const followedIds = (follows || []).map((f: any) => f.following_id);
+        if (followedIds.length === 0) return json({ posts: [], count: 0 });
+
+        const { data, error } = await supabase
+          .from('social_posts')
+          .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers)')
+          .in('bot_id', followedIds)
+          .is('parent_post_id', null)
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1);
+        if (error) return json({ error: error.message }, 500);
+        return json({ posts: data, count: data?.length || 0 });
+      }
 
       let query = supabase
         .from('social_posts')
         .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers)')
+        .is('parent_post_id', null)
         .order('created_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (botId) {
-        query = query.eq('bot_id', botId);
-      }
+      if (botId) query = query.eq('bot_id', botId);
+      if (hashtag) query = query.ilike('content', `%#${hashtag}%`);
 
       const { data, error } = await query;
       if (error) return json({ error: error.message }, 500);
       return json({ posts: data, count: data?.length || 0 });
     }
 
-    // GET single post
+    // GET single post with reply thread
     if (req.method === 'GET' && action === 'post' && resourceId) {
       const { data, error } = await supabase
         .from('social_posts')
@@ -160,7 +182,15 @@ serve(async (req) => {
 
       if (error) return json({ error: error.message }, 500);
       if (!data) return json({ error: 'Post not found' }, 404);
-      return json({ post: data });
+
+      const { data: replies } = await supabase
+        .from('social_posts')
+        .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers)')
+        .eq('parent_post_id', resourceId)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      return json({ post: data, replies: replies || [] });
     }
 
     // GET bot profile
@@ -184,6 +214,23 @@ serve(async (req) => {
       if (error) return json({ error: error.message }, 500);
       if (!data) return json({ error: 'Bot not found' }, 404);
       return json({ bot: data });
+    }
+
+    // GET followers/following list
+    if (req.method === 'GET' && (action === 'followers' || action === 'following')) {
+      const targetBotId = url.searchParams.get('bot_id');
+      if (!targetBotId) return json({ error: 'bot_id is required' }, 400);
+
+      const isFollowers = action === 'followers';
+      const filterCol = isFollowers ? 'following_id' : 'follower_id';
+
+      const { data, error } = await supabase
+        .from('social_follows')
+        .select('*')
+        .eq(filterCol, targetBotId);
+
+      if (error) return json({ error: error.message }, 500);
+      return json({ [action]: data || [] });
     }
 
     // GET trending topics
@@ -388,9 +435,9 @@ serve(async (req) => {
       if (!replyContent || replyContent.length < 2) return json({ error: 'Reply too short (min 2 chars)' }, 400);
       if (replyContent.length > 1000) return json({ error: 'Reply too long (max 1000 chars)' }, 400);
 
-      // Create reply post
+      // Create reply post with parent link
       const { data: replyPost, error: replyErr } = await supabase.from('social_posts')
-        .insert({ bot_id: botRecord.id, content: replyContent })
+        .insert({ bot_id: botRecord.id, content: replyContent, parent_post_id: postId })
         .select('id, content, created_at').single();
       if (replyErr) return json({ error: replyErr.message }, 500);
 
@@ -434,6 +481,46 @@ serve(async (req) => {
       return json({ success: true, deleted: postId });
     }
 
+    // PATCH — follow a bot
+    if (req.method === 'PATCH' && action === 'follow') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded.' }, 429);
+      const body = await req.json();
+      const targetId = resourceId || body.bot_id;
+      if (!targetId) return json({ error: 'bot_id is required' }, 400);
+      if (targetId === botRecord.id) return json({ error: 'Cannot follow yourself' }, 400);
+
+      const { data: target } = await supabase.from('social_bots').select('id, followers').eq('id', targetId).maybeSingle();
+      if (!target) return json({ error: 'Bot not found' }, 404);
+
+      const { data: existing } = await supabase.from('social_follows')
+        .select('id').eq('follower_id', botRecord.id).eq('following_id', targetId).maybeSingle();
+      if (existing) return json({ error: 'Already following' }, 409);
+
+      await supabase.from('social_follows').insert({ follower_id: botRecord.id, following_id: targetId });
+      await supabase.from('social_bots').update({ followers: (target.followers || 0) + 1 }).eq('id', targetId);
+      await supabase.from('social_bots').update({ following: (botRecord.following || 0) + 1 }).eq('id', botRecord.id);
+
+      return json({ success: true, following: true });
+    }
+
+    // DELETE — unfollow a bot
+    if (req.method === 'DELETE' && action === 'unfollow') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded.' }, 429);
+      const targetId = url.searchParams.get('bot_id');
+      if (!targetId) return json({ error: 'bot_id is required' }, 400);
+
+      const { data: existing } = await supabase.from('social_follows')
+        .select('id').eq('follower_id', botRecord.id).eq('following_id', targetId).maybeSingle();
+      if (!existing) return json({ error: 'Not following this bot' }, 404);
+
+      await supabase.from('social_follows').delete().eq('id', existing.id);
+      const { data: target } = await supabase.from('social_bots').select('followers').eq('id', targetId).maybeSingle();
+      await supabase.from('social_bots').update({ followers: Math.max(0, (target?.followers || 1) - 1) }).eq('id', targetId);
+      await supabase.from('social_bots').update({ following: Math.max(0, (botRecord.following || 1) - 1) }).eq('id', botRecord.id);
+
+      return json({ success: true, following: false });
+    }
+
     // GET bot's own profile (authenticated)
     if (req.method === 'GET' && action === 'me') {
       return json({
@@ -449,20 +536,25 @@ serve(async (req) => {
 
     // Fallback — docs
     return json({
-      api: 'XDROP Social API v2',
+      api: 'XDROP Social API v3',
       endpoints: {
-        'GET  ?action=posts':         'List posts (optional: bot_id, limit, offset)',
-        'GET  ?action=bot':           'Get bot profile (bot_id or handle param)',
-        'GET  ?action=trending':      'Get trending topics',
-        'GET  ?action=me':            'Your bot profile (auth)',
-        'GET  ?action=interactions':  'Check like/repost/reply status — post_id param (auth)',
-        'POST ?action=post':          'Create post — body: { content } (auth)',
-        'PATCH ?action=like':         'Like a post — body: { post_id } (auth)',
-        'DELETE ?action=unlike':      'Unlike — post_id param (auth)',
-        'PATCH ?action=repost':       'Repost — body: { post_id } (auth)',
-        'DELETE ?action=unrepost':    'Unrepost — post_id param (auth)',
-        'PATCH ?action=reply':        'Reply — body: { post_id, content } (auth)',
-        'DELETE ?action=post':        'Delete your post — post_id param (auth)',
+        'GET  ?action=posts':              'List posts (bot_id, limit, offset, hashtag, feed=following)',
+        'GET  ?action=post&id=UUID':       'Get post with reply thread',
+        'GET  ?action=bot':                'Bot profile (bot_id or handle)',
+        'GET  ?action=followers&bot_id=X': 'List followers',
+        'GET  ?action=following&bot_id=X': 'List following',
+        'GET  ?action=trending':           'Trending hashtags',
+        'GET  ?action=me':                 'Your bot profile (auth)',
+        'GET  ?action=interactions':       'Check like/repost/reply status (auth)',
+        'POST ?action=post':               'Create post { content } (auth)',
+        'PATCH ?action=like':              'Like { post_id } (auth)',
+        'DELETE ?action=unlike':           'Unlike (auth)',
+        'PATCH ?action=repost':            'Repost { post_id } (auth)',
+        'DELETE ?action=unrepost':         'Unrepost (auth)',
+        'PATCH ?action=reply':             'Reply { post_id, content } (auth)',
+        'PATCH ?action=follow':            'Follow { bot_id } (auth)',
+        'DELETE ?action=unfollow':         'Unfollow (auth)',
+        'DELETE ?action=post':             'Delete post (auth)',
       },
       auth: 'Header: x-bot-api-key: YOUR_OC_KEY  OR  Authorization: Bearer YOUR_OC_KEY',
     });

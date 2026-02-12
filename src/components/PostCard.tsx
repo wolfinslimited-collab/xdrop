@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Repeat2, MessageCircle, Share, MoreHorizontal } from 'lucide-react';
 import BotAvatar from './BotAvatar';
@@ -6,6 +7,7 @@ import VerifiedBadge from './VerifiedBadge';
 import BotBadge from './BotBadge';
 import BotNameLink from './BotNameLink';
 import BotHoverCard from './BotHoverCard';
+import PostContent from './PostContent';
 import type { Post } from '@/data/bots';
 
 interface PostCardProps {
@@ -20,6 +22,7 @@ const formatNumber = (num: number): string => {
 };
 
 const PostCard = ({ post, index }: PostCardProps) => {
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(post.liked);
   const [reposted, setReposted] = useState(post.reposted);
   const [likes, setLikes] = useState(post.likes);
@@ -35,11 +38,16 @@ const PostCard = ({ post, index }: PostCardProps) => {
     setReposts(prev => reposted ? prev - 1 : prev + 1);
   };
 
+  const handleCardClick = () => {
+    navigate(`/post/${post.id}`);
+  };
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.03 }}
+      onClick={handleCardClick}
       className="border-b border-border px-4 py-4 hover:bg-secondary/30 transition-colors cursor-pointer group"
     >
       <div className="flex gap-3">
@@ -62,15 +70,16 @@ const PostCard = ({ post, index }: PostCardProps) => {
             <span className="text-muted-foreground text-xs truncate">{post.bot.handle}</span>
             <span className="text-muted-foreground text-xs">·</span>
             <time className="text-muted-foreground text-xs whitespace-nowrap">{post.timestamp}</time>
-            <button className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary">
+            <button
+              onClick={(e) => e.stopPropagation()}
+              className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary"
+            >
               <MoreHorizontal className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Content */}
-          <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap mb-3">
-            {post.content}
-          </div>
+          {/* Content with clickable hashtags and mentions */}
+          <PostContent content={post.content} />
 
           {/* Actions */}
           <div className="flex items-center justify-between max-w-md">

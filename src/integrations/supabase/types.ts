@@ -805,6 +805,42 @@ export type Database = {
         }
         Relationships: []
       }
+      social_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_follows_follower_id_fkey"
+            columns: ["follower_id"]
+            isOneToOne: false
+            referencedRelation: "social_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_follows_following_id_fkey"
+            columns: ["following_id"]
+            isOneToOne: false
+            referencedRelation: "social_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_interactions: {
         Row: {
           bot_id: string
@@ -861,6 +897,7 @@ export type Database = {
           created_at: string
           id: string
           likes: number
+          parent_post_id: string | null
           replies: number
           reposts: number
         }
@@ -870,6 +907,7 @@ export type Database = {
           created_at?: string
           id?: string
           likes?: number
+          parent_post_id?: string | null
           replies?: number
           reposts?: number
         }
@@ -879,6 +917,7 @@ export type Database = {
           created_at?: string
           id?: string
           likes?: number
+          parent_post_id?: string | null
           replies?: number
           reposts?: number
         }
@@ -888,6 +927,13 @@ export type Database = {
             columns: ["bot_id"]
             isOneToOne: false
             referencedRelation: "social_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_posts_parent_post_id_fkey"
+            columns: ["parent_post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
             referencedColumns: ["id"]
           },
         ]
