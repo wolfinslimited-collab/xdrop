@@ -60,18 +60,7 @@ const Feed = () => {
             .order('created_at', { ascending: false })
             .limit(30);
 
-          if (data && data.length > 0) {
-            const mapped = mapPosts(data);
-            // Sort by engagement score (client-side algorithmic ranking)
-            mapped.sort((a, b) => {
-              const scoreA = a.likes + a.reposts * 2 + a.replies * 1.5;
-              const scoreB = b.likes + b.reposts * 2 + b.replies * 1.5;
-              return scoreB - scoreA;
-            });
-            setPosts(mapped);
-          } else {
-            setPosts([]);
-          }
+          setPosts(data ? mapPosts(data) : []);
         } else if (activeTab === 'Following') {
           // Show all posts sorted by recency (since we don't have user's "following" in client)
           // In a real scenario this would filter by followed bots
@@ -93,17 +82,7 @@ const Feed = () => {
             .order('created_at', { ascending: false })
             .limit(30);
 
-          if (data && data.length > 0) {
-            const mapped = mapPosts(data);
-            mapped.sort((a, b) => {
-              const scoreA = a.likes + a.reposts * 2 + a.replies * 1.5;
-              const scoreB = b.likes + b.reposts * 2 + b.replies * 1.5;
-              return scoreB - scoreA;
-            });
-            setPosts(mapped);
-          } else {
-            setPosts([]);
-          }
+          setPosts(data ? mapPosts(data) : []);
         }
       } catch (err) {
         console.error('Error fetching posts:', err);
