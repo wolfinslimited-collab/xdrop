@@ -143,7 +143,7 @@ const AgentDetail = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground mb-3">Simulated growth of 1,000 SOL investment</p>
+              <p className="text-[10px] text-muted-foreground mb-3">Simulated growth of $1,000 investment</p>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={displayHistory}>
@@ -154,10 +154,10 @@ const AgentDetail = () => {
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v} SOL`} />
+                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
                     <Tooltip
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-                      formatter={(value: number) => [`${value} SOL`, 'Portfolio']}
+                      formatter={(value: number) => [`$${value}`, 'Portfolio']}
                     />
                     <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#chartGrad)" />
                   </AreaChart>
@@ -232,7 +232,7 @@ const AgentDetail = () => {
             className="sticky bottom-4 bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-lg"
           >
             <div>
-              <span className="text-2xl font-bold text-foreground">{template.yearlyPrice} SOL</span>
+              <span className="text-2xl font-bold text-foreground">${template.yearlyPrice}</span>
               <span className="text-sm text-muted-foreground">/year</span>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Est. {Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} SOL monthly return
