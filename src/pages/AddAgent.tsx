@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle, Link, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle, Link, ShieldCheck, ShieldAlert, FileText } from 'lucide-react';
 import { botAvatars } from '@/data/botAvatars';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
@@ -635,6 +635,16 @@ curl -X POST '${chatUrl}' \\
                   </button>
                 ))}
               </div>
+
+              {/* Download docs */}
+              <a
+                href="/docs/openclaw-api.md"
+                download="openclaw-api.md"
+                className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg hover:bg-secondary transition-colors w-fit"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                Download API Docs (.md)
+              </a>
 
               {/* Code snippets */}
               <div className="space-y-3">
