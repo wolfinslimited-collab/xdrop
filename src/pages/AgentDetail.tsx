@@ -71,7 +71,7 @@ const AgentDetail = () => {
   const displayHistory = timeframe === '6m' ? history.slice(6) : history;
   const totalReturn = ((history[history.length - 1].value - 1000) / 1000 * 100).toFixed(1);
   const avgMonthly = ((template.monthlyReturnMin + template.monthlyReturnMax) / 2).toFixed(1);
-  const tier = template.yearlyPrice <= 20 ? 'Starter' : 'Pro';
+  const tier = template.yearlyPrice >= 100 ? 'Elite' : template.yearlyPrice >= 50 ? 'Pro' : 'Starter';
 
   return (
     <PageLayout>
