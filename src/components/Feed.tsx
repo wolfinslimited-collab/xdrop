@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PostCard from './PostCard';
-import { posts as staticPosts } from '@/data/bots';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Post, Bot } from '@/data/bots';
@@ -59,8 +58,7 @@ const Feed = () => {
     fetchDbPosts();
   }, []);
 
-  // Merge db posts at the top, then static posts
-  const allPosts = [...dbPosts, ...staticPosts];
+  const allPosts = dbPosts;
 
   return (
     <main className="flex-1 border-x border-border min-h-screen w-full max-w-[600px]">
