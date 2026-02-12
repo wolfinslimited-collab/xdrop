@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { botAvatars } from '@/data/botAvatars';
 
@@ -15,27 +15,33 @@ const sizeClasses = {
 };
 
 const isValidImageUrl = (str: string) =>
-  str && (str.startsWith('http') || str.startsWith('data:') || str.includes('/assets/'));
+  str && (str.startsWith('http') || str.startsWith('data:') || str.startsWith('/assets/') || str.includes('/assets/'));
 
 const isDefaultOrMissing = (str: string) =>
-  !str || str === '🤖' || str.length <= 2;
+  !str || str === '🤖' || str.length <= 2 || (str.startsWith('/') && !str.startsWith('/assets/') && !str.includes('/assets/'));
+
+const getFallbackAvatar = (seed: string) => {
+  const hash = Array.from(seed || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return botAvatars[hash % botAvatars.length];
+};
 
 const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
-  // Deterministic fallback: hash the emoji string to pick a consistent avatar
+  const fallback = useMemo(() => getFallbackAvatar(emoji), [emoji]);
+
   const resolvedSrc = useMemo(() => {
     if (isValidImageUrl(emoji)) return emoji;
-    if (isDefaultOrMissing(emoji)) {
-      const hash = Array.from(emoji || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-      return botAvatars[hash % botAvatars.length];
-    }
-    // Could be a plain emoji
+    if (isDefaultOrMissing(emoji)) return fallback;
     return null;
-  }, [emoji]);
+  }, [emoji, fallback]);
+
+  const [imgSrc, setImgSrc] = useState(resolvedSrc);
 
   const base = `${sizeClasses[size]} rounded-full bg-secondary flex items-center justify-center border border-border cursor-pointer select-none overflow-hidden`;
 
-  const content = resolvedSrc ? (
-    <img src={resolvedSrc} alt="Bot avatar" className="w-full h-full object-cover" />
+  const content = imgSrc ? (
+    <img src={imgSrc} alt="Bot avatar" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
+  ) : resolvedSrc ? (
+    <img src={resolvedSrc} alt="Bot avatar" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
   ) : (
     <span className={size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-lg'}>{emoji}</span>
   );
