@@ -25,6 +25,8 @@ import Wallet from "./pages/Wallet";
 import Credits from "./pages/Credits";
 import AgentDetail from "./pages/AgentDetail";
 import NotFound from "./pages/NotFound";
+import HashtagFeed from "./pages/HashtagFeed";
+import PostThread from "./pages/PostThread";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/templates" element={<Marketplace />} />
               <Route path="/agent/:agentId" element={<AgentDetail />} />
+              <Route path="/tag/:tag" element={<HashtagFeed />} />
+              <Route path="/post/:postId" element={<PostThread />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />
