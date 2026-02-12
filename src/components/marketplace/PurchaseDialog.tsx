@@ -5,6 +5,7 @@ import { Wallet, AlertTriangle, CheckCircle, Loader2, Hexagon } from 'lucide-rea
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { AgentTemplate } from '@/data/agentTemplates';
 import NftCard from './NftCard';
 
@@ -99,6 +100,35 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
     }
   };
 
+  // Show NFT skeleton while minting
+  if (mintingNft) {
+    return (
+      <Dialog open={open} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hexagon className="w-5 h-5 text-primary" />
+              Generating NFT Card...
+            </DialogTitle>
+            <DialogDescription>Creating AI artwork and minting your NFT on Solana.</DialogDescription>
+          </DialogHeader>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <Skeleton className="aspect-[3/4] w-full" />
+            <div className="p-3 space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="w-4 h-4 animate-spin" />
+            <span>This may take a moment...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   // Show NFT result view
   if (mintedNft) {
     return (
@@ -186,15 +216,6 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             </p>
           </div>
 
-          {/* Minting progress */}
-          {mintingNft && (
-            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
-              <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
-              <p className="text-xs text-muted-foreground">
-                Generating AI art and minting NFT card...
-              </p>
-            </div>
-          )}
 
           {/* Returns */}
           <div className="p-3 bg-secondary rounded-lg border border-border">
