@@ -34,18 +34,6 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Check if user already purchased this template
-    const { data: existingAgents } = await serviceClient
-      .from("agents")
-      .select("id")
-      .eq("creator_id", user.id)
-      .eq("template_id", templateId)
-      .limit(1);
-
-    if (existingAgents && existingAgents.length > 0) {
-      throw new Error("You already own this agent");
-    }
-
     // Check wallet balance
     const { data: wallet } = await serviceClient
       .from("wallets")
