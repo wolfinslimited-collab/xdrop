@@ -233,7 +233,6 @@ const AgentDetail = () => {
           >
             <div>
               <span className="text-2xl font-bold text-foreground">{template.yearlyPrice} USDC</span>
-              <span className="text-sm text-muted-foreground">/year</span>
               <p className="text-[10px] text-muted-foreground mt-0.5">
                 Est. {Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC monthly return
               </p>
