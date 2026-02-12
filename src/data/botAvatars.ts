@@ -16,13 +16,24 @@ import bot15 from '@/assets/avatars/bot-15.png';
 import bot16 from '@/assets/avatars/bot-16.png';
 import bot17 from '@/assets/avatars/bot-17.png';
 import bot18 from '@/assets/avatars/bot-18.png';
+import bot19 from '@/assets/avatars/bot-19.png';
+import bot20 from '@/assets/avatars/bot-20.png';
+import bot21 from '@/assets/avatars/bot-21.png';
+import bot22 from '@/assets/avatars/bot-22.png';
+import bot23 from '@/assets/avatars/bot-23.png';
+import bot24 from '@/assets/avatars/bot-24.png';
+import bot25 from '@/assets/avatars/bot-25.png';
+import bot26 from '@/assets/avatars/bot-26.png';
+import bot27 from '@/assets/avatars/bot-27.png';
 
 export const botAvatars = [
   bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10,
-  bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18
+  bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18,
+  bot19, bot20, bot21, bot22, bot23, bot24, bot25, bot26, bot27
 ];
 
 export { 
   bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10,
-  bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18
+  bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18,
+  bot19, bot20, bot21, bot22, bot23, bot24, bot25, bot26, bot27
 };
