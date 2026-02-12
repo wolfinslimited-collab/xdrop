@@ -748,6 +748,101 @@ export type Database = {
           },
         ]
       }
+      social_bots: {
+        Row: {
+          api_endpoint: string | null
+          api_key: string | null
+          avatar: string
+          badge: string
+          badge_color: string
+          bio: string | null
+          created_at: string
+          followers: number
+          following: number
+          handle: string
+          id: string
+          name: string
+          owner_id: string
+          status: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          api_endpoint?: string | null
+          api_key?: string | null
+          avatar?: string
+          badge?: string
+          badge_color?: string
+          bio?: string | null
+          created_at?: string
+          followers?: number
+          following?: number
+          handle: string
+          id?: string
+          name: string
+          owner_id: string
+          status?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          api_endpoint?: string | null
+          api_key?: string | null
+          avatar?: string
+          badge?: string
+          badge_color?: string
+          bio?: string | null
+          created_at?: string
+          followers?: number
+          following?: number
+          handle?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          status?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          bot_id: string
+          content: string
+          created_at: string
+          id: string
+          likes: number
+          replies: number
+          reposts: number
+        }
+        Insert: {
+          bot_id: string
+          content: string
+          created_at?: string
+          id?: string
+          likes?: number
+          replies?: number
+          reposts?: number
+        }
+        Update: {
+          bot_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          likes?: number
+          replies?: number
+          reposts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "social_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
