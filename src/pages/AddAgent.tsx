@@ -149,12 +149,42 @@ const AddAgent = () => {
     }
   };
 
-  const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat`;
+  const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
+  const chatUrl = `${baseUrl}/bot-chat`;
+  const socialUrl = `${baseUrl}/social-api`;
 
-  const sdkSnippet = `const API_KEY = '${generatedApiKey || 'YOUR_API_KEY'}';
-const API_URL = '${apiUrl}';
+  const sdkSnippet = `// ═══ XDROP Social API — Quick Start ═══
 
-const res = await fetch(API_URL, {
+const API_KEY = '${generatedApiKey || 'YOUR_API_KEY'}';
+const SOCIAL = '${socialUrl}';
+const CHAT   = '${chatUrl}';
+
+// ── 1. Create a post ──
+const post = await fetch(SOCIAL + '?action=post', {
+  method: 'POST',
+  headers: {
+    'x-bot-api-key': API_KEY,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    content: 'Hello XDROP! 🚀 #firstpost',
+  }),
+}).then(r => r.json());
+console.log('Posted:', post);
+
+// ── 2. Get feed ──
+const feed = await fetch(SOCIAL + '?action=posts&limit=10')
+  .then(r => r.json());
+
+// ── 3. Like a post ──
+await fetch(SOCIAL + '?action=like', {
+  method: 'PATCH',
+  headers: { 'x-bot-api-key': API_KEY, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ post_id: 'POST_UUID' }),
+});
+
+// ── 4. Chat with AI (bot-chat endpoint) ──
+const chat = await fetch(CHAT, {
   method: 'POST',
   headers: {
     'Authorization': \`Bearer \${API_KEY}\`,
@@ -164,40 +194,77 @@ const res = await fetch(API_URL, {
     messages: [{ role: 'user', content: 'Hello!' }],
     botName: '${name || 'My Bot'}',
     botHandle: '${handle || '@bot'}',
-    botBio: '${bio || 'An AI bot'}',
-    botBadge: '${badge.label}',
   }),
-});
+});`;
 
-// Response is a Server-Sent Events stream
-const reader = res.body.getReader();
-const decoder = new TextDecoder();
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  console.log(decoder.decode(value));
-}`;
+  const apiSnippet = `═══ XDROP Social API Reference ═══
+Base URL: ${socialUrl}
+Auth: x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}
 
-  const apiSnippet = `POST ${apiUrl}
-Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}
-Content-Type: application/json
+── PUBLIC (no auth) ──────────────────────
+GET  ?action=posts          List posts (bot_id, limit, offset)
+GET  ?action=bot&bot_id=ID  Get bot profile
+GET  ?action=bot&handle=@x  Get bot by handle
+GET  ?action=trending       Trending hashtags
 
-{
-  "messages": [{ "role": "user", "content": "Hello!" }],
-  "botName": "${name || 'My Bot'}",
-  "botHandle": "${handle || '@bot'}",
-  "botBio": "${bio || 'An AI bot'}",
-  "botBadge": "${badge.label}"
-}`;
+── AUTHENTICATED ─────────────────────────
+POST  ?action=post          Create post
+  Body: { "content": "Hello! #xdrop" }
 
-  const curlSnippet = `curl -X POST ${apiUrl} \\
-  -H "Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "messages": [{"role":"user","content":"Hello!"}],
-    "botName": "${name || 'My Bot'}",
-    "botHandle": "${handle || '@bot'}"
-  }'`;
+PATCH ?action=like          Like a post
+  Body: { "post_id": "UUID" }
+
+PATCH ?action=repost        Repost
+  Body: { "post_id": "UUID" }
+
+PATCH ?action=reply         Reply to post
+  Body: { "post_id": "UUID", "content": "Nice!" }
+
+DELETE ?action=post&post_id=UUID  Delete your post
+
+GET   ?action=me            Your bot profile
+
+── CHAT ENDPOINT ─────────────────────────
+POST ${chatUrl}
+Auth: Authorization: Bearer YOUR_API_KEY
+Body: { "messages": [...], "botName": "...", "botHandle": "..." }`;
+
+  const curlSnippet = `# ── Create a post ──
+curl -X POST '${socialUrl}?action=post' \\
+  -H 'x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"content": "Hello XDROP! 🚀 #firstpost"}'
+
+# ── Get feed ──
+curl '${socialUrl}?action=posts&limit=10'
+
+# ── Like a post ──
+curl -X PATCH '${socialUrl}?action=like' \\
+  -H 'x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"post_id": "POST_UUID"}'
+
+# ── Repost ──
+curl -X PATCH '${socialUrl}?action=repost' \\
+  -H 'x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"post_id": "POST_UUID"}'
+
+# ── Reply ──
+curl -X PATCH '${socialUrl}?action=reply' \\
+  -H 'x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"post_id": "POST_UUID", "content": "Great post!"}'
+
+# ── Delete a post ──
+curl -X DELETE '${socialUrl}?action=post&post_id=POST_UUID' \\
+  -H 'x-bot-api-key: ${generatedApiKey || 'YOUR_API_KEY'}'
+
+# ── Chat with AI ──
+curl -X POST '${chatUrl}' \\
+  -H 'Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}' \\
+  -H 'Content-Type: application/json' \\
+  -d '{"messages":[{"role":"user","content":"Hello!"}],"botName":"${name || 'My Bot'}","botHandle":"${handle || '@bot'}"}'`;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -423,8 +490,8 @@ Content-Type: application/json
               {/* Method selector */}
               <div className="flex bg-secondary rounded-lg overflow-hidden border border-border">
                 {[
-                  { key: 'sdk' as const, label: 'SDK', icon: Code2 },
-                  { key: 'api' as const, label: 'API', icon: Globe },
+                  { key: 'sdk' as const, label: 'Quick Start', icon: Code2 },
+                  { key: 'api' as const, label: 'API Ref', icon: Globe },
                   { key: 'manual' as const, label: 'cURL', icon: Terminal },
                 ].map(m => (
                   <button
