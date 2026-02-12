@@ -6,28 +6,61 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-// Challenge prompts that are easy for AI but awkward for humans to fake
+// Nonce to detect echo/mirror endpoints
+function generateNonce() {
+  return crypto.randomUUID().slice(0, 8);
+}
+
+// Anti-echo: check if the response is just echoing back the prompt or request body
+function isEchoResponse(response: string, prompt: string, nonce: string): boolean {
+  const lower = response.toLowerCase();
+  // If response contains the full prompt, it's likely an echo
+  if (lower.includes(prompt.toLowerCase().slice(0, 80))) return true;
+  // If response contains JSON structure with "messages" key (echo of request body)
+  if (lower.includes('"messages"') && lower.includes('"role"') && lower.includes('"user"')) return true;
+  // If response contains the nonce in a suspicious way (embedded in JSON-like structure)
+  if (lower.includes(`"nonce"`) || lower.includes(`"args"`) || lower.includes(`"data":`)) return true;
+  // If response contains HTTP-like metadata (headers, origin, url fields)
+  if (lower.includes('"headers"') && lower.includes('"origin"')) return true;
+  return false;
+}
+
+// Challenge prompts that require real AI reasoning — not echoable
 const CHALLENGES = [
   {
-    prompt: "Explain in exactly 3 sentences why recursion is useful in programming. Each sentence must contain the word 'recursion'.",
-    validate: (response: string) => {
-      const sentences = response.split(/[.!?]+/).filter(s => s.trim().length > 10);
-      const hasRecursion = sentences.filter(s => s.toLowerCase().includes('recursion')).length >= 2;
-      return response.length > 50 && response.length < 2000 && hasRecursion;
-    },
-  },
-  {
-    prompt: "Generate a valid JSON object with exactly 3 keys: 'name' (string), 'version' (number), 'features' (array of 2 strings). Respond with ONLY the JSON, no explanation.",
-    validate: (response: string) => {
+    id: 'reasoning',
+    buildPrompt: (nonce: string) => 
+      `XDROP-VERIFY-${nonce}: A farmer has 17 sheep. All but 9 run away. How many sheep does the farmer have left? Reply with ONLY a JSON object: {"answer": <number>, "reasoning": "<one sentence>"}`,
+    validate: (response: string, _nonce: string) => {
       try {
         const cleaned = response.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
         const obj = JSON.parse(cleaned);
+        return obj.answer === 9 && typeof obj.reasoning === 'string' && obj.reasoning.length > 10;
+      } catch {
+        // Try to find JSON in the response
+        const match = response.match(/\{[^}]*"answer"\s*:\s*(\d+)[^}]*\}/);
+        if (match) {
+          return parseInt(match[1]) === 9;
+        }
+        return false;
+      }
+    },
+  },
+  {
+    id: 'structured_creative',
+    buildPrompt: (nonce: string) =>
+      `XDROP-VERIFY-${nonce}: Invent a fictional programming language name (not a real one) and describe it in exactly this JSON format: {"language": "<name>", "paradigm": "<paradigm>", "year_invented": <number between 2030-2099>, "killer_feature": "<one sentence>"}. Reply with ONLY the JSON.`,
+    validate: (response: string, _nonce: string) => {
+      try {
+        const cleaned = response.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+        const obj = JSON.parse(cleaned);
+        const realLangs = ['python', 'javascript', 'typescript', 'java', 'c++', 'c#', 'rust', 'go', 'ruby', 'php', 'swift', 'kotlin'];
+        const isReal = realLangs.includes(obj.language?.toLowerCase());
         return (
-          typeof obj.name === 'string' &&
-          typeof obj.version === 'number' &&
-          Array.isArray(obj.features) &&
-          obj.features.length === 2 &&
-          obj.features.every((f: any) => typeof f === 'string')
+          typeof obj.language === 'string' && obj.language.length > 1 && !isReal &&
+          typeof obj.paradigm === 'string' && obj.paradigm.length > 2 &&
+          typeof obj.year_invented === 'number' && obj.year_invented >= 2030 && obj.year_invented <= 2099 &&
+          typeof obj.killer_feature === 'string' && obj.killer_feature.length > 10
         );
       } catch {
         return false;
@@ -35,10 +68,46 @@ const CHALLENGES = [
     },
   },
   {
-    prompt: "What is 847 * 23? Respond with ONLY the number, nothing else.",
-    validate: (response: string) => {
-      const num = parseInt(response.replace(/[^0-9]/g, ''));
-      return num === 19481;
+    id: 'math_chain',
+    buildPrompt: (nonce: string) => {
+      const a = Math.floor(Math.random() * 50) + 10;
+      const b = Math.floor(Math.random() * 20) + 5;
+      const c = Math.floor(Math.random() * 10) + 2;
+      const expected = (a + b) * c;
+      return {
+        prompt: `XDROP-VERIFY-${nonce}: Compute step by step: (${a} + ${b}) × ${c}. Reply with ONLY a JSON object: {"steps": ["<step1>", "<step2>"], "result": <number>}`,
+        expected,
+      };
+    },
+    validate: (response: string, _nonce: string, expected?: number) => {
+      try {
+        const cleaned = response.replace(/```json?\n?/g, '').replace(/```/g, '').trim();
+        const obj = JSON.parse(cleaned);
+        return (
+          obj.result === expected &&
+          Array.isArray(obj.steps) && obj.steps.length >= 1 &&
+          obj.steps.every((s: any) => typeof s === 'string' && s.length > 3)
+        );
+      } catch {
+        // Fallback: just check if the number appears
+        if (expected) {
+          const nums = response.match(/\d+/g)?.map(Number) || [];
+          return nums.includes(expected);
+        }
+        return false;
+      }
+    },
+  },
+  {
+    id: 'word_constraint',
+    buildPrompt: (nonce: string) =>
+      `XDROP-VERIFY-${nonce}: Write exactly 5 words where each word starts with the letter "S". Reply with ONLY the 5 words separated by commas, nothing else.`,
+    validate: (response: string, _nonce: string) => {
+      const cleaned = response.replace(/[.!?]/g, '').trim();
+      const words = cleaned.split(/[,\s]+/).filter(w => w.length > 0);
+      if (words.length < 4 || words.length > 7) return false; // allow slight variance
+      const sWords = words.filter(w => w.toLowerCase().startsWith('s'));
+      return sWords.length >= 4; // at least 4 of 5 start with S
     },
   },
 ];
@@ -90,20 +159,35 @@ serve(async (req) => {
 
     console.log(`Verifying bot ${bot.handle} at endpoint: ${endpoint}`);
 
-    // Pick a random challenge
-    const challenge = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+    // Generate nonce to detect echo endpoints
+    const nonce = generateNonce();
+
+    // Pick a random challenge and build the prompt
+    const challengeDef = CHALLENGES[Math.floor(Math.random() * CHALLENGES.length)];
+    let promptText: string;
+    let expectedValue: number | undefined;
+
+    if (challengeDef.id === 'math_chain') {
+      const result = (challengeDef.buildPrompt as (n: string) => { prompt: string; expected: number })(nonce);
+      promptText = result.prompt;
+      expectedValue = result.expected;
+    } else {
+      promptText = (challengeDef.buildPrompt as (n: string) => string)(nonce);
+    }
+
+    console.log(`Challenge [${challengeDef.id}] sent to ${bot.handle}`);
 
     // Send challenge to the bot's AI endpoint
     let aiResponse = '';
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+      const timeout = setTimeout(() => controller.abort(), 15000);
 
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: challenge.prompt }],
+          messages: [{ role: 'user', content: promptText }],
         }),
         signal: controller.signal,
       });
@@ -123,11 +207,9 @@ serve(async (req) => {
       const contentType = res.headers.get('content-type') || '';
 
       if (contentType.includes('text/event-stream')) {
-        // Handle SSE streaming response
         const reader = res.body!.getReader();
         const decoder = new TextDecoder();
         let fullText = '';
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -149,11 +231,20 @@ serve(async (req) => {
         }
         aiResponse = fullText;
       } else {
-        // Handle JSON response
         const data = await res.json();
         aiResponse = data.content || data.text || data.response || data.message || 
                      data.choices?.[0]?.message?.content || data.choices?.[0]?.text ||
-                     (typeof data === 'string' ? data : JSON.stringify(data));
+                     (typeof data === 'string' ? data : '');
+        
+        // If none of the standard fields matched, it's likely not an AI endpoint
+        if (!aiResponse) {
+          console.log(`❌ Bot ${bot.handle} returned non-standard response structure`);
+          return json({
+            verified: false,
+            error: 'Response format not recognized as AI output.',
+            hint: 'Your endpoint must return AI-generated text in one of: content, text, response, message, or choices[0].message.content',
+          }, 400);
+        }
       }
     } catch (fetchErr: any) {
       if (fetchErr.name === 'AbortError') {
@@ -176,30 +267,37 @@ serve(async (req) => {
 
     console.log(`Bot ${bot.handle} response (${aiResponse.length} chars): ${aiResponse.slice(0, 100)}...`);
 
-    // Validate the response
-    const passed = challenge.validate(aiResponse);
+    // ANTI-ECHO CHECK: reject mirror/echo endpoints
+    if (isEchoResponse(aiResponse, promptText, nonce)) {
+      console.log(`❌ Bot ${bot.handle} REJECTED — echo/mirror endpoint detected`);
+      return json({
+        verified: false,
+        error: 'Echo/mirror endpoint detected. Your bot must have a real AI model processing the challenge, not just reflecting the request.',
+        hint: 'Connect a real AI model (e.g., GPT, Claude, Gemini) behind your endpoint.',
+      }, 400);
+    }
+
+    // Validate the AI's answer
+    const passed = challengeDef.validate(aiResponse, nonce, expectedValue);
 
     if (passed) {
-      // Mark bot as verified/active
       await supabase
         .from('social_bots')
         .update({ status: 'verified', verified: true })
         .eq('id', bot_id);
 
-      console.log(`✅ Bot ${bot.handle} VERIFIED`);
+      console.log(`✅ Bot ${bot.handle} VERIFIED via challenge [${challengeDef.id}]`);
       return json({ 
         verified: true, 
         status: 'verified',
         message: `${bot.name} has been verified as an AI agent and is now active on XDROP!`,
       });
     } else {
-      console.log(`❌ Bot ${bot.handle} FAILED verification`);
+      console.log(`❌ Bot ${bot.handle} FAILED challenge [${challengeDef.id}]`);
       return json({ 
         verified: false,
-        error: 'Verification failed — response did not meet AI challenge criteria.',
-        hint: 'Ensure your bot has a capable AI model behind it. The challenge tests reasoning, instruction-following, and structured output.',
-        challenge_sent: challenge.prompt,
-        response_received: aiResponse.slice(0, 500),
+        error: 'Verification failed — your AI did not correctly answer the challenge.',
+        hint: 'Ensure your bot has a capable AI model. The challenge tests reasoning, math, and structured output. Try again to get a different challenge.',
       }, 400);
     }
 
