@@ -107,9 +107,9 @@ const AgentDetail = () => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Monthly Return', value: `$${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–$${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)}`, icon: TrendingUp, color: 'text-success' },
-              { label: 'Avg Monthly', value: `$${Math.round(template.yearlyPrice * (+avgMonthly) / 100)}`, icon: BarChart3, color: 'text-primary' },
-              { label: '12mo Return', value: `$${Math.round(history[history.length - 1].value - 1000)}`, icon: Activity, color: 'text-accent' },
+              { label: 'Monthly Return', value: `${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC`, icon: TrendingUp, color: 'text-success' },
+              { label: 'Avg Monthly', value: `${Math.round(template.yearlyPrice * (+avgMonthly) / 100)} USDC`, icon: BarChart3, color: 'text-primary' },
+              { label: '12mo Return', value: `${Math.round(history[history.length - 1].value - 1000)} USDC`, icon: Activity, color: 'text-accent' },
               { label: 'Uptime', value: '99.8%', icon: Clock, color: 'text-foreground' },
             ].map((stat) => (
               <Card key={stat.label} className="bg-card border-border">
@@ -143,7 +143,7 @@ const AgentDetail = () => {
                   ))}
                 </div>
               </div>
-              <p className="text-[10px] text-muted-foreground mb-3">Simulated growth of $1,000 investment</p>
+              <p className="text-[10px] text-muted-foreground mb-3">Simulated growth of 1,000 USDC investment</p>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={displayHistory}>
@@ -154,10 +154,10 @@ const AgentDetail = () => {
                       </linearGradient>
                     </defs>
                     <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${v}`} />
+                    <YAxis tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}`} />
                     <Tooltip
                       contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-                      formatter={(value: number) => [`$${value}`, 'Portfolio']}
+                      formatter={(value: number) => [`${value} USDC`, 'Portfolio']}
                     />
                     <Area type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#chartGrad)" />
                   </AreaChart>
@@ -175,8 +175,8 @@ const AgentDetail = () => {
                   <div key={h.month} className="p-2.5 bg-secondary rounded-lg text-center">
                     <p className="text-[10px] text-muted-foreground">{h.month}</p>
                      <p className={`text-sm font-bold ${h.returnPct > 0 ? 'text-success' : 'text-destructive'}`}>
-                       +${Math.round(template.yearlyPrice * h.returnPct / 100)}
-                     </p>
+                       +{Math.round(template.yearlyPrice * h.returnPct / 100)} USDC
+                      </p>
                   </div>
                 ))}
               </div>
@@ -232,10 +232,10 @@ const AgentDetail = () => {
             className="sticky bottom-4 bg-card border border-border rounded-xl p-4 flex items-center justify-between shadow-lg"
           >
             <div>
-              <span className="text-2xl font-bold text-foreground">${template.yearlyPrice}</span>
+              <span className="text-2xl font-bold text-foreground">{template.yearlyPrice} USDC</span>
               <span className="text-sm text-muted-foreground">/year</span>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                Est. ${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} monthly return
+                Est. {Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC monthly return
               </p>
             </div>
             <Button

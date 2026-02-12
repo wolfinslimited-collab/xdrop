@@ -265,7 +265,7 @@ const Marketplace = () => {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-success" />
-                            <span className="text-xs font-semibold text-success">${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)}</span>
+                            <span className="text-xs font-semibold text-success">{Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC</span>
                             <span className="text-[10px] text-muted-foreground">/mo</span>
                           </div>
                           <div className="flex items-center gap-1.5">
@@ -276,7 +276,7 @@ const Marketplace = () => {
                       </div>
                       <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
                         <div>
-                          <span className="text-lg font-bold text-foreground">${template.yearlyPrice}</span>
+                          <span className="text-lg font-bold text-foreground">{template.yearlyPrice} USDC</span>
                           <span className="text-xs text-muted-foreground">/year</span>
                         </div>
                         <Button
@@ -345,7 +345,7 @@ const Marketplace = () => {
                           {agent.short_description || agent.description}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
-                          <span className="text-xs font-bold text-gradient-cyber">${agent.price}</span>
+                          <span className="text-xs font-bold text-gradient-cyber">{agent.price} USDC</span>
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Star className="w-3 h-3 fill-accent text-accent" />
                             {agent.reliability_score.toFixed(1)}
