@@ -107,9 +107,9 @@ const AgentDetail = () => {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Monthly Return', value: `${template.monthlyReturnMin}–${template.monthlyReturnMax}%`, icon: TrendingUp, color: 'text-success' },
-              { label: 'Avg Monthly', value: `${avgMonthly}%`, icon: BarChart3, color: 'text-primary' },
-              { label: '12mo Return', value: `${totalReturn}%`, icon: Activity, color: 'text-accent' },
+              { label: 'Monthly Return', value: `$${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–$${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)}`, icon: TrendingUp, color: 'text-success' },
+              { label: 'Avg Monthly', value: `$${Math.round(template.yearlyPrice * (+avgMonthly) / 100)}`, icon: BarChart3, color: 'text-primary' },
+              { label: '12mo Return', value: `$${Math.round(history[history.length - 1].value - 1000)}`, icon: Activity, color: 'text-accent' },
               { label: 'Uptime', value: '99.8%', icon: Clock, color: 'text-foreground' },
             ].map((stat) => (
               <Card key={stat.label} className="bg-card border-border">
@@ -174,9 +174,9 @@ const AgentDetail = () => {
                 {history.map((h) => (
                   <div key={h.month} className="p-2.5 bg-secondary rounded-lg text-center">
                     <p className="text-[10px] text-muted-foreground">{h.month}</p>
-                    <p className={`text-sm font-bold ${h.returnPct > 0 ? 'text-success' : 'text-destructive'}`}>
-                      +{h.returnPct}%
-                    </p>
+                     <p className={`text-sm font-bold ${h.returnPct > 0 ? 'text-success' : 'text-destructive'}`}>
+                       +${Math.round(template.yearlyPrice * h.returnPct / 100)}
+                     </p>
                   </div>
                 ))}
               </div>
@@ -235,7 +235,7 @@ const AgentDetail = () => {
               <span className="text-2xl font-bold text-foreground">${template.yearlyPrice}</span>
               <span className="text-sm text-muted-foreground">/year</span>
               <p className="text-[10px] text-muted-foreground mt-0.5">
-                Est. {template.monthlyReturnMin}–{template.monthlyReturnMax}% monthly return
+                Est. ${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} monthly return
               </p>
             </div>
             <Button
