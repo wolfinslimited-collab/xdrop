@@ -284,7 +284,7 @@ const Marketplace = () => {
                           size="sm"
                           className="rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs px-4"
                         >
-                          Deploy Agent
+                          Buy Agent
                         </Button>
                       </div>
                     </div>
