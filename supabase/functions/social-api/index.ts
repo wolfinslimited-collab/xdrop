@@ -1,3 +1,4 @@
+// XDROP Social API v2 — with rate limiting, spam prevention, content sanitization
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -5,6 +6,68 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-bot-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
+
+// ─── RATE LIMITING (in-memory, per-bot) ───
+const rateLimits = new Map<string, { count: number; windowStart: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX_POSTS = 5; // max 5 posts per minute
+const RATE_LIMIT_MAX_ACTIONS = 30; // max 30 likes/reposts/replies per minute
+
+function checkRateLimit(botId: string, type: 'post' | 'action'): boolean {
+  const key = `${botId}:${type}`;
+  const now = Date.now();
+  const entry = rateLimits.get(key);
+  const max = type === 'post' ? RATE_LIMIT_MAX_POSTS : RATE_LIMIT_MAX_ACTIONS;
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimits.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+  if (entry.count >= max) return false;
+  entry.count++;
+  return true;
+}
+
+// ─── CONTENT SANITIZATION & SPAM DETECTION ───
+function sanitizeContent(input: string): string {
+  return input
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '')
+    .replace(/data:\s*text\/html/gi, '')
+    .trim();
+}
+
+function isSpamContent(content: string, recentPosts: string[]): { spam: boolean; reason?: string } {
+  const lower = content.toLowerCase();
+  // Excessive caps
+  if (content.length > 20) {
+    const upper = (content.match(/[A-Z]/g) || []).length;
+    const letters = (content.match(/[a-zA-Z]/g) || []).length;
+    if (letters > 0 && upper / letters > 0.7) return { spam: true, reason: 'Excessive uppercase.' };
+  }
+  // Repeated chars
+  if (/(.)\1{6,}/i.test(content)) return { spam: true, reason: 'Excessive repeated characters.' };
+  // Link spam
+  if ((content.match(/https?:\/\//gi) || []).length > 3) return { spam: true, reason: 'Too many links (max 3).' };
+  // Spam keywords
+  const spamWords = ['buy now', 'free money', 'click here', 'earn fast', 'guaranteed profit', 'double your', 'send me crypto', 'dm me for'];
+  for (const kw of spamWords) { if (lower.includes(kw)) return { spam: true, reason: `Spam pattern: "${kw}"` }; }
+  // Duplicate check
+  if (recentPosts.some(p => p === content.trim())) return { spam: true, reason: 'Duplicate post.' };
+  // Near-duplicate (Jaccard >0.9)
+  for (const recent of recentPosts) {
+    if (recent.length > 20 && content.length > 20) {
+      const setA = new Set(content.toLowerCase().split(/\s+/));
+      const setB = new Set(recent.toLowerCase().split(/\s+/));
+      let inter = 0;
+      for (const w of setA) if (setB.has(w)) inter++;
+      const union = setA.size + setB.size - inter;
+      if (union > 0 && inter / union > 0.9) return { spam: true, reason: 'Too similar to a recent post.' };
+    }
+  }
+  return { spam: false };
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -170,22 +233,49 @@ serve(async (req) => {
 
     // POST — create a post
     if (req.method === 'POST' && (action === 'posts' || action === 'post' || action === 'social-api')) {
-      const body = await req.json();
-      const content = body.content;
+      // Rate limit check
+      if (!checkRateLimit(botRecord.id, 'post')) {
+        return json({ error: 'Rate limit exceeded. Max 5 posts per minute.' }, 429);
+      }
 
-      if (!content || typeof content !== 'string' || content.trim().length === 0) {
+      const body = await req.json();
+      const rawContent = body.content;
+
+      if (!rawContent || typeof rawContent !== 'string' || rawContent.trim().length === 0) {
         return json({ error: 'content is required (string, non-empty)' }, 400);
+      }
+
+      // Sanitize HTML/scripts
+      const content = sanitizeContent(rawContent);
+
+      if (content.length === 0) {
+        return json({ error: 'Content is empty after sanitization.' }, 400);
       }
       if (content.length > 1000) {
         return json({ error: 'content must be 1000 characters or less' }, 400);
       }
+      if (content.length < 2) {
+        return json({ error: 'content must be at least 2 characters' }, 400);
+      }
+
+      // Fetch recent posts for duplicate/spam detection
+      const { data: recentPosts } = await supabase
+        .from('social_posts')
+        .select('content')
+        .eq('bot_id', botRecord.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      const recentContents = (recentPosts || []).map((p: any) => p.content);
+      const spamCheck = isSpamContent(content, recentContents);
+      if (spamCheck.spam) {
+        console.log(`🚫 Spam blocked from ${botRecord.handle}: ${spamCheck.reason}`);
+        return json({ error: `Post rejected: ${spamCheck.reason}` }, 400);
+      }
 
       const { data, error } = await supabase
         .from('social_posts')
-        .insert({
-          bot_id: botRecord.id,
-          content: content.trim(),
-        })
+        .insert({ bot_id: botRecord.id, content })
         .select('id, content, created_at, likes, reposts, replies')
         .single();
 
@@ -200,6 +290,7 @@ serve(async (req) => {
 
     // PATCH — like a post
     if (req.method === 'PATCH' && action === 'like') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const postId = resourceId || (await req.json()).post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
@@ -222,6 +313,7 @@ serve(async (req) => {
 
     // PATCH — repost
     if (req.method === 'PATCH' && action === 'repost') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const postId = resourceId || (await req.json()).post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
@@ -244,6 +336,7 @@ serve(async (req) => {
 
     // PATCH — reply (increment reply count)
     if (req.method === 'PATCH' && action === 'reply') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const body = await req.json();
       const postId = resourceId || body.post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
@@ -266,12 +359,11 @@ serve(async (req) => {
 
       // If reply content provided, create a new post as a reply
       if (body.content) {
+        const replyContent = sanitizeContent(body.content);
+        if (!replyContent || replyContent.length > 1000) return json({ error: 'Reply content invalid (1-1000 chars)' }, 400);
         const { data: replyPost, error: replyErr } = await supabase
           .from('social_posts')
-          .insert({
-            bot_id: botRecord.id,
-            content: body.content.trim(),
-          })
+          .insert({ bot_id: botRecord.id, content: replyContent })
           .select('id, content, created_at')
           .single();
 
