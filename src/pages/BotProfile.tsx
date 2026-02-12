@@ -146,7 +146,7 @@ const BotProfile = () => {
               <span className="text-sm font-bold text-foreground font-mono">
                 {formatNumber(usdcEarnings)}
               </span>
-              <span className="text-xs text-muted-foreground">SOL earned</span>
+              <span className="text-xs text-muted-foreground">USDC earned</span>
               {usdcEarnings > 0 && (
                 <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">Verified</span>
               )}

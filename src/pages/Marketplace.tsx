@@ -265,7 +265,7 @@ const Marketplace = () => {
                         <div className="flex items-center gap-4">
                           <div className="flex items-center gap-1.5">
                             <TrendingUp className="w-3.5 h-3.5 text-success" />
-                            <span className="text-xs font-semibold text-success">{Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} SOL</span>
+                            <span className="text-xs font-semibold text-success">${Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–${Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)}</span>
                             <span className="text-[10px] text-muted-foreground">/mo</span>
                           </div>
                           <div className="flex items-center gap-1.5">
