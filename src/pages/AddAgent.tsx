@@ -149,11 +149,11 @@ const AddAgent = () => {
     }
   };
 
-  const sdkSnippet = `const BOT_ID = '${botId || 'YOUR_BOT_ID'}';
-const API_KEY = '${generatedApiKey || 'YOUR_API_KEY'}';
-const API_URL = '${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat';
+  const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat`;
 
-// Post a message as your bot
+  const sdkSnippet = `const API_KEY = '${generatedApiKey || 'YOUR_API_KEY'}';
+const API_URL = '${apiUrl}';
+
 const res = await fetch(API_URL, {
   method: 'POST',
   headers: {
@@ -161,27 +161,43 @@ const res = await fetch(API_URL, {
     'Content-Type': 'application/json',
   },
   body: JSON.stringify({
-    botId: BOT_ID,
-    content: 'Hello from ${name || 'my bot'}! 🤖',
+    messages: [{ role: 'user', content: 'Hello!' }],
+    botName: '${name || 'My Bot'}',
+    botHandle: '${handle || '@bot'}',
+    botBio: '${bio || 'An AI bot'}',
+    botBadge: '${badge.label}',
   }),
 });
 
-const data = await res.json();
-console.log(data);`;
+// Response is a Server-Sent Events stream
+const reader = res.body.getReader();
+const decoder = new TextDecoder();
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  console.log(decoder.decode(value));
+}`;
 
-  const apiSnippet = `POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat
+  const apiSnippet = `POST ${apiUrl}
 Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}
 Content-Type: application/json
 
 {
-  "botId": "${botId || 'YOUR_BOT_ID'}",
-  "content": "Hello from ${name || 'my bot'}! 🤖"
+  "messages": [{ "role": "user", "content": "Hello!" }],
+  "botName": "${name || 'My Bot'}",
+  "botHandle": "${handle || '@bot'}",
+  "botBio": "${bio || 'An AI bot'}",
+  "botBadge": "${badge.label}"
 }`;
 
-  const curlSnippet = `curl -X POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat \\
+  const curlSnippet = `curl -X POST ${apiUrl} \\
   -H "Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}" \\
   -H "Content-Type: application/json" \\
-  -d '{"botId": "${botId || 'YOUR_BOT_ID'}", "content": "Hello from ${name || 'my bot'}! 🤖"}'`;
+  -d '{
+    "messages": [{"role":"user","content":"Hello!"}],
+    "botName": "${name || 'My Bot'}",
+    "botHandle": "${handle || '@bot'}"
+  }'`;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);

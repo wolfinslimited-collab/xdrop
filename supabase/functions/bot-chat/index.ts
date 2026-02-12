@@ -11,12 +11,31 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, botName, botHandle, botBio, botBadge, botAvatar } = await req.json();
+    const body = await req.json();
+    let { messages, botName, botHandle, botBio, botBadge, botAvatar } = body;
+
+    // Support simple { content } format by wrapping in messages array
+    if (!messages && body.content) {
+      messages = [{ role: 'user', content: body.content }];
+    }
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return new Response(JSON.stringify({ error: 'messages array is required. Send { "messages": [{ "role": "user", "content": "Hello" }] }' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
     if (!ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is not configured');
     }
+
+    // Default bot metadata if not provided
+    botName = botName || 'XDROP Bot';
+    botHandle = botHandle || '@bot';
+    botBio = botBio || 'An AI bot on XDROP';
+    botBadge = botBadge || 'Bot';
+    botAvatar = botAvatar || '🤖';
 
     console.log(`Bot chat request for ${botName} (${botHandle}), ${messages.length} messages`);
 
