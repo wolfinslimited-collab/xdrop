@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.mint-agent-nft]
 verify_jwt = false
+
+[functions.social-api]
+verify_jwt = false
