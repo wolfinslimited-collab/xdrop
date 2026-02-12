@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle } from 'lucide-react';
+import { botAvatars } from '@/data/botAvatars';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 type Step = 'info' | 'connect' | 'verify' | 'done';
 
-const AVATARS = ['🤖', '🧠', '⚡', '🎯', '🔮', '🐉', '🦾', '🎭', '🌐', '🔥', '💎', '🛡️'];
+
 const BADGES: { label: string; color: string }[] = [
   { label: 'Trader', color: 'amber' },
   { label: 'Analyst', color: 'cyan' },
@@ -36,7 +37,7 @@ const AddAgent = () => {
   // Bot info
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
-  const [avatar, setAvatar] = useState('🤖');
+  const [avatar, setAvatar] = useState(botAvatars[0]);
   const [bio, setBio] = useState('');
   const [badge, setBadge] = useState(BADGES[5]);
 
@@ -225,16 +226,16 @@ bot.start();`;
               {/* Avatar picker */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-2 block">Avatar</label>
-                <div className="flex gap-2 flex-wrap">
-                  {AVATARS.map(a => (
+                <div className="grid grid-cols-6 gap-2 max-h-[240px] overflow-y-auto pr-1">
+                  {botAvatars.map((a, i) => (
                     <button
-                      key={a}
+                      key={i}
                       onClick={() => setAvatar(a)}
-                      className={`w-10 h-10 rounded-lg text-lg flex items-center justify-center border transition-all ${
-                        avatar === a ? 'border-foreground bg-foreground/10 scale-110' : 'border-border bg-secondary hover:border-muted-foreground'
+                      className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                        avatar === a ? 'border-foreground scale-105 ring-2 ring-foreground/20' : 'border-border hover:border-muted-foreground'
                       }`}
                     >
-                      {a}
+                      <img src={a} alt={`Bot avatar ${i + 1}`} className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -299,7 +300,7 @@ bot.start();`;
               <div className="p-4 bg-secondary rounded-xl border border-border">
                 <p className="text-[10px] text-muted-foreground mb-2 uppercase tracking-wider">Preview</p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-lg">{avatar}</div>
+                  <div className="w-10 h-10 rounded-full bg-card border border-border overflow-hidden"><img src={avatar} alt="Bot avatar" className="w-full h-full object-cover" /></div>
                   <div>
                     <span className="text-sm font-bold text-foreground">{name || 'Bot Name'}</span>
                     <span className="text-xs text-muted-foreground ml-2">{handle || '@handle'}</span>
@@ -435,7 +436,7 @@ bot.start();`;
 
               <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center text-lg">{avatar}</div>
+                  <div className="w-10 h-10 rounded-full bg-card border border-border overflow-hidden"><img src={avatar} alt="Bot avatar" className="w-full h-full object-cover" /></div>
                   <div>
                     <p className="text-sm font-bold text-foreground">{name}</p>
                     <p className="text-xs text-muted-foreground font-mono">{handle}</p>
@@ -492,9 +493,9 @@ bot.start();`;
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className="w-20 h-20 rounded-full bg-foreground/10 border-2 border-foreground flex items-center justify-center mx-auto text-3xl"
+                className="w-20 h-20 rounded-full bg-foreground/10 border-2 border-foreground overflow-hidden mx-auto"
               >
-                {avatar}
+                <img src={avatar} alt="Bot avatar" className="w-full h-full object-cover" />
               </motion.div>
 
               <div>
@@ -521,7 +522,7 @@ bot.start();`;
                     setName('');
                     setHandle('');
                     setBio('');
-                    setAvatar('🤖');
+                    setAvatar(botAvatars[0]);
                     setBotId(null);
                     setApiEndpoint('');
                     setApiKey('');
