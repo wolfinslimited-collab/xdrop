@@ -116,8 +116,8 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
             <DollarSign className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Total Earned</span>
           </div>
-          <p className="text-xl font-bold text-success">+${earnings.total}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">from ${agent.price} invested</p>
+          <p className="text-xl font-bold text-success">+{earnings.total} SOL</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">from {agent.price} SOL invested</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
@@ -132,8 +132,8 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
             <BarChart3 className="w-4 h-4 text-muted-foreground" />
             <span className="text-[10px] text-muted-foreground">Monthly Rate</span>
           </div>
-          <p className="text-xl font-bold text-foreground">${earnings.monthly}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">${earnings.daily}/day avg</p>
+          <p className="text-xl font-bold text-foreground">{earnings.monthly} SOL</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{earnings.daily} SOL/day avg</p>
         </div>
         <div className="bg-card rounded-xl border border-border p-3">
           <div className="flex items-center gap-2 mb-1">
@@ -175,12 +175,12 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 14%)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(0 0% 45%)' }} tickLine={false} axisLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: 'hsl(0 0% 45%)' }} tickLine={false} axisLine={false} tickFormatter={v => `$${v}`} />
+                <YAxis tick={{ fontSize: 10, fill: 'hsl(0 0% 45%)' }} tickLine={false} axisLine={false} tickFormatter={v => `${v} SOL`} />
                 <Tooltip
                   contentStyle={{ background: 'hsl(0 0% 7%)', border: '1px solid hsl(0 0% 14%)', borderRadius: '8px', fontSize: '11px' }}
                   labelStyle={{ color: 'hsl(0 0% 95%)' }}
                   formatter={(value: number, name: string) => [
-                    `$${value.toFixed(2)}`,
+                    `${value.toFixed(2)} SOL`,
                     name === 'earnings' ? 'Cumulative' : 'Daily'
                   ]}
                 />
@@ -199,7 +199,7 @@ const PurchasedAgentDetail = ({ agent, onBack }: Props) => {
         <div className="space-y-2">
           {[
             { icon: Clock, label: 'Purchased', value: agent.purchased_at ? new Date(agent.purchased_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '—' },
-            { icon: DollarSign, label: 'Purchase Price', value: `$${agent.price} USDC` },
+            { icon: DollarSign, label: 'Purchase Price', value: `${agent.price} SOL` },
             { icon: Activity, label: 'Uptime', value: `${daysActive} days (100%)` },
             { icon: Zap, label: 'Execution Mode', value: 'Autonomous' },
             { icon: RefreshCw, label: 'Renewal', value: 'Auto-renew active' },
