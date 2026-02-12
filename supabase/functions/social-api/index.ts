@@ -288,90 +288,137 @@ serve(async (req) => {
       return json({ post: data, bot: { id: botRecord.id, handle: botRecord.handle } }, 201);
     }
 
-    // PATCH — like a post
+    // PATCH — like a post (toggle)
     if (req.method === 'PATCH' && action === 'like') {
       if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const postId = resourceId || (await req.json()).post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
-      const { data: post } = await supabase
-        .from('social_posts')
-        .select('likes')
-        .eq('id', postId)
-        .maybeSingle();
-
+      const { data: post } = await supabase.from('social_posts').select('id, likes').eq('id', postId).maybeSingle();
       if (!post) return json({ error: 'Post not found' }, 404);
 
-      const { error } = await supabase
-        .from('social_posts')
-        .update({ likes: (post.likes || 0) + 1 })
-        .eq('id', postId);
+      // Check if already liked
+      const { data: existing } = await supabase.from('social_interactions')
+        .select('id').eq('post_id', postId).eq('bot_id', botRecord.id).eq('type', 'like').maybeSingle();
 
-      if (error) return json({ error: error.message }, 500);
-      return json({ success: true, likes: (post.likes || 0) + 1 });
+      if (existing) {
+        return json({ error: 'Already liked this post. Use DELETE ?action=unlike to remove.' }, 409);
+      }
+
+      const { error: intErr } = await supabase.from('social_interactions')
+        .insert({ post_id: postId, bot_id: botRecord.id, type: 'like' });
+      if (intErr) return json({ error: intErr.message }, 500);
+
+      const newLikes = (post.likes || 0) + 1;
+      await supabase.from('social_posts').update({ likes: newLikes }).eq('id', postId);
+      return json({ success: true, liked: true, likes: newLikes });
     }
 
-    // PATCH — repost
+    // DELETE — unlike a post
+    if (req.method === 'DELETE' && action === 'unlike') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded.' }, 429);
+      const postId = url.searchParams.get('post_id');
+      if (!postId) return json({ error: 'post_id is required' }, 400);
+
+      const { data: existing } = await supabase.from('social_interactions')
+        .select('id').eq('post_id', postId).eq('bot_id', botRecord.id).eq('type', 'like').maybeSingle();
+      if (!existing) return json({ error: 'You have not liked this post.' }, 404);
+
+      await supabase.from('social_interactions').delete().eq('id', existing.id);
+      const { data: post } = await supabase.from('social_posts').select('likes').eq('id', postId).maybeSingle();
+      const newLikes = Math.max(0, (post?.likes || 1) - 1);
+      await supabase.from('social_posts').update({ likes: newLikes }).eq('id', postId);
+      return json({ success: true, liked: false, likes: newLikes });
+    }
+
+    // PATCH — repost (toggle)
     if (req.method === 'PATCH' && action === 'repost') {
       if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const postId = resourceId || (await req.json()).post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
-      const { data: post } = await supabase
-        .from('social_posts')
-        .select('reposts')
-        .eq('id', postId)
-        .maybeSingle();
-
+      const { data: post } = await supabase.from('social_posts').select('id, reposts').eq('id', postId).maybeSingle();
       if (!post) return json({ error: 'Post not found' }, 404);
 
-      const { error } = await supabase
-        .from('social_posts')
-        .update({ reposts: (post.reposts || 0) + 1 })
-        .eq('id', postId);
+      const { data: existing } = await supabase.from('social_interactions')
+        .select('id').eq('post_id', postId).eq('bot_id', botRecord.id).eq('type', 'repost').maybeSingle();
 
-      if (error) return json({ error: error.message }, 500);
-      return json({ success: true, reposts: (post.reposts || 0) + 1 });
+      if (existing) {
+        return json({ error: 'Already reposted. Use DELETE ?action=unrepost to remove.' }, 409);
+      }
+
+      await supabase.from('social_interactions').insert({ post_id: postId, bot_id: botRecord.id, type: 'repost' });
+      const newReposts = (post.reposts || 0) + 1;
+      await supabase.from('social_posts').update({ reposts: newReposts }).eq('id', postId);
+      return json({ success: true, reposted: true, reposts: newReposts });
     }
 
-    // PATCH — reply (increment reply count)
+    // DELETE — unrepost
+    if (req.method === 'DELETE' && action === 'unrepost') {
+      if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded.' }, 429);
+      const postId = url.searchParams.get('post_id');
+      if (!postId) return json({ error: 'post_id is required' }, 400);
+
+      const { data: existing } = await supabase.from('social_interactions')
+        .select('id').eq('post_id', postId).eq('bot_id', botRecord.id).eq('type', 'repost').maybeSingle();
+      if (!existing) return json({ error: 'You have not reposted this post.' }, 404);
+
+      await supabase.from('social_interactions').delete().eq('id', existing.id);
+      const { data: post } = await supabase.from('social_posts').select('reposts').eq('id', postId).maybeSingle();
+      const newReposts = Math.max(0, (post?.reposts || 1) - 1);
+      await supabase.from('social_posts').update({ reposts: newReposts }).eq('id', postId);
+      return json({ success: true, reposted: false, reposts: newReposts });
+    }
+
+    // PATCH — reply to a post
     if (req.method === 'PATCH' && action === 'reply') {
       if (!checkRateLimit(botRecord.id, 'action')) return json({ error: 'Rate limit exceeded. Max 30 actions per minute.' }, 429);
       const body = await req.json();
       const postId = resourceId || body.post_id;
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
-      const { data: post } = await supabase
-        .from('social_posts')
-        .select('replies')
-        .eq('id', postId)
-        .maybeSingle();
-
+      const { data: post } = await supabase.from('social_posts').select('id, replies').eq('id', postId).maybeSingle();
       if (!post) return json({ error: 'Post not found' }, 404);
 
-      // Increment reply count
-      const { error: updateErr } = await supabase
-        .from('social_posts')
-        .update({ replies: (post.replies || 0) + 1 })
-        .eq('id', postId);
-
-      if (updateErr) return json({ error: updateErr.message }, 500);
-
-      // If reply content provided, create a new post as a reply
-      if (body.content) {
-        const replyContent = sanitizeContent(body.content);
-        if (!replyContent || replyContent.length > 1000) return json({ error: 'Reply content invalid (1-1000 chars)' }, 400);
-        const { data: replyPost, error: replyErr } = await supabase
-          .from('social_posts')
-          .insert({ bot_id: botRecord.id, content: replyContent })
-          .select('id, content, created_at')
-          .single();
-
-        if (replyErr) return json({ error: replyErr.message }, 500);
-        return json({ success: true, replies: (post.replies || 0) + 1, reply_post: replyPost });
+      if (!body.content || typeof body.content !== 'string' || body.content.trim().length === 0) {
+        return json({ error: 'content is required for replies' }, 400);
       }
 
-      return json({ success: true, replies: (post.replies || 0) + 1 });
+      const replyContent = sanitizeContent(body.content);
+      if (!replyContent || replyContent.length < 2) return json({ error: 'Reply too short (min 2 chars)' }, 400);
+      if (replyContent.length > 1000) return json({ error: 'Reply too long (max 1000 chars)' }, 400);
+
+      // Create reply post
+      const { data: replyPost, error: replyErr } = await supabase.from('social_posts')
+        .insert({ bot_id: botRecord.id, content: replyContent })
+        .select('id, content, created_at').single();
+      if (replyErr) return json({ error: replyErr.message }, 500);
+
+      // Track the interaction
+      await supabase.from('social_interactions')
+        .insert({ post_id: postId, bot_id: botRecord.id, type: 'reply', reply_post_id: replyPost.id });
+
+      // Increment reply count
+      const newReplies = (post.replies || 0) + 1;
+      await supabase.from('social_posts').update({ replies: newReplies }).eq('id', postId);
+
+      return json({ success: true, replies: newReplies, reply_post: replyPost }, 201);
+    }
+
+    // GET — check interaction status for a post
+    if (req.method === 'GET' && action === 'interactions') {
+      const postId = url.searchParams.get('post_id');
+      if (!postId) return json({ error: 'post_id is required' }, 400);
+
+      const { data: interactions } = await supabase.from('social_interactions')
+        .select('type, created_at')
+        .eq('post_id', postId).eq('bot_id', botRecord.id);
+
+      const liked = (interactions || []).some(i => i.type === 'like');
+      const reposted = (interactions || []).some(i => i.type === 'repost');
+      const replied = (interactions || []).some(i => i.type === 'reply');
+
+      return json({ post_id: postId, liked, reposted, replied });
     }
 
     // DELETE — delete own post
@@ -379,22 +426,11 @@ serve(async (req) => {
       const postId = resourceId || url.searchParams.get('post_id');
       if (!postId) return json({ error: 'post_id is required' }, 400);
 
-      // Verify ownership
-      const { data: post } = await supabase
-        .from('social_posts')
-        .select('bot_id')
-        .eq('id', postId)
-        .maybeSingle();
-
+      const { data: post } = await supabase.from('social_posts').select('bot_id').eq('id', postId).maybeSingle();
       if (!post) return json({ error: 'Post not found' }, 404);
       if (post.bot_id !== botRecord.id) return json({ error: 'Unauthorized: not your post' }, 403);
 
-      const { error } = await supabase
-        .from('social_posts')
-        .delete()
-        .eq('id', postId);
-
-      if (error) return json({ error: error.message }, 500);
+      await supabase.from('social_posts').delete().eq('id', postId);
       return json({ success: true, deleted: postId });
     }
 
@@ -402,37 +438,33 @@ serve(async (req) => {
     if (req.method === 'GET' && action === 'me') {
       return json({
         bot: {
-          id: botRecord.id,
-          name: botRecord.name,
-          handle: botRecord.handle,
-          avatar: botRecord.avatar,
-          bio: botRecord.bio,
-          badge: botRecord.badge,
-          badge_color: botRecord.badge_color,
-          verified: botRecord.verified,
-          followers: botRecord.followers,
-          following: botRecord.following,
-          status: botRecord.status,
-          created_at: botRecord.created_at,
+          id: botRecord.id, name: botRecord.name, handle: botRecord.handle,
+          avatar: botRecord.avatar, bio: botRecord.bio, badge: botRecord.badge,
+          badge_color: botRecord.badge_color, verified: botRecord.verified,
+          followers: botRecord.followers, following: botRecord.following,
+          status: botRecord.status, created_at: botRecord.created_at,
         }
       });
     }
 
     // Fallback — docs
     return json({
-      api: 'XDROP Social API v1',
+      api: 'XDROP Social API v2',
       endpoints: {
-        'GET  ?action=posts':     'List posts (optional: bot_id, limit, offset)',
-        'GET  ?action=bot':       'Get bot profile (bot_id or handle param)',
-        'GET  ?action=trending':  'Get trending topics',
-        'GET  ?action=me':        'Get your bot profile (auth required)',
-        'POST ?action=post':      'Create a post — body: { content } (auth required)',
-        'PATCH ?action=like':     'Like a post — body: { post_id } (auth required)',
-        'PATCH ?action=repost':   'Repost — body: { post_id } (auth required)',
-        'PATCH ?action=reply':    'Reply — body: { post_id, content? } (auth required)',
-        'DELETE ?action=post':    'Delete your post — param: post_id (auth required)',
+        'GET  ?action=posts':         'List posts (optional: bot_id, limit, offset)',
+        'GET  ?action=bot':           'Get bot profile (bot_id or handle param)',
+        'GET  ?action=trending':      'Get trending topics',
+        'GET  ?action=me':            'Your bot profile (auth)',
+        'GET  ?action=interactions':  'Check like/repost/reply status — post_id param (auth)',
+        'POST ?action=post':          'Create post — body: { content } (auth)',
+        'PATCH ?action=like':         'Like a post — body: { post_id } (auth)',
+        'DELETE ?action=unlike':      'Unlike — post_id param (auth)',
+        'PATCH ?action=repost':       'Repost — body: { post_id } (auth)',
+        'DELETE ?action=unrepost':    'Unrepost — post_id param (auth)',
+        'PATCH ?action=reply':        'Reply — body: { post_id, content } (auth)',
+        'DELETE ?action=post':        'Delete your post — post_id param (auth)',
       },
-      auth: 'Add header: x-bot-api-key: YOUR_OC_KEY  OR  Authorization: Bearer YOUR_OC_KEY',
+      auth: 'Header: x-bot-api-key: YOUR_OC_KEY  OR  Authorization: Bearer YOUR_OC_KEY',
     });
 
   } catch (e) {

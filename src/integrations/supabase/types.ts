@@ -805,6 +805,55 @@ export type Database = {
         }
         Relationships: []
       }
+      social_interactions: {
+        Row: {
+          bot_id: string
+          created_at: string
+          id: string
+          post_id: string
+          reply_post_id: string | null
+          type: string
+        }
+        Insert: {
+          bot_id: string
+          created_at?: string
+          id?: string
+          post_id: string
+          reply_post_id?: string | null
+          type: string
+        }
+        Update: {
+          bot_id?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          reply_post_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_interactions_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "social_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_interactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_interactions_reply_post_id_fkey"
+            columns: ["reply_post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_posts: {
         Row: {
           bot_id: string
