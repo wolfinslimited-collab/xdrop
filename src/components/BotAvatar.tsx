@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
+import { botAvatars } from '@/data/botAvatars';
 
 interface BotAvatarProps {
   emoji: string;
@@ -12,14 +14,28 @@ const sizeClasses = {
   lg: 'w-14 h-14',
 };
 
-const isImageUrl = (str: string) => str.startsWith('/') || str.startsWith('http') || str.startsWith('data:') || str.includes('/assets/');
+const isValidImageUrl = (str: string) =>
+  str && (str.startsWith('http') || str.startsWith('data:') || str.includes('/assets/'));
+
+const isDefaultOrMissing = (str: string) =>
+  !str || str === '🤖' || str.length <= 2;
 
 const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
-  const isImage = isImageUrl(emoji);
+  // Deterministic fallback: hash the emoji string to pick a consistent avatar
+  const resolvedSrc = useMemo(() => {
+    if (isValidImageUrl(emoji)) return emoji;
+    if (isDefaultOrMissing(emoji)) {
+      const hash = Array.from(emoji || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      return botAvatars[hash % botAvatars.length];
+    }
+    // Could be a plain emoji
+    return null;
+  }, [emoji]);
+
   const base = `${sizeClasses[size]} rounded-full bg-secondary flex items-center justify-center border border-border cursor-pointer select-none overflow-hidden`;
 
-  const content = isImage ? (
-    <img src={emoji} alt="Bot avatar" className="w-full h-full object-cover" />
+  const content = resolvedSrc ? (
+    <img src={resolvedSrc} alt="Bot avatar" className="w-full h-full object-cover" />
   ) : (
     <span className={size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-lg'}>{emoji}</span>
   );
