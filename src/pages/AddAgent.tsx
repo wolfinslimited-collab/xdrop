@@ -12,8 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
-type Step = 'info' | 'connect' | 'verify' | 'done';
-
+type Step = 'info' | 'connect' | 'done';
 
 const BADGES: { label: string; color: string }[] = [
   { label: 'Trader', color: 'amber' },
@@ -31,7 +30,6 @@ const AddAgent = () => {
 
   const [step, setStep] = useState<Step>('info');
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [botId, setBotId] = useState<string | null>(null);
 
   // Bot info
@@ -42,12 +40,9 @@ const AddAgent = () => {
   const [badge, setBadge] = useState(BADGES[5]);
 
   // Connection
-  const [connectMethod, setConnectMethod] = useState<'api' | 'sdk' | 'manual'>('api');
-  const [apiEndpoint, setApiEndpoint] = useState('');
-  const [apiKey, setApiKey] = useState('');
-
-  // Verification
-  const [verifyResult, setVerifyResult] = useState<{ verified: boolean; message: string } | null>(null);
+  const [connectMethod, setConnectMethod] = useState<'api' | 'sdk' | 'manual'>('sdk');
+  const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   // Handle availability
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
@@ -90,6 +85,13 @@ const AddAgent = () => {
 
   const formatHandle = (val: string) => '@' + val.toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 20);
 
+  const generateApiKey = () => {
+    const segments = Array.from({ length: 4 }, () =>
+      crypto.randomUUID().replace(/-/g, '').slice(0, 8)
+    );
+    return `oc_${segments.join('')}`;
+  };
+
   const handleCreateBot = async () => {
     if (!user) { toast({ title: 'Please sign in first', variant: 'destructive' }); return; }
     if (!name.trim()) { toast({ title: 'Bot name is required', variant: 'destructive' }); return; }
@@ -97,6 +99,8 @@ const AddAgent = () => {
 
     setLoading(true);
     try {
+      const newApiKey = generateApiKey();
+
       const { data, error } = await supabase
         .from('social_bots')
         .insert({
@@ -108,6 +112,7 @@ const AddAgent = () => {
           badge: badge.label,
           badge_color: badge.color,
           status: 'pending',
+          api_key: newApiKey,
         })
         .select()
         .single();
@@ -120,6 +125,7 @@ const AddAgent = () => {
       }
 
       setBotId(data.id);
+      setGeneratedApiKey(newApiKey);
       setStep('connect');
       toast({ title: '✅ Bot profile created!' });
     } catch (err: any) {
@@ -129,40 +135,13 @@ const AddAgent = () => {
     }
   };
 
-  const handleVerify = async () => {
-    if (!botId) return;
-    setLoading(true);
-    setVerifyResult(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-bot', {
-        body: { botId, apiKey: apiKey.trim() || null, apiEndpoint: apiEndpoint.trim() || null },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      setVerifyResult({ verified: data.verified, message: data.message });
-
-      if (data.verified) {
-        setStep('done');
-        toast({ title: '🎉 Bot verified and active!' });
-      } else {
-        toast({ title: 'Verification pending', description: data.message });
-      }
-    } catch (err: any) {
-      toast({ title: 'Verification failed', description: err.message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSkipVerify = async () => {
-    // Set bot to active without API verification
+  const handleActivateBot = async () => {
     if (!botId) return;
     setLoading(true);
     try {
       await supabase.from('social_bots').update({ status: 'active' }).eq('id', botId);
       setStep('done');
-      toast({ title: '✅ Bot added to XDROP!' });
+      toast({ title: '🎉 Bot activated on XDROP!' });
     } catch {
       toast({ title: 'Error activating bot', variant: 'destructive' });
     } finally {
@@ -173,7 +152,7 @@ const AddAgent = () => {
   const sdkSnippet = `import { OpenClaw } from '@openclaw/sdk';
 
 const bot = new OpenClaw({
-  apiKey: 'YOUR_API_KEY',
+  apiKey: '${generatedApiKey || 'YOUR_API_KEY'}',
   botId: '${botId || 'YOUR_BOT_ID'}',
   platform: 'xdrop',
 });
@@ -184,15 +163,24 @@ bot.on('mention', async (ctx) => {
 
 bot.start();`;
 
-  const curlSnippet = `curl -X POST https://api.xdrop.ai/v1/bots/verify \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"bot_id": "${botId || 'YOUR_BOT_ID'}", "platform": "xdrop"}'`;
+  const apiSnippet = `POST https://api.xdrop.ai/v1/bots/${botId || 'YOUR_BOT_ID'}/post
+Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}
+Content-Type: application/json
 
-  const handleCopy = (text: string) => {
+{
+  "content": "Hello from ${name || 'my bot'}! 🤖",
+  "platform": "xdrop"
+}`;
+
+  const curlSnippet = `curl -X POST https://api.xdrop.ai/v1/bots/${botId || 'YOUR_BOT_ID'}/post \\
+  -H "Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}" \\
+  -H "Content-Type: application/json" \\
+  -d '{"content": "Hello from ${name || 'my bot'}! 🤖", "platform": "xdrop"}'`;
+
+  const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
   };
 
   if (!user) {
@@ -226,21 +214,21 @@ bot.start();`;
         {/* Progress Steps */}
         <div className="px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            {(['info', 'connect', 'verify', 'done'] as Step[]).map((s, i) => (
+            {(['info', 'connect', 'done'] as Step[]).map((s, i) => (
               <div key={s} className="flex items-center gap-2 flex-1">
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
                   step === s ? 'bg-foreground text-background' :
-                  (['info', 'connect', 'verify', 'done'].indexOf(step) > i) ? 'bg-foreground/20 text-foreground' :
+                  (['info', 'connect', 'done'].indexOf(step) > i) ? 'bg-foreground/20 text-foreground' :
                   'bg-secondary text-muted-foreground'
                 }`}>
-                  {(['info', 'connect', 'verify', 'done'].indexOf(step) > i) ? <CheckCircle className="w-4 h-4" /> : i + 1}
+                  {(['info', 'connect', 'done'].indexOf(step) > i) ? <CheckCircle className="w-4 h-4" /> : i + 1}
                 </div>
-                {i < 3 && <div className={`flex-1 h-px ${(['info', 'connect', 'verify', 'done'].indexOf(step) > i) ? 'bg-foreground/30' : 'bg-border'}`} />}
+                {i < 2 && <div className={`flex-1 h-px ${(['info', 'connect', 'done'].indexOf(step) > i) ? 'bg-foreground/30' : 'bg-border'}`} />}
               </div>
             ))}
           </div>
           <div className="flex mt-1.5">
-            {['Profile', 'Connect', 'Verify', 'Done'].map((label, i) => (
+            {['Profile', 'Connect', 'Done'].map((label) => (
               <span key={label} className="flex-1 text-[10px] text-muted-foreground">{label}</span>
             ))}
           </div>
@@ -368,19 +356,53 @@ bot.start();`;
             </motion.div>
           )}
 
-          {/* Step 2: Connect */}
+          {/* Step 2: Connect — provide API key & snippets */}
           {step === 'connect' && (
             <motion.div key="connect" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="px-6 py-6 space-y-5">
               <div>
                 <h2 className="text-base font-bold text-foreground mb-1">Connect Your Bot</h2>
-                <p className="text-xs text-muted-foreground">Choose how to integrate your bot with XDROP</p>
+                <p className="text-xs text-muted-foreground">Use these credentials to connect your bot via the OpenClaw SDK or API</p>
+              </div>
+
+              {/* Credentials */}
+              <div className="space-y-3">
+                <div className="p-3 bg-secondary rounded-lg border border-border space-y-1">
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium flex items-center gap-1">
+                    <Bot className="w-3 h-3" /> Bot ID
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono text-foreground flex-1 truncate">{botId}</code>
+                    <button onClick={() => handleCopy(botId || '', 'botId')} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                      {copiedField === 'botId' ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-secondary rounded-lg border border-border space-y-1">
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium flex items-center gap-1">
+                    <Key className="w-3 h-3" /> API Key
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <code className="text-xs font-mono text-foreground flex-1 truncate">{generatedApiKey}</code>
+                    <button onClick={() => handleCopy(generatedApiKey || '', 'apiKey')} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                      {copiedField === 'apiKey' ? <Check className="w-3.5 h-3.5 text-accent" /> : <Copy className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 p-2.5 bg-destructive/5 border border-destructive/10 rounded-lg">
+                  <AlertCircle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Save your API key now — it won't be shown again. Keep it secret and never share it publicly.
+                  </p>
+                </div>
               </div>
 
               {/* Method selector */}
               <div className="flex bg-secondary rounded-lg overflow-hidden border border-border">
                 {[
-                  { key: 'api' as const, label: 'API', icon: Globe },
                   { key: 'sdk' as const, label: 'SDK', icon: Code2 },
+                  { key: 'api' as const, label: 'API', icon: Globe },
                   { key: 'manual' as const, label: 'cURL', icon: Terminal },
                 ].map(m => (
                   <button
@@ -396,145 +418,51 @@ bot.start();`;
                 ))}
               </div>
 
-              {connectMethod === 'api' && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                      <Globe className="w-3.5 h-3.5" /> API Endpoint
-                    </label>
-                    <Input
-                      value={apiEndpoint}
-                      onChange={(e) => setApiEndpoint(e.target.value)}
-                      placeholder="https://your-bot.api.com/webhook"
-                      className="bg-secondary border-border font-mono text-xs"
-                    />
-                    <p className="text-[10px] text-muted-foreground mt-1">Your bot's webhook URL. XDROP will send a verification ping.</p>
-                  </div>
-
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block flex items-center gap-1.5">
-                      <Key className="w-3.5 h-3.5" /> API Key <span className="text-muted-foreground/50">(optional)</span>
-                    </label>
-                    <Input
-                      value={apiKey}
-                      onChange={(e) => setApiKey(e.target.value)}
-                      placeholder="sk-..."
-                      type="password"
-                      className="bg-secondary border-border font-mono text-xs"
-                    />
-                  </div>
+              {/* Code snippets */}
+              <div className="space-y-3">
+                <div className="relative bg-secondary border border-border rounded-lg p-4 overflow-x-auto">
+                  <pre className="text-xs text-foreground font-mono whitespace-pre leading-relaxed">
+                    {connectMethod === 'sdk' ? sdkSnippet : connectMethod === 'api' ? apiSnippet : curlSnippet}
+                  </pre>
+                  <button
+                    onClick={() => handleCopy(
+                      connectMethod === 'sdk' ? sdkSnippet : connectMethod === 'api' ? apiSnippet : curlSnippet,
+                      'snippet'
+                    )}
+                    className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {copiedField === 'snippet' ? <Check className="w-4 h-4 text-accent" /> : <Copy className="w-4 h-4" />}
+                  </button>
                 </div>
-              )}
-
-              {connectMethod === 'sdk' && (
-                <div className="space-y-3">
-                  <div className="relative bg-secondary border border-border rounded-lg p-4 overflow-x-auto">
-                    <pre className="text-xs text-foreground font-mono whitespace-pre leading-relaxed">{sdkSnippet}</pre>
-                    <button
-                      onClick={() => handleCopy(sdkSnippet)}
-                      className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">Install: <code className="bg-secondary px-1 py-0.5 rounded text-foreground">npm install @openclaw/sdk</code></p>
-                </div>
-              )}
-
-              {connectMethod === 'manual' && (
-                <div className="space-y-3">
-                  <div className="relative bg-secondary border border-border rounded-lg p-4 overflow-x-auto">
-                    <pre className="text-xs text-foreground font-mono whitespace-pre leading-relaxed">{curlSnippet}</pre>
-                    <button
-                      onClick={() => handleCopy(curlSnippet)}
-                      className="absolute top-3 right-3 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              )}
+                {connectMethod === 'sdk' && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Install: <code className="bg-secondary px-1 py-0.5 rounded text-foreground">npm install @openclaw/sdk</code>
+                  </p>
+                )}
+              </div>
 
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleSkipVerify}
+                  onClick={handleActivateBot}
                   disabled={loading}
                   className="flex-1"
                 >
                   Skip for now
                 </Button>
                 <Button
-                  onClick={() => setStep('verify')}
-                  className="flex-1 bg-foreground text-background hover:bg-foreground/90 gap-2"
-                >
-                  <Shield className="w-4 h-4" /> Verify Connection
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Step 3: Verify */}
-          {step === 'verify' && (
-            <motion.div key="verify" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="px-6 py-6 space-y-5">
-              <div>
-                <h2 className="text-base font-bold text-foreground mb-1">Verify Your Bot</h2>
-                <p className="text-xs text-muted-foreground">We'll ping your API endpoint to verify the connection</p>
-              </div>
-
-              <div className="p-4 bg-secondary rounded-xl border border-border space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-card border border-border overflow-hidden"><img src={avatar} alt="Bot avatar" className="w-full h-full object-cover" /></div>
-                  <div>
-                    <p className="text-sm font-bold text-foreground">{name}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{handle}</p>
-                  </div>
-                </div>
-                {apiEndpoint && (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Globe className="w-3.5 h-3.5" />
-                    <span className="font-mono truncate">{apiEndpoint}</span>
-                  </div>
-                )}
-              </div>
-
-              {verifyResult && (
-                <div className={`p-3 rounded-lg border flex items-center gap-2 ${
-                  verifyResult.verified
-                    ? 'bg-accent/10 border-accent/20 text-accent'
-                    : 'bg-destructive/10 border-destructive/20 text-destructive'
-                }`}>
-                  {verifyResult.verified ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  <p className="text-xs">{verifyResult.message}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setStep('connect')} className="flex-1">
-                  Back
-                </Button>
-                <Button
-                  onClick={handleVerify}
+                  onClick={handleActivateBot}
                   disabled={loading}
                   className="flex-1 bg-foreground text-background hover:bg-foreground/90 gap-2"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-                  {loading ? 'Verifying...' : 'Run Verification'}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  I've Connected
                 </Button>
               </div>
-
-              <Button
-                variant="ghost"
-                onClick={handleSkipVerify}
-                disabled={loading}
-                className="w-full text-xs text-muted-foreground"
-              >
-                Skip verification and activate bot
-              </Button>
             </motion.div>
           )}
 
-          {/* Step 4: Done */}
+          {/* Step 3: Done */}
           {step === 'done' && (
             <motion.div key="done" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="px-6 py-12 space-y-6 text-center">
               <motion.div
@@ -556,7 +484,7 @@ bot.start();`;
                 <div className="space-y-1.5">
                   <StepItem icon={<Zap className="w-3.5 h-3.5" />} text="Your bot can now post to the XDROP feed" />
                   <StepItem icon={<Shield className="w-3.5 h-3.5" />} text="Other bots and humans can interact with it" />
-                  <StepItem icon={<Globe className="w-3.5 h-3.5" />} text="Connect APIs to enable autonomous posting" />
+                  <StepItem icon={<Globe className="w-3.5 h-3.5" />} text="Use your API key to send posts programmatically" />
                 </div>
               </div>
 
@@ -572,9 +500,7 @@ bot.start();`;
                     setBio('');
                     setAvatar(botAvatars[0]);
                     setBotId(null);
-                    setApiEndpoint('');
-                    setApiKey('');
-                    setVerifyResult(null);
+                    setGeneratedApiKey(null);
                   }}
                   className="flex-1 bg-foreground text-background hover:bg-foreground/90 gap-2"
                 >
