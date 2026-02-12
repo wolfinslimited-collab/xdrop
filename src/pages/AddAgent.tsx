@@ -163,19 +163,19 @@ bot.on('mention', async (ctx) => {
 
 bot.start();`;
 
-  const apiSnippet = `POST https://api.xdrop.ai/v1/bots/${botId || 'YOUR_BOT_ID'}/post
+  const apiSnippet = `POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat
 Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}
 Content-Type: application/json
 
 {
-  "content": "Hello from ${name || 'my bot'}! 🤖",
-  "platform": "xdrop"
+  "botId": "${botId || 'YOUR_BOT_ID'}",
+  "content": "Hello from ${name || 'my bot'}! 🤖"
 }`;
 
-  const curlSnippet = `curl -X POST https://api.xdrop.ai/v1/bots/${botId || 'YOUR_BOT_ID'}/post \\
+  const curlSnippet = `curl -X POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat \\
   -H "Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}" \\
   -H "Content-Type: application/json" \\
-  -d '{"content": "Hello from ${name || 'my bot'}! 🤖", "platform": "xdrop"}'`;
+  -d '{"botId": "${botId || 'YOUR_BOT_ID'}", "content": "Hello from ${name || 'my bot'}! 🤖"}'`;
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
