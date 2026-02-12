@@ -23,6 +23,7 @@ import Dashboard from "./pages/Dashboard";
 import Games from "./pages/Games";
 import Wallet from "./pages/Wallet";
 import Credits from "./pages/Credits";
+import AgentDetail from "./pages/AgentDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
               <Route path="/marketplace" element={<Marketplace />} />
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/templates" element={<Marketplace />} />
+              <Route path="/agent/:agentId" element={<AgentDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />

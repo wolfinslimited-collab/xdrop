@@ -235,58 +235,60 @@ const Marketplace = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
                 >
-                  <div className="bg-card border border-border rounded-xl hover:border-muted-foreground/30 transition-all h-full flex flex-col">
-                    <div className="pb-3 pt-5 px-5">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-                            {getIcon(template.lucideIcon)}
+                  <Link to={`/agent/${template.id}`} className="block">
+                    <div className="bg-card border border-border rounded-xl hover:border-muted-foreground/30 transition-all h-full flex flex-col">
+                      <div className="pb-3 pt-5 px-5">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                              {getIcon(template.lucideIcon)}
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-semibold text-foreground leading-tight">{template.name}</h3>
+                              <span className="text-[10px] text-muted-foreground">{template.category}</span>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="text-sm font-semibold text-foreground leading-tight">{template.name}</h3>
-                            <span className="text-[10px] text-muted-foreground">{template.category}</span>
+                          {template.popular && (
+                            <Badge variant="secondary" className="text-[10px] bg-accent/15 text-accent border-accent/20">
+                              Popular
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex-1 px-5 pb-3">
+                        <p className="text-xs text-muted-foreground leading-relaxed mb-3">{template.description}</p>
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {template.features.map(f => (
+                            <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border">{f}</span>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <TrendingUp className="w-3.5 h-3.5 text-success" />
+                            <span className="text-xs font-semibold text-success">{template.monthlyReturnMin}–{template.monthlyReturnMax}%</span>
+                            <span className="text-[10px] text-muted-foreground">/mo</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Server className="w-3.5 h-3.5 text-muted-foreground" />
+                            <span className="text-[10px] text-muted-foreground">RunPod GPU</span>
                           </div>
                         </div>
-                        {template.popular && (
-                          <Badge variant="secondary" className="text-[10px] bg-accent/15 text-accent border-accent/20">
-                            Popular
-                          </Badge>
-                        )}
                       </div>
-                    </div>
-                    <div className="flex-1 px-5 pb-3">
-                      <p className="text-xs text-muted-foreground leading-relaxed mb-3">{template.description}</p>
-                      <div className="flex flex-wrap gap-1.5 mb-4">
-                        {template.features.map(f => (
-                          <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border">{f}</span>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5 text-success" />
-                          <span className="text-xs font-semibold text-success">{template.monthlyReturnMin}–{template.monthlyReturnMax}%</span>
-                          <span className="text-[10px] text-muted-foreground">/mo</span>
+                      <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
+                        <div>
+                          <span className="text-lg font-bold text-foreground">${template.yearlyPrice}</span>
+                          <span className="text-xs text-muted-foreground">/year</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <Server className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground">RunPod GPU</span>
-                        </div>
+                        <Button
+                          onClick={(e) => { e.preventDefault(); handleDeploy(template); }}
+                          size="sm"
+                          className="rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs px-4"
+                        >
+                          Deploy Agent
+                        </Button>
                       </div>
                     </div>
-                    <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
-                      <div>
-                        <span className="text-lg font-bold text-foreground">$100</span>
-                        <span className="text-xs text-muted-foreground">/year</span>
-                      </div>
-                      <Button
-                        onClick={() => handleDeploy(template)}
-                        size="sm"
-                        className="rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs px-4"
-                      >
-                        Deploy Agent
-                      </Button>
-                    </div>
-                  </div>
+                  </Link>
                 </motion.div>
               ))}
             </div>
