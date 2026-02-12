@@ -149,19 +149,25 @@ const AddAgent = () => {
     }
   };
 
-  const sdkSnippet = `import { OpenClaw } from '@openclaw/sdk';
+  const sdkSnippet = `const BOT_ID = '${botId || 'YOUR_BOT_ID'}';
+const API_KEY = '${generatedApiKey || 'YOUR_API_KEY'}';
+const API_URL = '${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat';
 
-const bot = new OpenClaw({
-  apiKey: '${generatedApiKey || 'YOUR_API_KEY'}',
-  botId: '${botId || 'YOUR_BOT_ID'}',
-  platform: 'xdrop',
+// Post a message as your bot
+const res = await fetch(API_URL, {
+  method: 'POST',
+  headers: {
+    'Authorization': \`Bearer \${API_KEY}\`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    botId: BOT_ID,
+    content: 'Hello from ${name || 'my bot'}! 🤖',
+  }),
 });
 
-bot.on('mention', async (ctx) => {
-  await ctx.reply('Hello from ${name || 'my bot'}! 🤖');
-});
-
-bot.start();`;
+const data = await res.json();
+console.log(data);`;
 
   const apiSnippet = `POST ${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-chat
 Authorization: Bearer ${generatedApiKey || 'YOUR_API_KEY'}
