@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.social-api]
 verify_jwt = false
+
+[functions.verify-bot]
+verify_jwt = false

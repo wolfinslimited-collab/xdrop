@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle } from 'lucide-react';
+import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle, Link, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { botAvatars } from '@/data/botAvatars';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
@@ -43,6 +43,9 @@ const AddAgent = () => {
   const [connectMethod, setConnectMethod] = useState<'api' | 'sdk' | 'manual'>('sdk');
   const [generatedApiKey, setGeneratedApiKey] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [aiEndpoint, setAiEndpoint] = useState('');
+  const [verifying, setVerifying] = useState(false);
+  const [verificationResult, setVerificationResult] = useState<{ verified: boolean; message?: string; error?: string; hint?: string } | null>(null);
 
   // Handle availability
   const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
@@ -135,13 +138,43 @@ const AddAgent = () => {
     }
   };
 
-  const handleActivateBot = async () => {
+  const handleVerifyBot = async () => {
+    if (!botId) return;
+    if (!aiEndpoint.trim()) {
+      toast({ title: 'AI endpoint is required', description: 'Provide the URL where your AI agent processes messages.', variant: 'destructive' });
+      return;
+    }
+    setVerifying(true);
+    setVerificationResult(null);
+    try {
+      const res = await supabase.functions.invoke('verify-bot', {
+        body: { bot_id: botId, api_endpoint: aiEndpoint.trim() },
+      });
+
+      const data = res.data as any;
+      if (data?.verified) {
+        setVerificationResult({ verified: true, message: data.message });
+        setStep('done');
+        toast({ title: '🎉 Bot verified & activated!' });
+      } else {
+        setVerificationResult({ verified: false, error: data?.error || 'Verification failed', hint: data?.hint });
+        toast({ title: 'Verification failed', description: data?.error, variant: 'destructive' });
+      }
+    } catch (err: any) {
+      setVerificationResult({ verified: false, error: err.message });
+      toast({ title: 'Error verifying bot', variant: 'destructive' });
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleSkipVerification = async () => {
     if (!botId) return;
     setLoading(true);
     try {
       await supabase.from('social_bots').update({ status: 'active' }).eq('id', botId);
       setStep('done');
-      toast({ title: '🎉 Bot activated on XDROP!' });
+      toast({ title: 'Bot activated (unverified)', description: 'Your bot is active but not verified. Verified bots get a badge.' });
     } catch {
       toast({ title: 'Error activating bot', variant: 'destructive' });
     } finally {
@@ -530,22 +563,64 @@ curl -X POST '${chatUrl}' \\
                 )}
               </div>
 
+              {/* AI Endpoint + Verification */}
+              <div className="space-y-3">
+                <div className="p-3 bg-secondary rounded-lg border border-border space-y-1.5">
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium flex items-center gap-1">
+                    <Link className="w-3 h-3" /> AI Endpoint (required for verification)
+                  </label>
+                  <Input
+                    value={aiEndpoint}
+                    onChange={(e) => { setAiEndpoint(e.target.value); setVerificationResult(null); }}
+                    placeholder="https://your-ai-api.com/chat"
+                    className="bg-card border-border font-mono text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Must accept POST with <code className="bg-card px-1 rounded">{'{ "messages": [{ "role": "user", "content": "..." }] }'}</code>
+                  </p>
+                </div>
+
+                {verificationResult && (
+                  <div className={`p-3 rounded-lg border flex items-start gap-2 ${
+                    verificationResult.verified 
+                      ? 'bg-accent/5 border-accent/20' 
+                      : 'bg-destructive/5 border-destructive/10'
+                  }`}>
+                    {verificationResult.verified 
+                      ? <ShieldCheck className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+                      : <ShieldAlert className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                    }
+                    <div className="space-y-1">
+                      <p className="text-xs font-medium text-foreground">
+                        {verificationResult.verified ? 'Verified!' : 'Verification Failed'}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {verificationResult.message || verificationResult.error}
+                      </p>
+                      {verificationResult.hint && (
+                        <p className="text-[10px] text-muted-foreground italic">{verificationResult.hint}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleActivateBot}
-                  disabled={loading}
+                  onClick={handleSkipVerification}
+                  disabled={loading || verifying}
                   className="flex-1"
                 >
-                  Skip for now
+                  Skip (unverified)
                 </Button>
                 <Button
-                  onClick={handleActivateBot}
-                  disabled={loading}
+                  onClick={handleVerifyBot}
+                  disabled={verifying || !aiEndpoint.trim()}
                   className="flex-1 bg-foreground text-background hover:bg-foreground/90 gap-2"
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                  I've Connected
+                  {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                  {verifying ? 'Verifying AI…' : 'Verify & Activate'}
                 </Button>
               </div>
             </motion.div>

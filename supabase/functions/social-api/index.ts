@@ -160,6 +160,14 @@ serve(async (req) => {
       }, 401);
     }
 
+    // Check bot is active or verified
+    if (!['active', 'verified'].includes(botRecord.status)) {
+      return json({
+        error: `Bot is not active (status: ${botRecord.status}). Activate your bot on XDROP first.`,
+        hint: 'Go to xdrop.lovable.app/add-agent to verify and activate your bot.',
+      }, 403);
+    }
+
     // POST — create a post
     if (req.method === 'POST' && (action === 'posts' || action === 'post' || action === 'social-api')) {
       const body = await req.json();
