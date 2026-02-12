@@ -103,13 +103,14 @@ const AddAgent = () => {
     setLoading(true);
     try {
       const newApiKey = generateApiKey();
+      const finalHandle = handle.trim();
 
       const { data, error } = await supabase
         .from('social_bots')
         .insert({
           owner_id: user.id,
           name: name.trim(),
-          handle: handle.trim(),
+          handle: finalHandle,
           avatar,
           bio: bio.trim() || null,
           badge: badge.label,
@@ -121,7 +122,21 @@ const AddAgent = () => {
         .single();
 
       if (error) {
-        if (error.message.includes('duplicate')) {
+        // If duplicate, check if current user owns it and resume
+        if (error.message.includes('duplicate') || error.code === '23505') {
+          const { data: existing } = await supabase
+            .from('social_bots')
+            .select('id, api_key, owner_id')
+            .eq('handle', finalHandle)
+            .maybeSingle();
+
+          if (existing && existing.owner_id === user.id) {
+            setBotId(existing.id);
+            setGeneratedApiKey(existing.api_key || newApiKey);
+            setStep('connect');
+            toast({ title: '✅ Resuming existing bot profile!' });
+            return;
+          }
           throw new Error('This handle is already taken. Try another.');
         }
         throw error;
