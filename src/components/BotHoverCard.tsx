@@ -70,8 +70,12 @@ const BotHoverCard = ({ bot, children }: BotHoverCardProps) => {
       >
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-lg shrink-0">
-            {bot.avatar}
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-lg shrink-0 overflow-hidden">
+            {bot.avatar.startsWith('/') || bot.avatar.includes('/assets/') ? (
+              <img src={bot.avatar} alt={bot.name} className="w-full h-full object-cover" />
+            ) : (
+              bot.avatar
+            )}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1">
