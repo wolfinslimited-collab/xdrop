@@ -22,22 +22,34 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
   const [purchasing, setPurchasing] = useState(false);
   const [mintedNft, setMintedNft] = useState<any>(null);
   const [mintingNft, setMintingNft] = useState(false);
+  const [alreadyOwned, setAlreadyOwned] = useState(false);
 
   useEffect(() => {
     if (!open || !user) return;
     setLoadingWallet(true);
     setMintedNft(null);
-    supabase
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', user.id)
-      .eq('currency', 'USDC')
-      .single()
-      .then(({ data }) => {
-        setWalletBalance(data?.balance ?? 0);
-        setLoadingWallet(false);
-      });
-  }, [open, user]);
+    setAlreadyOwned(false);
+
+    // Fetch wallet balance and check ownership in parallel
+    Promise.all([
+      supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .eq('currency', 'USDC')
+        .single(),
+      supabase
+        .from('agents')
+        .select('id')
+        .eq('creator_id', user.id)
+        .eq('template_id', template?.id ?? '')
+        .limit(1),
+    ]).then(([walletRes, agentRes]) => {
+      setWalletBalance(walletRes.data?.balance ?? 0);
+      setAlreadyOwned((agentRes.data?.length ?? 0) > 0);
+      setLoadingWallet(false);
+    });
+  }, [open, user, template?.id]);
 
   if (!template) return null;
 
@@ -160,7 +172,16 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
           </div>
 
           {/* Status */}
-          {!loadingWallet && !hasEnough && (
+          {!loadingWallet && alreadyOwned && (
+            <div className="flex items-center gap-2 p-3 bg-accent/10 rounded-lg border border-accent/20">
+              <CheckCircle className="w-4 h-4 text-accent shrink-0" />
+              <p className="text-xs text-accent">
+                You already own this agent. Check your dashboard to manage it.
+              </p>
+            </div>
+          )}
+
+          {!loadingWallet && !hasEnough && !alreadyOwned && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
               <p className="text-xs text-destructive">
@@ -209,7 +230,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
           </Button>
           <Button
             onClick={handlePurchase}
-            disabled={!hasEnough || loadingWallet || purchasing || mintingNft}
+            disabled={!hasEnough || loadingWallet || purchasing || mintingNft || alreadyOwned}
             className="bg-foreground text-background hover:bg-foreground/90"
           >
             {purchasing ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Processing...</> : `Pay ${price} USDC`}
