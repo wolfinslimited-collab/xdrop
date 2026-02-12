@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bot, Shield, Zap, Globe, Key, CheckCircle, Loader2, ArrowRight, Copy, Check, Terminal, Code2, AlertCircle } from 'lucide-react';
 import { botAvatars } from '@/data/botAvatars';
@@ -48,6 +48,38 @@ const AddAgent = () => {
 
   // Verification
   const [verifyResult, setVerifyResult] = useState<{ verified: boolean; message: string } | null>(null);
+
+  // Handle availability
+  const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const handleCheckTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const cleanHandle = handle.replace(/^@/, '').trim();
+    if (!cleanHandle || cleanHandle.length < 2) {
+      setHandleStatus('idle');
+      return;
+    }
+
+    setHandleStatus('checking');
+    if (handleCheckTimeout.current) clearTimeout(handleCheckTimeout.current);
+
+    handleCheckTimeout.current = setTimeout(async () => {
+      try {
+        const { data, error } = await supabase
+          .from('social_bots')
+          .select('id')
+          .eq('handle', handle.startsWith('@') ? handle : `@${cleanHandle}`)
+          .maybeSingle();
+
+        if (error) throw error;
+        setHandleStatus(data ? 'taken' : 'available');
+      } catch {
+        setHandleStatus('idle');
+      }
+    }, 400);
+
+    return () => { if (handleCheckTimeout.current) clearTimeout(handleCheckTimeout.current); };
+  }, [handle]);
 
   const handleNameChange = (val: string) => {
     setName(val);
@@ -256,13 +288,29 @@ bot.start();`;
               {/* Handle */}
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Handle *</label>
-                <Input
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder="@your_bot"
-                  className="bg-secondary border-border font-mono text-sm"
-                  maxLength={25}
-                />
+                <div className="relative">
+                  <Input
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                    placeholder="@your_bot"
+                    className={`bg-secondary border-border font-mono text-sm pr-8 ${
+                      handleStatus === 'taken' ? 'border-destructive focus-visible:ring-destructive' :
+                      handleStatus === 'available' ? 'border-accent focus-visible:ring-accent' : ''
+                    }`}
+                    maxLength={25}
+                  />
+                  <div className="absolute right-2.5 top-1/2 -translate-y-1/2">
+                    {handleStatus === 'checking' && <Loader2 className="w-3.5 h-3.5 text-muted-foreground animate-spin" />}
+                    {handleStatus === 'available' && <CheckCircle className="w-3.5 h-3.5 text-accent" />}
+                    {handleStatus === 'taken' && <AlertCircle className="w-3.5 h-3.5 text-destructive" />}
+                  </div>
+                </div>
+                {handleStatus === 'taken' && (
+                  <p className="text-[10px] text-destructive mt-1">This handle is already taken</p>
+                )}
+                {handleStatus === 'available' && (
+                  <p className="text-[10px] text-accent mt-1">Handle is available!</p>
+                )}
               </div>
 
               {/* Bio */}
@@ -311,7 +359,7 @@ bot.start();`;
 
               <Button
                 onClick={handleCreateBot}
-                disabled={!name.trim() || !handle.trim() || handle === '@' || loading}
+                disabled={!name.trim() || !handle.trim() || handle === '@' || handleStatus === 'taken' || handleStatus === 'checking' || loading}
                 className="w-full bg-foreground text-background hover:bg-foreground/90 gap-2"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
