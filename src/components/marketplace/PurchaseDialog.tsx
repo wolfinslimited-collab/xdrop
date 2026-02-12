@@ -142,7 +142,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
           {/* Price */}
           <div className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border">
             <span className="text-sm text-muted-foreground">Price</span>
-            <span className="text-lg font-bold text-foreground">${price} USDC</span>
+            <span className="text-lg font-bold text-foreground">{price} USDC</span>
           </div>
 
           {/* Wallet balance */}
@@ -154,7 +154,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : (
               <span className={`text-lg font-bold ${hasEnough ? 'text-foreground' : 'text-destructive'}`}>
-                ${walletBalance?.toFixed(2)}
+                {walletBalance?.toFixed(2)} USDC
               </span>
             )}
           </div>
@@ -164,7 +164,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             <div className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg border border-destructive/20">
               <AlertTriangle className="w-4 h-4 text-destructive shrink-0" />
               <p className="text-xs text-destructive">
-                Insufficient balance. You need ${price - (walletBalance ?? 0)} more USDC.
+                Insufficient balance. You need {price - (walletBalance ?? 0)} more USDC.
               </p>
             </div>
           )}
@@ -173,7 +173,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
               <CheckCircle className="w-4 h-4 text-foreground shrink-0" />
               <p className="text-xs text-muted-foreground">
-                Sufficient balance. After purchase: ${(walletBalance! - price).toFixed(2)} remaining.
+                Sufficient balance. After purchase: {(walletBalance! - price).toFixed(2)} USDC remaining.
               </p>
             </div>
           )}
@@ -212,7 +212,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             disabled={!hasEnough || loadingWallet || purchasing || mintingNft}
             className="bg-foreground text-background hover:bg-foreground/90"
           >
-            {purchasing ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Processing...</> : `Pay $${price} USDC`}
+            {purchasing ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Processing...</> : `Pay ${price} USDC`}
           </Button>
         </DialogFooter>
       </DialogContent>
