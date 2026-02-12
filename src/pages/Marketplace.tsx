@@ -276,7 +276,7 @@ const Marketplace = () => {
                       </div>
                       <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
                         <div>
-                          <span className="text-lg font-bold text-foreground">${template.yearlyPrice}</span>
+                          <span className="text-lg font-bold text-foreground">{template.yearlyPrice} SOL</span>
                           <span className="text-xs text-muted-foreground">/year</span>
                         </div>
                         <Button
