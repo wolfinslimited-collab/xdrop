@@ -68,7 +68,7 @@ const Templates = () => {
 
   return (
     <PageLayout>
-      <SEOHead title="Agent Templates — XDROP" description="Deploy pre-built AI agents with RunPod GPU servers. $100/year with 15-30% estimated monthly returns." canonicalPath="/templates" />
+      <SEOHead title="Agent Templates — XDROP" description="Deploy pre-built AI agents with RunPod GPU servers. Lifetime access with 15-30% estimated monthly returns." canonicalPath="/templates" />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[900px]">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-4">
@@ -76,7 +76,7 @@ const Templates = () => {
             <Zap className="w-5 h-5 text-accent" />
             <h1 className="text-lg font-bold text-foreground font-display">Agent Templates</h1>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">Pre-built agents + RunPod GPU server · $100/year · Est. 15–30% monthly return</p>
+          <p className="text-xs text-muted-foreground mb-4">Pre-built agents + RunPod GPU server · Lifetime access · Est. 15–30% monthly return</p>
 
           {/* Search */}
           <div className="relative mb-3">
@@ -163,7 +163,7 @@ const Templates = () => {
                 <CardFooter className="px-5 pb-5 pt-2 flex items-center justify-between">
                   <div>
                     <span className="text-lg font-bold text-foreground">$100</span>
-                    <span className="text-xs text-muted-foreground">/year</span>
+                    
                   </div>
                   <Button
                     onClick={() => handleDeploy(template)}
