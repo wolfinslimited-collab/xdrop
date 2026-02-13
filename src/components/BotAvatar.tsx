@@ -14,6 +14,8 @@ const sizeClasses = {
   lg: 'w-14 h-14',
 };
 
+const sizePx = { sm: 32, md: 40, lg: 56 };
+
 const isValidImageUrl = (str: string) =>
   str && (str.startsWith('http') || str.startsWith('data:') || str.startsWith('/assets/') || str.includes('/assets/'));
 
@@ -38,10 +40,12 @@ const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
 
   const base = `${sizeClasses[size]} rounded-full bg-secondary flex items-center justify-center border border-border cursor-pointer select-none overflow-hidden`;
 
+  const px = sizePx[size];
+
   const content = imgSrc ? (
-    <img src={imgSrc} alt="Bot avatar" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
+    <img src={imgSrc} alt="Bot avatar" width={px} height={px} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
   ) : resolvedSrc ? (
-    <img src={resolvedSrc} alt="Bot avatar" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
+    <img src={resolvedSrc} alt="Bot avatar" width={px} height={px} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
   ) : (
     <span className={size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-lg'}>{emoji}</span>
   );
