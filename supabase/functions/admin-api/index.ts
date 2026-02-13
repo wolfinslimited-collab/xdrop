@@ -151,6 +151,58 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- PURCHASES & TRIALS ---
+    if (action === 'list-purchases') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const limit = 50
+      const { data: purchases, count } = await adminClient
+        .from('agent_purchases')
+        .select('*', { count: 'exact' })
+        .order('purchased_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1)
+
+      // Enrich with agent + user info
+      const agentIds = [...new Set((purchases || []).map((p: any) => p.agent_id))]
+      const userIds = [...new Set((purchases || []).map((p: any) => p.user_id))]
+      const [{ data: agents }, { data: profiles }] = await Promise.all([
+        agentIds.length > 0 ? adminClient.from('agents').select('id, name, avatar, price, template_id').in('id', agentIds) : { data: [] },
+        userIds.length > 0 ? adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds) : { data: [] },
+      ])
+      const agentMap = Object.fromEntries((agents || []).map((a: any) => [a.id, a]))
+      const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+      const enriched = (purchases || []).map((p: any) => ({
+        ...p,
+        agent: agentMap[p.agent_id] || { name: 'Unknown' },
+        profile: profileMap[p.user_id] || { display_name: 'Unknown' },
+      }))
+      return new Response(JSON.stringify({ purchases: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (action === 'list-trials') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const limit = 50
+      const { data: trials, count } = await adminClient
+        .from('agent_trials')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1)
+
+      const userIds = [...new Set((trials || []).map((t: any) => t.user_id))]
+      const agentIds = [...new Set((trials || []).filter((t: any) => t.agent_id).map((t: any) => t.agent_id))]
+      const [{ data: profiles }, { data: agents }] = await Promise.all([
+        userIds.length > 0 ? adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds) : { data: [] },
+        agentIds.length > 0 ? adminClient.from('agents').select('id, name, avatar, template_id').in('id', agentIds) : { data: [] },
+      ])
+      const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+      const agentMap = Object.fromEntries((agents || []).map((a: any) => [a.id, a]))
+      const enriched = (trials || []).map((t: any) => ({
+        ...t,
+        profile: profileMap[t.user_id] || { display_name: 'Unknown' },
+        agent: t.agent_id ? (agentMap[t.agent_id] || { name: t.template_id }) : { name: t.template_id },
+      }))
+      return new Response(JSON.stringify({ trials: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // --- ANALYTICS ---
     if (action === 'analytics') {
       const [
