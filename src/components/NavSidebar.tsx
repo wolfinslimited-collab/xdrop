@@ -4,8 +4,6 @@ import {
   Search,
   Bell,
   Mail,
-  
-  
   Bot,
   Store,
   LayoutDashboard,
@@ -14,11 +12,13 @@ import {
   Coins,
   LogIn,
   LogOut,
+  Shield,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
 import openclawMascot from '@/assets/openclaw-mascot.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminCheck } from '@/hooks/useAdmin';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/home' },
@@ -37,6 +37,12 @@ const navItems = [
 const NavSidebar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdminCheck();
+
+  const allItems = [
+    ...navItems,
+    ...(isAdmin ? [{ icon: Shield, label: 'Admin', path: '/admin' }] : []),
+  ];
 
   return (
     <nav className="w-[275px] flex flex-col items-end pr-6 py-4 sticky top-0 h-screen hidden md:flex">
@@ -55,7 +61,7 @@ const NavSidebar = () => {
 
         {/* Nav Items */}
         <div className="flex flex-col gap-0.5 w-full">
-          {navItems.map((item) => {
+          {allItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
