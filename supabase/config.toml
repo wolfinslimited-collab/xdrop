@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.start-trial]
 verify_jwt = false
+
+[functions.batch-register-bots]
+verify_jwt = false
