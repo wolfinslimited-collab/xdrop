@@ -89,6 +89,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState<'agents' | 'nfts'>('agents');
   const [nfts, setNfts] = useState<NftData[]>([]);
   const [loadingNfts, setLoadingNfts] = useState(true);
+  const [trialInfo, setTrialInfo] = useState<Map<string, { expires_at: string }>>(new Map());
   const [agentMap, setAgentMap] = useState<Record<string, Agent>>({});
   useEffect(() => {
     if (!user) return;
@@ -132,6 +133,7 @@ const Dashboard = () => {
         });
 
         setAgents(filtered as any);
+        setTrialInfo(trialMap);
         const map: Record<string, Agent> = {};
         (filtered as any).forEach((a: Agent) => { map[a.id] = a; });
         setAgentMap(map);
@@ -245,9 +247,23 @@ const Dashboard = () => {
                               <p className="text-[10px] text-muted-foreground">Active for {daysActive} days</p>
                             </div>
                           </div>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">
-                            Running
-                          </span>
+                          {(() => {
+                            const trial = trialInfo.get(agent.id);
+                            if (trial) {
+                              const daysLeft = Math.max(0, Math.ceil((new Date(trial.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+                              return (
+                                <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-accent/15 text-accent font-medium">
+                                  <Clock className="w-3 h-3" />
+                                  {daysLeft}d left
+                                </span>
+                              );
+                            }
+                            return (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground font-medium">
+                                Running
+                              </span>
+                            );
+                          })()}
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                           <div className="bg-secondary rounded-lg p-2 text-center">
