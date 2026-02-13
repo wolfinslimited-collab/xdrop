@@ -17,17 +17,72 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
+interface DbBot {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  bio: string | null;
+  badge: string;
+  badge_color: string;
+  verified: boolean;
+  followers: number;
+  following: number;
+}
+
 const BotProfile = () => {
   const { botId } = useParams<{ botId: string }>();
-  const bot = bots.find((b) => b.id === botId);
+  const staticBot = bots.find((b) => b.id === botId);
   const botPosts = posts.filter((p) => p.bot.id === botId);
+
+  const [dbBot, setDbBot] = useState<DbBot | null>(null);
+  const [dbPosts, setDbPosts] = useState<any[]>([]);
+  const [loadingDb, setLoadingDb] = useState(!staticBot);
   const [usdcEarnings, setUsdcEarnings] = useState<number>(0);
   const [earningsLoaded, setEarningsLoaded] = useState(false);
+
+  // Fetch DB bot if no static match
+  useEffect(() => {
+    if (staticBot || !botId) return;
+    const fetchBot = async () => {
+      const { data } = await supabase
+        .from('social_bots')
+        .select('id, name, handle, avatar, bio, badge, badge_color, verified, followers, following')
+        .eq('id', botId)
+        .maybeSingle();
+      if (data) {
+        setDbBot(data as DbBot);
+        // Fetch posts for this bot
+        const { data: postsData } = await supabase
+          .from('social_posts')
+          .select('*')
+          .eq('bot_id', botId)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        setDbPosts(postsData ?? []);
+      }
+      setLoadingDb(false);
+    };
+    fetchBot();
+  }, [botId, staticBot]);
+
+  // Resolved bot (static or DB)
+  const bot = staticBot ?? (dbBot ? {
+    id: dbBot.id,
+    name: dbBot.name,
+    handle: dbBot.handle,
+    avatar: dbBot.avatar,
+    bio: dbBot.bio ?? '',
+    badge: dbBot.badge,
+    badgeColor: dbBot.badge_color,
+    verified: dbBot.verified,
+    followers: dbBot.followers,
+    following: dbBot.following,
+  } : null);
 
   useEffect(() => {
     if (!bot) return;
     const fetchEarnings = async () => {
-      // Try matching agent by name to get real usdc_earnings
       const { data } = await supabase
         .from('agents')
         .select('usdc_earnings')
@@ -37,7 +92,17 @@ const BotProfile = () => {
       setEarningsLoaded(true);
     };
     fetchEarnings();
-  }, [bot]);
+  }, [bot?.name]);
+
+  if (loadingDb) {
+    return (
+      <PageLayout>
+        <div className="flex-1 border-x border-border min-h-screen w-full max-w-[600px] flex items-center justify-center">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      </PageLayout>
+    );
+  }
 
   if (!bot) {
     return (
@@ -48,6 +113,9 @@ const BotProfile = () => {
       </PageLayout>
     );
   }
+
+  // Merge static posts with DB posts for display
+  const allPosts = staticBot ? botPosts : dbPosts;
 
   return (
     <PageLayout>
@@ -88,7 +156,7 @@ const BotProfile = () => {
           </Link>
           <div>
             <h1 className="text-lg font-bold text-foreground leading-tight">{bot.name}</h1>
-            <p className="text-xs text-muted-foreground">{botPosts.length} posts</p>
+            <p className="text-xs text-muted-foreground">{allPosts.length} posts</p>
           </div>
         </div>
 
@@ -123,7 +191,7 @@ const BotProfile = () => {
           <div className="flex items-center gap-1.5 mb-0.5">
             <h2 className="text-xl font-bold text-foreground">{bot.name}</h2>
             {bot.verified && <VerifiedBadge />}
-            <BotBadge label={bot.badge} color={bot.badgeColor} />
+            <BotBadge label={bot.badge} color={bot.badgeColor as 'cyan' | 'amber' | 'green' | 'pink' | 'purple'} />
           </div>
           <p className="text-sm font-mono text-muted-foreground mb-3">{bot.handle}</p>
           <p className="text-sm text-foreground leading-relaxed mb-3">{bot.bio}</p>
@@ -181,9 +249,23 @@ const BotProfile = () => {
 
         {/* Posts */}
         <div>
-          {botPosts.length > 0 ? (
+          {staticBot && botPosts.length > 0 ? (
             botPosts.map((post, i) => (
               <PostCard key={post.id} post={post} index={i} />
+            ))
+          ) : dbPosts.length > 0 ? (
+            dbPosts.map((post, i) => (
+              <div key={post.id} className="px-4 py-3 border-b border-border">
+                <p className="text-sm text-foreground leading-relaxed">{post.content}</p>
+                <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                  <span>❤️ {post.likes}</span>
+                  <span>🔁 {post.reposts}</span>
+                  <span>💬 {post.replies}</span>
+                  <span className="ml-auto">
+                    {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </span>
+                </div>
+              </div>
             ))
           ) : (
             <div className="py-12 text-center text-muted-foreground text-sm">
