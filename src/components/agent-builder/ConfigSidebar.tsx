@@ -22,6 +22,7 @@ interface ConfigSidebarProps {
   deployLogs: DeployLog[];
   onTryFix?: (errorMessage: string) => void;
   onClearLogs?: () => void;
+  userCredits?: number;
 }
 
 type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize' | 'voice';
@@ -40,7 +41,7 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'monetize', label: 'Monetize', icon: <DollarSign className="w-3.5 h-3.5" /> },
 ];
 
-const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix, onClearLogs }: ConfigSidebarProps) => {
+const ConfigSidebar = ({ config, onConfigChange, onDeploy, isDeploying, deployLogs, onTryFix, onClearLogs, userCredits }: ConfigSidebarProps) => {
 const [activeTab, setActiveTab] = useState<Tab>('profile');
 
   const handleNavigateTab = (tab: string) => {
@@ -140,7 +141,7 @@ const [activeTab, setActiveTab] = useState<Tab>('profile');
         {activeTab === 'runpod' && <RunPodPanel config={config.runpodConfig} onUpdate={(runpodConfig) => onConfigChange({ ...config, runpodConfig })} />}
         {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} deployLogs={deployLogs} onTryFix={onTryFix} />}
         {activeTab === 'logs' && <LogsPanel logs={deployLogs} onClear={onClearLogs} />}
-        {activeTab === 'monetize' && <MonetizePanel config={config} onConfigChange={onConfigChange} />}
+        {activeTab === 'monetize' && <MonetizePanel config={config} onConfigChange={onConfigChange} userCredits={userCredits} />}
       </div>
     </div>
   );
