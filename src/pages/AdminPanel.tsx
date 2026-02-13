@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Shield, Users, Eye, BarChart3, Activity, Settings, Cpu } from 'lucide-react';
-import PageLayout from '@/components/PageLayout';
+import { Navigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Shield, Users, Eye, BarChart3, Settings, Cpu, 
+  ChevronLeft, Home, Activity, Bell, LogOut 
+} from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminCheck } from '@/hooks/useAdmin';
@@ -11,82 +13,168 @@ import AdminUsers from '@/components/admin/AdminUsers';
 import AdminModeration from '@/components/admin/AdminModeration';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminAgents from '@/components/admin/AdminAgents';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 
 type Tab = 'analytics' | 'users' | 'agents' | 'moderation' | 'settings';
 
-const tabs: { id: Tab; label: string; icon: any }[] = [
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'users', label: 'Users', icon: Users },
-  { id: 'agents', label: 'Agents', icon: Cpu },
-  { id: 'moderation', label: 'Moderation', icon: Eye },
-  { id: 'settings', label: 'Settings', icon: Settings },
+const navItems: { id: Tab; label: string; icon: any; description: string }[] = [
+  { id: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Platform metrics' },
+  { id: 'users', label: 'Users', icon: Users, description: 'Manage accounts' },
+  { id: 'agents', label: 'Agents', icon: Cpu, description: 'AI agents & APIs' },
+  { id: 'moderation', label: 'Moderation', icon: Eye, description: 'Content review' },
+  { id: 'settings', label: 'Settings', icon: Settings, description: 'Platform config' },
 ];
 
 const AdminPanel = () => {
-  const { user, session, loading: authLoading } = useAuth();
+  const { user, session, loading: authLoading, signOut } = useAuth();
   const { isAdmin, checking } = useAdminCheck();
   const [tab, setTab] = useState<Tab>('analytics');
+  const [collapsed, setCollapsed] = useState(false);
 
   if (authLoading || checking) return null;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
 
+  const currentNav = navItems.find(n => n.id === tab);
+
   return (
-    <PageLayout>
+    <>
       <SEOHead title="Admin Panel — XDROP" description="Platform administration" canonicalPath="/admin" />
-      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[700px]">
-        {/* Header */}
-        <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border">
-          <div className="px-6 pt-5 pb-3">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center">
-                <Shield className="w-4.5 h-4.5 text-accent" />
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-foreground tracking-tight">Admin Panel</h1>
-                <p className="text-[11px] text-muted-foreground">Platform management & analytics</p>
-              </div>
-              <div className="ml-auto flex items-center gap-2">
-                <Activity className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-[10px] text-green-400 font-medium">System Online</span>
-              </div>
+      <div className="flex h-screen w-full bg-background overflow-hidden">
+        {/* Sidebar */}
+        <motion.aside
+          animate={{ width: collapsed ? 72 : 260 }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
+          className="h-full border-r border-border bg-card flex flex-col shrink-0 overflow-hidden"
+        >
+          {/* Logo area */}
+          <div className="p-4 flex items-center gap-3 h-16 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
+              <Shield className="w-4.5 h-4.5 text-accent" />
             </div>
+            {!collapsed && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-w-0">
+                <p className="text-sm font-bold font-display text-foreground tracking-tight">XDROP</p>
+                <p className="text-[10px] text-muted-foreground">Admin Console</p>
+              </motion.div>
+            )}
           </div>
-          {/* Tab bar */}
-          <div className="flex px-6 gap-1">
-            {tabs.map(t => {
-              const active = tab === t.id;
+
+          <Separator />
+
+          {/* Navigation */}
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            {navItems.map(item => {
+              const active = tab === item.id;
               return (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
-                  className={`relative flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors ${
-                    active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                  key={item.id}
+                  onClick={() => setTab(item.id)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative ${
+                    active
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60'
                   }`}
                 >
-                  <t.icon className="w-4 h-4" />
-                  {t.label}
                   {active && (
                     <motion.div
-                      layoutId="admin-tab"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full"
+                      layoutId="admin-sidebar-active"
+                      className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-accent rounded-r-full"
                     />
+                  )}
+                  <item.icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground'}`} />
+                  {!collapsed && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-left min-w-0">
+                      <span className="block truncate">{item.label}</span>
+                      {!active && <span className="block text-[10px] text-muted-foreground/60 truncate">{item.description}</span>}
+                    </motion.div>
                   )}
                 </button>
               );
             })}
-          </div>
-        </header>
+          </nav>
 
-        {/* Content */}
-        <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
-          {tab === 'analytics' && <AdminAnalytics session={session} />}
-          {tab === 'users' && <AdminUsers session={session} />}
-          {tab === 'agents' && <AdminAgents session={session} />}
-          {tab === 'moderation' && <AdminModeration session={session} />}
-          {tab === 'settings' && <AdminSettings session={session} />}
-        </motion.div>
-      </main>
-    </PageLayout>
+          <Separator />
+
+          {/* Bottom section */}
+          <div className="p-3 space-y-2 shrink-0">
+            <Link
+              to="/"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            >
+              <Home className="w-[18px] h-[18px] shrink-0" />
+              {!collapsed && <span>Back to App</span>}
+            </Link>
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors"
+            >
+              <ChevronLeft className={`w-[18px] h-[18px] shrink-0 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+              {!collapsed && <span>Collapse</span>}
+            </button>
+          </div>
+
+          {/* User pill */}
+          {!collapsed && (
+            <div className="p-3 pt-0 shrink-0">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-lg bg-secondary/40">
+                <Avatar className="w-7 h-7">
+                  <AvatarImage src={user?.user_metadata?.avatar_url} />
+                  <AvatarFallback className="text-[10px] bg-accent/15 text-accent">
+                    {(user?.user_metadata?.full_name || 'A')[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-foreground truncate">{user?.user_metadata?.full_name || 'Admin'}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{user?.email}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.aside>
+
+        {/* Main content */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          {/* Top bar */}
+          <header className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6 shrink-0">
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-lg font-bold font-display text-foreground tracking-tight">
+                  {currentNav?.label}
+                </h1>
+                <p className="text-[11px] text-muted-foreground -mt-0.5">{currentNav?.description}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 border border-success/20">
+                <Activity className="w-3 h-3 text-success" />
+                <span className="text-[10px] text-success font-medium">System Online</span>
+              </div>
+            </div>
+          </header>
+
+          {/* Content area */}
+          <main className="flex-1 overflow-y-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={tab}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.15 }}
+              >
+                {tab === 'analytics' && <AdminAnalytics session={session} />}
+                {tab === 'users' && <AdminUsers session={session} />}
+                {tab === 'agents' && <AdminAgents session={session} />}
+                {tab === 'moderation' && <AdminModeration session={session} />}
+                {tab === 'settings' && <AdminSettings session={session} />}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </div>
+    </>
   );
 };
 
