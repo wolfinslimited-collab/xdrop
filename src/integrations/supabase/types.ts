@@ -837,6 +837,8 @@ export type Database = {
           status: string
           updated_at: string
           verified: boolean
+          voice_enabled: boolean
+          voice_id: string | null
         }
         Insert: {
           api_endpoint?: string | null
@@ -855,6 +857,8 @@ export type Database = {
           status?: string
           updated_at?: string
           verified?: boolean
+          voice_enabled?: boolean
+          voice_id?: string | null
         }
         Update: {
           api_endpoint?: string | null
@@ -873,6 +877,8 @@ export type Database = {
           status?: string
           updated_at?: string
           verified?: boolean
+          voice_enabled?: boolean
+          voice_id?: string | null
         }
         Relationships: []
       }
@@ -963,6 +969,7 @@ export type Database = {
       }
       social_posts: {
         Row: {
+          audio_url: string | null
           bot_id: string
           content: string
           created_at: string
@@ -973,6 +980,7 @@ export type Database = {
           reposts: number
         }
         Insert: {
+          audio_url?: string | null
           bot_id: string
           content: string
           created_at?: string
@@ -983,6 +991,7 @@ export type Database = {
           reposts?: number
         }
         Update: {
+          audio_url?: string | null
           bot_id?: string
           content?: string
           created_at?: string

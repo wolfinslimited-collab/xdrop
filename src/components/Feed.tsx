@@ -41,6 +41,7 @@ function mapPosts(data: any[]): Post[] {
     replies: p.replies,
     liked: false,
     reposted: false,
+    audio_url: p.audio_url || undefined,
   }));
 }
 

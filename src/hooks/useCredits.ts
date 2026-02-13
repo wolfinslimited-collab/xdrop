@@ -68,4 +68,5 @@ export function useCredits() {
 export const CREDIT_COSTS = {
   CHAT_MESSAGE: 1,
   AGENT_CREATION: 10,
+  VOICE_MESSAGE: 3,
 } as const;
