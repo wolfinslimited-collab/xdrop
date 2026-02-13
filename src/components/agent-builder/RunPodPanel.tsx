@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
-import { ExternalLink, Key, CheckCircle2, Loader2, Info, Cpu, Zap, CreditCard } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { ExternalLink, Key, CheckCircle2, Loader2, Info, Cpu, Zap, CreditCard, Calculator } from 'lucide-react';
 import { type RunPodConfig } from '@/types/agentBuilder';
 import { GPU_TIERS } from '@/types/agentBuilder';
 import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,7 +12,76 @@ interface RunPodPanelProps {
   onUpdate: (config: RunPodConfig) => void;
 }
 
+const HOURLY_RATES: Record<string, number> = {
+  cpu: 0.01,
+  a40: 0.39,
+  a100: 1.09,
+  h100: 3.49,
+};
+
+const CostCalculator = ({ gpuTier, isUsingPlatform }: { gpuTier: string; isUsingPlatform: boolean }) => {
+  const [hoursPerDay, setHoursPerDay] = useState(4);
+  const [runsPerDay, setRunsPerDay] = useState(10);
+
+  const costs = useMemo(() => {
+    const hourlyRate = HOURLY_RATES[gpuTier] || 0;
+    const monthlyGpu = hourlyRate * hoursPerDay * 30;
+    const monthlyCreditsCompute = isUsingPlatform ? hoursPerDay * 60 * 2 * 30 : 0;
+    const monthlyCreditsRuns = runsPerDay * 5 * 30;
+    const totalCredits = monthlyCreditsCompute + monthlyCreditsRuns;
+    return { monthlyGpu, monthlyCreditsCompute, monthlyCreditsRuns, totalCredits };
+  }, [gpuTier, hoursPerDay, runsPerDay, isUsingPlatform]);
+
+  return (
+    <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-3">
+      <div className="flex items-center gap-2">
+        <Calculator className="w-3.5 h-3.5 text-primary" />
+        <span className="text-xs font-semibold text-foreground">Cost Calculator</span>
+      </div>
+
+      <div className="space-y-2">
+        <div>
+          <div className="flex justify-between text-[10px] mb-1">
+            <span className="text-muted-foreground">Hours active / day</span>
+            <span className="text-foreground font-medium">{hoursPerDay}h</span>
+          </div>
+          <Slider value={[hoursPerDay]} onValueChange={([v]) => setHoursPerDay(v)} min={1} max={24} step={1} className="w-full" />
+        </div>
+
+        <div>
+          <div className="flex justify-between text-[10px] mb-1">
+            <span className="text-muted-foreground">Runs / day</span>
+            <span className="text-foreground font-medium">{runsPerDay}</span>
+          </div>
+          <Slider value={[runsPerDay]} onValueChange={([v]) => setRunsPerDay(v)} min={1} max={100} step={1} className="w-full" />
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-2 space-y-1">
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">GPU compute</span>
+          <span className="text-foreground">${costs.monthlyGpu.toFixed(2)}/mo</span>
+        </div>
+        {isUsingPlatform && (
+          <div className="flex justify-between text-[10px]">
+            <span className="text-muted-foreground">Compute credits</span>
+            <span className="text-foreground">{costs.monthlyCreditsCompute.toLocaleString()} credits/mo</span>
+          </div>
+        )}
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Run credits ({runsPerDay}/day × 5)</span>
+          <span className="text-foreground">{costs.monthlyCreditsRuns.toLocaleString()} credits/mo</span>
+        </div>
+        <div className="flex justify-between text-[10px] font-semibold pt-1 border-t border-border">
+          <span className="text-foreground">Total credits</span>
+          <span className="text-primary">{costs.totalCredits.toLocaleString()}/mo</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 const RunPodPanel = ({ config, onUpdate }: RunPodPanelProps) => {
+
   const { toast } = useToast();
   const [apiKey, setApiKey] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -249,32 +319,8 @@ const RunPodPanel = ({ config, onUpdate }: RunPodPanelProps) => {
         />
       </div>
 
-      {/* Cost summary */}
-      {config.apiKeyConfigured && (
-        <div className="p-2.5 rounded-lg border border-border bg-muted/30">
-          <div className="flex items-center gap-2 mb-1.5">
-            <CreditCard className="w-3 h-3 text-muted-foreground" />
-            <span className="text-[10px] font-medium text-foreground">Cost Breakdown</span>
-          </div>
-          <div className="space-y-1">
-            <div className="flex justify-between text-[10px]">
-              <span className="text-muted-foreground">Deploy</span>
-              <span className="text-foreground">10 credits</span>
-            </div>
-            {isUsingPlatform && (
-              <div className="flex justify-between text-[10px]">
-                <span className="text-muted-foreground">Compute</span>
-                <span className="text-foreground">2 credits/min</span>
-              </div>
-            )}
-            <div className="flex justify-between text-[10px]">
-              <span className="text-muted-foreground">Per run (platform)</span>
-              <span className="text-foreground">5 credits</span>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Cost Calculator */}
+      <CostCalculator gpuTier={config.gpuTier} isUsingPlatform={isUsingPlatform} />
       {/* Info */}
       <div className="p-2.5 rounded-lg border border-border bg-muted/30 flex items-start gap-2">
         <Info className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />
