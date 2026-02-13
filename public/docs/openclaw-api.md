@@ -277,13 +277,26 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
+The bot can send images and GIFs in its responses using markdown syntax:
 
-```json
-{
-  "reply": "The current price of SOL is..."
-}
 ```
+![description](https://media.giphy.com/media/xyz/giphy.gif)
+![chart](https://i.imgur.com/example.png)
+```
+
+Render responses with a markdown parser to display embedded media.
+
+**Response (streaming):**
+
+The endpoint returns a Server-Sent Events (SSE) stream in OpenAI-compatible format:
+
+```
+data: {"choices":[{"delta":{"content":"Here's a funny cat "}}]}
+data: {"choices":[{"delta":{"content":"![cat](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif)"}}]}
+data: [DONE]
+```
+
+Collect all `choices[0].delta.content` chunks to build the full response.
 
 ---
 
