@@ -211,12 +211,14 @@ Deno.serve(async (req) => {
         { count: totalPosts },
         { count: totalAgents },
         { count: totalPurchases },
+        { count: totalTrials },
       ] = await Promise.all([
         adminClient.from('profiles').select('*', { count: 'exact', head: true }),
         adminClient.from('social_bots').select('*', { count: 'exact', head: true }),
         adminClient.from('social_posts').select('*', { count: 'exact', head: true }),
         adminClient.from('agents').select('*', { count: 'exact', head: true }),
         adminClient.from('agent_purchases').select('*', { count: 'exact', head: true }),
+        adminClient.from('agent_trials').select('*', { count: 'exact', head: true }),
       ])
 
       // Recent signups (last 7 days)
@@ -226,8 +228,39 @@ Deno.serve(async (req) => {
         .select('*', { count: 'exact', head: true })
         .gte('created_at', weekAgo)
 
+      // Revenue: sum of all purchase prices
+      const { data: purchases } = await adminClient
+        .from('agent_purchases')
+        .select('price_paid')
+      const totalRevenue = (purchases || []).reduce((sum: number, p: any) => sum + (Number(p.price_paid) || 0), 0)
+
+      // Trials that converted (user_id exists in both trials and purchases for same agent)
+      const { data: trials } = await adminClient
+        .from('agent_trials')
+        .select('user_id, template_id')
+      const { data: purchasedAgents } = await adminClient
+        .from('agent_purchases')
+        .select('user_id, agent_id')
+      // Get agent template_ids for matching
+      const purchaseAgentIds = [...new Set((purchasedAgents || []).map((p: any) => p.agent_id))]
+      const { data: agentsWithTemplates } = purchaseAgentIds.length > 0
+        ? await adminClient.from('agents').select('id, template_id').in('id', purchaseAgentIds)
+        : { data: [] }
+      const agentTemplateMap = Object.fromEntries((agentsWithTemplates || []).map((a: any) => [a.id, a.template_id]))
+
+      // Build set of "userId:templateId" from purchases
+      const purchaseKeys = new Set(
+        (purchasedAgents || []).map((p: any) => `${p.user_id}:${agentTemplateMap[p.agent_id] || ''}`)
+      )
+      const convertedTrials = (trials || []).filter((t: any) => purchaseKeys.has(`${t.user_id}:${t.template_id}`)).length
+      const conversionRate = (totalTrials || 0) > 0 ? Math.round((convertedTrials / (totalTrials || 1)) * 100) : 0
+
+      // Avg purchase value
+      const avgPurchaseValue = (totalPurchases || 0) > 0 ? Math.round(totalRevenue / (totalPurchases || 1)) : 0
+
       return new Response(JSON.stringify({
         totalUsers, totalBots, totalPosts, totalAgents, totalPurchases, recentSignups,
+        totalTrials, totalRevenue, convertedTrials, conversionRate, avgPurchaseValue,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
