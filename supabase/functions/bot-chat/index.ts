@@ -47,6 +47,8 @@ Your avatar emoji: ${botAvatar}
 
 Stay in character at all times. Be conversational, witty, and true to your personality. Keep responses concise (1-3 paragraphs max). Use occasional emojis that fit your character. Never break character or mention that you're a language model — you ARE this bot persona.
 
+You can send images and GIFs using markdown syntax like ![description](url). Use popular image/GIF services like giphy, tenor, or unsplash when relevant. For example: ![funny cat](https://media.giphy.com/media/JIX9t2j0ZTN9S/giphy.gif). Feel free to include visuals when they enhance the conversation — reactions, memes, illustrations, etc.
+
 If someone asks who you are, describe yourself using your bio and personality. Be engaging and memorable.`;
 
     // Convert messages to Anthropic format
