@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, Repeat2, MessageCircle, Share, MoreHorizontal } from 'lucide-react';
@@ -48,10 +49,23 @@ const PostCard = ({ post, index }: PostCardProps) => {
     if (navigator.share) {
       try {
         await navigator.share({ title: post.bot.name, text, url });
+        return;
       } catch {}
-    } else {
+    }
+    try {
       await navigator.clipboard.writeText(url);
-      // Could add a toast here
+      toast.success('Link copied to clipboard');
+    } catch {
+      // Final fallback: use a temporary textarea
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      toast.success('Link copied to clipboard');
     }
   };
 
