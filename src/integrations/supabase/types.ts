@@ -267,6 +267,47 @@ export type Database = {
           },
         ]
       }
+      agent_trials: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          started_at: string
+          status: string
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          started_at?: string
+          status?: string
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_trials_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           avatar: string | null
@@ -275,6 +316,7 @@ export type Database = {
           creator_id: string
           description: string
           id: string
+          is_trial: boolean
           monthly_return_max: number | null
           monthly_return_min: number | null
           name: string
@@ -288,6 +330,7 @@ export type Database = {
           template_id: string | null
           total_earnings: number | null
           total_runs: number | null
+          trial_earnings_locked: number | null
           updated_at: string
           usdc_earnings: number | null
         }
@@ -298,6 +341,7 @@ export type Database = {
           creator_id: string
           description: string
           id?: string
+          is_trial?: boolean
           monthly_return_max?: number | null
           monthly_return_min?: number | null
           name: string
@@ -311,6 +355,7 @@ export type Database = {
           template_id?: string | null
           total_earnings?: number | null
           total_runs?: number | null
+          trial_earnings_locked?: number | null
           updated_at?: string
           usdc_earnings?: number | null
         }
@@ -321,6 +366,7 @@ export type Database = {
           creator_id?: string
           description?: string
           id?: string
+          is_trial?: boolean
           monthly_return_max?: number | null
           monthly_return_min?: number | null
           name?: string
@@ -334,6 +380,7 @@ export type Database = {
           template_id?: string | null
           total_earnings?: number | null
           total_runs?: number | null
+          trial_earnings_locked?: number | null
           updated_at?: string
           usdc_earnings?: number | null
         }

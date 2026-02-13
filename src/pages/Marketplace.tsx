@@ -277,6 +277,7 @@ const Marketplace = () => {
                       <div className="px-5 pb-5 pt-2 flex items-center justify-between border-t border-border mt-auto">
                         <div>
                           <span className="text-lg font-bold text-foreground">{template.yearlyPrice} USDC</span>
+                          <p className="text-[10px] text-primary font-medium">7-day free trial</p>
                         </div>
                         <Button
                           onClick={(e) => { e.preventDefault(); handleDeploy(template); }}
