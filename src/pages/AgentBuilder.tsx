@@ -21,6 +21,7 @@ import claudeLogo from '@/assets/claude-logo.png';
 import OpenClawMascot from '@/components/agent-builder/OpenClawMascot';
 import SessionHistory from '@/components/agent-builder/SessionHistory';
 import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
+import { generateOpenClawConfig } from '@/lib/openclawConfig';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -278,7 +279,7 @@ const AgentBuilder = () => {
 
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
-    if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and add your API key first.', variant: 'destructive' }); return; }
+    if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and connect RunPod or use platform credits.', variant: 'destructive' }); return; }
     if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { toast({ title: 'Insufficient credits', description: `Agent creation requires ${CREDIT_COSTS.AGENT_CREATION} credits.`, variant: 'destructive' }); return; }
 
     // Deduct credits for agent creation
@@ -287,12 +288,20 @@ const AgentBuilder = () => {
 
     setIsDeploying(true);
     setDeployLogs([]);
-    addLog('Starting deployment...');
+    addLog('Starting OpenClaw deployment...');
     try {
       const enabledSkills = config.skills.filter(s => s.enabled);
       const connectedIntegrations = config.integrations.filter(i => i.connected);
 
       addLog(`Agent: ${config.name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
+      addLog(`Docker image: openclaw/openclaw:latest`);
+      addLog(`RunPod mode: ${config.runpodConfig.usePlatformKey ? 'Platform credits' : 'Own account'}`);
+      addLog('Generating OpenClaw config...');
+
+      // Generate OpenClaw config
+      const openclawConfig = generateOpenClawConfig(config);
+      addLog('OpenClaw config generated ✓', 'success');
+
       addLog('Saving agent to database...');
 
       // Save agent to DB
@@ -306,9 +315,9 @@ const AgentBuilder = () => {
       if (manifestErr) throw manifestErr;
 
       addLog('Manifest saved', 'success');
-      addLog('Deploying to RunPod endpoint...');
+      addLog('Deploying OpenClaw container to RunPod...');
 
-      // Deploy to RunPod
+      // Deploy to RunPod with OpenClaw config
       const session = await supabase.auth.getSession();
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
         method: 'POST',
@@ -316,7 +325,13 @@ const AgentBuilder = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session.data.session?.access_token}`,
         },
-        body: JSON.stringify({ action: 'deploy', config, agentId: agent.id }),
+        body: JSON.stringify({
+          action: 'deploy',
+          config,
+          agentId: agent.id,
+          usePlatformKey: config.runpodConfig.usePlatformKey,
+          openclawConfig,
+        }),
       });
 
       const result = await resp.json();
@@ -332,10 +347,11 @@ const AgentBuilder = () => {
 
       addLog(`Deployed to RunPod endpoint: ${endpointInfo?.id || 'created'}`, 'success');
       addLog(`Workers: ${endpointInfo?.workersMin ?? 0}–${endpointInfo?.workersMax ?? 3}`, 'info');
-      addLog('Deployment complete! 🚀', 'success');
+      addLog(`Billing: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}`, 'info');
+      addLog('OpenClaw deployment complete! 🚀', 'success');
 
       toast({ title: 'Agent deployed to RunPod', description: `Endpoint: ${endpointInfo?.id || 'created'}` });
-      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod successfully! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\n\nYou can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod as an OpenClaw container! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nDocker Image: \`openclaw/openclaw:latest\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\nBilling: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}\n\nYour agent is now live and ready to accept jobs. You can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
     } catch (err: any) {
       console.error('Deploy error:', err);
       addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');

@@ -34,6 +34,7 @@ export interface RunPodConfig {
   volumeSize: number; // GB
   endpointId: string;
   apiKeyConfigured: boolean;
+  usePlatformKey: boolean;
 }
 
 export interface AgentConfig {
@@ -192,6 +193,7 @@ export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
   volumeSize: 20,
   endpointId: '',
   apiKeyConfigured: false,
+  usePlatformKey: false,
 };
 
 export const DEFAULT_CONFIG: AgentConfig = {
