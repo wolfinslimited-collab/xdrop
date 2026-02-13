@@ -112,6 +112,32 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ posts, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- AGENTS ---
+    if (action === 'list-agents') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const limit = 50
+      const { data: agents, count } = await adminClient
+        .from('agents')
+        .select('*, profiles!agents_creator_id_fkey(display_name, avatar_url)', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1)
+
+      // Get run counts per agent
+      const agentIds = (agents || []).map((a: any) => a.id)
+      const { data: manifests } = await adminClient
+        .from('agent_manifests')
+        .select('agent_id, triggers, tool_permissions')
+        .in('agent_id', agentIds)
+
+      return new Response(JSON.stringify({ agents, manifests, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (action === 'update-agent-status') {
+      const { agentId, status } = await req.json()
+      await adminClient.from('agents').update({ status }).eq('id', agentId)
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // --- ANALYTICS ---
     if (action === 'analytics') {
       const [

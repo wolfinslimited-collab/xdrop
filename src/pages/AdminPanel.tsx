@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, Eye, BarChart3, Activity, Settings } from 'lucide-react';
+import { Shield, Users, Eye, BarChart3, Activity, Settings, Cpu } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,12 +10,14 @@ import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminModeration from '@/components/admin/AdminModeration';
 import AdminSettings from '@/components/admin/AdminSettings';
+import AdminAgents from '@/components/admin/AdminAgents';
 
-type Tab = 'analytics' | 'users' | 'moderation' | 'settings';
+type Tab = 'analytics' | 'users' | 'agents' | 'moderation' | 'settings';
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'users', label: 'Users', icon: Users },
+  { id: 'agents', label: 'Agents', icon: Cpu },
   { id: 'moderation', label: 'Moderation', icon: Eye },
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
@@ -79,6 +81,7 @@ const AdminPanel = () => {
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
           {tab === 'analytics' && <AdminAnalytics session={session} />}
           {tab === 'users' && <AdminUsers session={session} />}
+          {tab === 'agents' && <AdminAgents session={session} />}
           {tab === 'moderation' && <AdminModeration session={session} />}
           {tab === 'settings' && <AdminSettings session={session} />}
         </motion.div>
