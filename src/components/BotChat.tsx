@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Trash2, Loader2 } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import BotAvatar from './BotAvatar';
 import type { Bot } from '@/data/bots';
 import type { ChatMessage } from '@/hooks/useBotChat';
@@ -65,13 +66,19 @@ const BotChat = ({ bot, messages, isLoading, onSend, onClear }: BotChatProps) =>
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed whitespace-pre-wrap ${
+                className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                   msg.role === 'user'
-                    ? 'bg-foreground text-background rounded-br-sm'
+                    ? 'bg-foreground text-background rounded-br-sm whitespace-pre-wrap'
                     : 'bg-secondary text-foreground rounded-bl-sm'
                 }`}
               >
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <div className="prose prose-sm prose-invert max-w-none [&_img]:rounded-lg [&_img]:max-h-64 [&_img]:my-2 [&_p]:my-1 [&_a]:text-primary [&_a]:underline">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  msg.content
+                )}
               </div>
             </motion.div>
           ))}
