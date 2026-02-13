@@ -59,10 +59,10 @@ export interface AgentConfig {
 export const AI_MODEL = { id: 'claude-sonnet-4' as const, name: 'Claude Sonnet 4', provider: 'Anthropic' };
 
 export const GPU_TIERS = [
-  { id: 'cpu' as const, name: 'CPU Only', price: '$0.003/sec', description: 'Lightweight tasks, no inference', vram: '—' },
-  { id: 'a40' as const, name: 'A40', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB' },
-  { id: 'a100' as const, name: 'A100', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB' },
-  { id: 'h100' as const, name: 'H100', price: '$3.49/hr', description: 'Maximum performance', vram: '80 GB' },
+  { id: 'cpu' as const, name: 'CPU Only', price: '$0.003/sec', description: 'Lightweight tasks, no inference', vram: '—', runpodId: 'CPU' },
+  { id: 'a40' as const, name: 'A40 / Ada 48GB', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB', runpodId: 'AMPERE_48,ADA_48_PRO' },
+  { id: 'a100' as const, name: 'A100 80GB', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB', runpodId: 'AMPERE_80,ADA_80_PRO' },
+  { id: 'h100' as const, name: 'H100 80GB', price: '$3.49/hr', description: 'Maximum performance', vram: '80 GB', runpodId: 'ADA_80_PRO,AMPERE_80' },
 ];
 
 export const DEFAULT_SKILLS: AgentSkill[] = [
