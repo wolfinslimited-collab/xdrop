@@ -136,23 +136,23 @@ serve(async (req) => {
       const maxWorkers = config.runpodConfig?.maxWorkers || 3;
       const idleTimeout = config.runpodConfig?.idleTimeout || 60;
 
-      if (endpointId) {
-        // Update existing endpoint
-        const resp = await fetch(
+      // Step 1: Create or reuse a RunPod template for the Docker image
+      let templateId = config?.runpodConfig?.templateId;
+      if (!templateId) {
+        const templateResp = await fetch(
           "https://api.runpod.io/graphql?api_key=" + encodeURIComponent(runpodApiKey),
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               query: `mutation {
-                saveEndpoint(input: {
-                  id: "${endpointId}"
-                  name: "${agentName}"
-                  templateId: "${OPENCLAW_DOCKER_IMAGE}"
-                  gpuIds: "${gpuId}"
-                  workersMin: ${minWorkers}
-                  workersMax: ${maxWorkers}
-                  idleTimeout: ${idleTimeout}
+                saveTemplate(input: {
+                  name: "OpenClaw - ${agentName}"
+                  imageName: "${OPENCLAW_DOCKER_IMAGE}"
+                  dockerArgs: ""
+                  containerDiskInGb: 20
+                  volumeInGb: 0
+                  isServerless: true
                   env: [
                     { key: "OPENCLAW_CONFIG", value: ${JSON.stringify(envConfig)} }
                     { key: "AGENT_ID", value: "${agentId || ""}" }
@@ -160,66 +160,72 @@ serve(async (req) => {
                 }) {
                   id
                   name
-                  workersMin
-                  workersMax
                 }
               }`,
             }),
           }
         );
-        const data = await resp.json();
-        if (data.errors) {
+        const templateData = await templateResp.json();
+        if (templateData.errors || !templateData.data?.saveTemplate?.id) {
+          console.error("Template creation error:", JSON.stringify(templateData));
           return new Response(
-            JSON.stringify({ error: data.errors[0]?.message || "Failed to update RunPod endpoint" }),
+            JSON.stringify({ error: templateData.errors?.[0]?.message || "Failed to create RunPod template" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        return new Response(
-          JSON.stringify({ success: true, endpoint: data.data?.saveEndpoint, action: "updated", usedPlatformKey: usePlatformKey }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      } else {
-        // Create new serverless endpoint with OpenClaw Docker image
-        const resp = await fetch(
-          "https://api.runpod.io/graphql?api_key=" + encodeURIComponent(runpodApiKey),
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              query: `mutation {
-                saveEndpoint(input: {
-                  name: "${agentName}"
-                  templateId: "${OPENCLAW_DOCKER_IMAGE}"
-                  gpuIds: "${gpuId}"
-                  workersMin: ${minWorkers}
-                  workersMax: ${maxWorkers}
-                  idleTimeout: ${idleTimeout}
-                  env: [
-                    { key: "OPENCLAW_CONFIG", value: ${JSON.stringify(envConfig)} }
-                    { key: "AGENT_ID", value: "${agentId || ""}" }
-                  ]
-                }) {
-                  id
-                  name
-                  workersMin
-                  workersMax
-                }
-              }`,
-            }),
-          }
-        );
-        const data = await resp.json();
-        if (data.errors) {
-          return new Response(
-            JSON.stringify({ error: data.errors[0]?.message || "Failed to create RunPod endpoint" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        templateId = templateData.data.saveTemplate.id;
+        console.log("Created RunPod template:", templateId);
+      }
+
+      // Step 2: Create or update the serverless endpoint using the template ID
+      const endpointMutation = endpointId
+        ? `mutation {
+            saveEndpoint(input: {
+              id: "${endpointId}"
+              name: "${agentName}"
+              templateId: "${templateId}"
+              gpuIds: "${gpuId}"
+              workersMin: ${minWorkers}
+              workersMax: ${maxWorkers}
+              idleTimeout: ${idleTimeout}
+            }) { id name workersMin workersMax }
+          }`
+        : `mutation {
+            saveEndpoint(input: {
+              name: "${agentName}"
+              templateId: "${templateId}"
+              gpuIds: "${gpuId}"
+              workersMin: ${minWorkers}
+              workersMax: ${maxWorkers}
+              idleTimeout: ${idleTimeout}
+            }) { id name workersMin workersMax }
+          }`;
+
+      const resp = await fetch(
+        "https://api.runpod.io/graphql?api_key=" + encodeURIComponent(runpodApiKey),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: endpointMutation }),
         }
+      );
+      const data = await resp.json();
+      if (data.errors) {
         return new Response(
-          JSON.stringify({ success: true, endpoint: data.data?.saveEndpoint, action: "created", usedPlatformKey: usePlatformKey }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: data.errors[0]?.message || "Failed to create RunPod endpoint" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      return new Response(
+        JSON.stringify({
+          success: true,
+          endpoint: data.data?.saveEndpoint,
+          templateId,
+          action: endpointId ? "updated" : "created",
+          usedPlatformKey: usePlatformKey,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ===== CHECK COMPUTE USAGE =====
