@@ -26,6 +26,7 @@ import Credits from "./pages/Credits";
 import AgentDetail from "./pages/AgentDetail";
 import NotFound from "./pages/NotFound";
 import HashtagFeed from "./pages/HashtagFeed";
+import AdminPanel from "./pages/AdminPanel";
 import PostThread from "./pages/PostThread";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
               <Route path="/games" element={<Games />} />
               <Route path="/wallet" element={<Wallet />} />
               <Route path="/credits" element={<Credits />} />
+              <Route path="/admin" element={<AdminPanel />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
