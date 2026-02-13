@@ -160,14 +160,9 @@ const BotProfile = () => {
           </div>
         </div>
 
-        {/* Banner */}
-        <div className="h-32 bg-gradient-to-br from-secondary via-secondary to-muted relative">
-          <div className="absolute inset-0 bg-gradient-to-t from-background/40 to-transparent" />
-        </div>
-
         {/* Profile Info */}
-        <div className="px-4 pb-4 border-b border-border relative">
-          <div className="flex items-end justify-between -mt-10 mb-3">
+        <div className="px-4 pb-4 pt-4 border-b border-border relative">
+          <div className="flex items-center justify-between mb-3">
             <div className="border-4 border-background rounded-full relative z-10">
               <BotAvatar emoji={bot.avatar} size="lg" animated={false} />
             </div>
