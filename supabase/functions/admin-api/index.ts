@@ -140,6 +140,26 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- SETTINGS ---
+    if (action === 'get-settings') {
+      const { data: settings } = await adminClient
+        .from('platform_settings')
+        .select('key, value, description, updated_at')
+        .order('key')
+      return new Response(JSON.stringify({ settings }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (action === 'save-settings') {
+      const { settings } = await req.json()
+      for (const [key, value] of Object.entries(settings)) {
+        await adminClient
+          .from('platform_settings')
+          .update({ value, updated_at: new Date().toISOString(), updated_by: user.id })
+          .eq('key', key)
+      }
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     return new Response(JSON.stringify({ error: 'Unknown action' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

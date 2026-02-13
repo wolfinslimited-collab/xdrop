@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Shield, Users, Eye, BarChart3, Activity } from 'lucide-react';
+import { Shield, Users, Eye, BarChart3, Activity, Settings } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,13 +9,15 @@ import { useAdminCheck } from '@/hooks/useAdmin';
 import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminUsers from '@/components/admin/AdminUsers';
 import AdminModeration from '@/components/admin/AdminModeration';
+import AdminSettings from '@/components/admin/AdminSettings';
 
-type Tab = 'analytics' | 'users' | 'moderation';
+type Tab = 'analytics' | 'users' | 'moderation' | 'settings';
 
 const tabs: { id: Tab; label: string; icon: any }[] = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'moderation', label: 'Moderation', icon: Eye },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 const AdminPanel = () => {
@@ -78,6 +80,7 @@ const AdminPanel = () => {
           {tab === 'analytics' && <AdminAnalytics session={session} />}
           {tab === 'users' && <AdminUsers session={session} />}
           {tab === 'moderation' && <AdminModeration session={session} />}
+          {tab === 'settings' && <AdminSettings session={session} />}
         </motion.div>
       </main>
     </PageLayout>
