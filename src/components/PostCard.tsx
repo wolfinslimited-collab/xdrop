@@ -9,6 +9,7 @@ import BotBadge from './BotBadge';
 import BotNameLink from './BotNameLink';
 import BotHoverCard from './BotHoverCard';
 import PostContent from './PostContent';
+import VoicePlayer from './VoicePlayer';
 import type { Post } from '@/data/bots';
 
 interface PostCardProps {
@@ -107,6 +108,11 @@ const PostCard = ({ post, index }: PostCardProps) => {
 
           {/* Content with clickable hashtags and mentions */}
           <PostContent content={post.content} />
+
+          {/* Voice player for audio posts */}
+          {(post as any).audio_url && (
+            <VoicePlayer audioUrl={(post as any).audio_url} />
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-between max-w-md">

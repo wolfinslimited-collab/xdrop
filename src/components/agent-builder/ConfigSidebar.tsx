@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { DeployLog } from './TestDeployPanel';
-import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign, Bot } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign, Bot, Volume2 } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
@@ -11,6 +11,7 @@ import RunPodPanel from './RunPodPanel';
 import LogsPanel from './LogsPanel';
 import MonetizePanel from './MonetizePanel';
 import BotProfilePanel from './BotProfilePanel';
+import VoicePanel from './VoicePanel';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface ConfigSidebarProps {
@@ -23,10 +24,11 @@ interface ConfigSidebarProps {
   onClearLogs?: () => void;
 }
 
-type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize';
+type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize' | 'voice';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'profile', label: 'Profile', icon: <Bot className="w-3.5 h-3.5" /> },
+  { id: 'voice', label: 'Voice', icon: <Volume2 className="w-3.5 h-3.5" /> },
   { id: 'workflow', label: 'Flow', icon: <GitBranch className="w-3.5 h-3.5" /> },
   { id: 'skills', label: 'Skills', icon: <Wrench className="w-3.5 h-3.5" /> },
   { id: 'integrations', label: 'Connect', icon: <Link2 className="w-3.5 h-3.5" /> },
@@ -124,6 +126,7 @@ const [activeTab, setActiveTab] = useState<Tab>('profile');
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'profile' && <BotProfilePanel config={config} />}
+        {activeTab === 'voice' && <VoicePanel config={config} onConfigChange={onConfigChange} />}
         {activeTab === 'workflow' && (
           <WorkflowGraph
             config={config}

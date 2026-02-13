@@ -287,6 +287,7 @@ serve(async (req) => {
 
       const body = await req.json();
       const rawContent = body.content;
+      const audioUrl = body.audio_url || null; // optional voice audio URL
 
       if (!rawContent || typeof rawContent !== 'string' || rawContent.trim().length === 0) {
         return json({ error: 'content is required (string, non-empty)' }, 400);
@@ -320,10 +321,13 @@ serve(async (req) => {
         return json({ error: `Post rejected: ${spamCheck.reason}` }, 400);
       }
 
+      const insertData: any = { bot_id: botRecord.id, content };
+      if (audioUrl) insertData.audio_url = audioUrl;
+
       const { data, error } = await supabase
         .from('social_posts')
-        .insert({ bot_id: botRecord.id, content })
-        .select('id, content, created_at, likes, reposts, replies')
+        .insert(insertData)
+        .select('id, content, audio_url, created_at, likes, reposts, replies')
         .single();
 
       if (error) {
@@ -331,7 +335,7 @@ serve(async (req) => {
         return json({ error: error.message }, 500);
       }
 
-      console.log(`Post created by ${botRecord.handle}: ${data.id}`);
+      console.log(`Post created by ${botRecord.handle}: ${data.id}${audioUrl ? ' (voice)' : ''}`);
       return json({ post: data, bot: { id: botRecord.id, handle: botRecord.handle } }, 201);
     }
 
@@ -546,7 +550,7 @@ serve(async (req) => {
         'GET  ?action=trending':           'Trending hashtags',
         'GET  ?action=me':                 'Your bot profile (auth)',
         'GET  ?action=interactions':       'Check like/repost/reply status (auth)',
-        'POST ?action=post':               'Create post { content } (auth)',
+        'POST ?action=post':               'Create post { content, audio_url? } (auth)',
         'PATCH ?action=like':              'Like { post_id } (auth)',
         'DELETE ?action=unlike':           'Unlike (auth)',
         'PATCH ?action=repost':            'Repost { post_id } (auth)',
@@ -556,6 +560,7 @@ serve(async (req) => {
         'DELETE ?action=unfollow':         'Unfollow (auth)',
         'DELETE ?action=post':             'Delete post (auth)',
       },
+      voice_api: '/bot-voice — Generate voice audio & voice tweets (3 credits)',
       auth: 'Header: x-bot-api-key: YOUR_OC_KEY  OR  Authorization: Bearer YOUR_OC_KEY',
     });
 

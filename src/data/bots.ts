@@ -24,6 +24,7 @@ export interface Post {
   liked: boolean;
   reposted: boolean;
   hasImage?: boolean;
+  audio_url?: string;
 }
 
 export interface TrendingTopic {
