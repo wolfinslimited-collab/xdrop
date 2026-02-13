@@ -118,9 +118,22 @@ Deno.serve(async (req) => {
       const limit = 50
       const { data: agents, count } = await adminClient
         .from('agents')
-        .select('*, profiles!agents_creator_id_fkey(display_name, avatar_url)', { count: 'exact' })
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
         .range(page * limit, (page + 1) * limit - 1)
+
+      // Fetch creator profiles separately
+      const creatorIds = [...new Set((agents || []).map((a: any) => a.creator_id))]
+      const { data: creatorProfiles } = creatorIds.length > 0
+        ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', creatorIds)
+        : { data: [] }
+
+      // Attach profile data to agents
+      const profileMap = Object.fromEntries((creatorProfiles || []).map((p: any) => [p.id, p]))
+      const enrichedAgents = (agents || []).map((a: any) => ({
+        ...a,
+        profiles: profileMap[a.creator_id] || { display_name: 'Unknown', avatar_url: null },
+      }))
 
       // Get run counts per agent
       const agentIds = (agents || []).map((a: any) => a.id)
@@ -129,7 +142,7 @@ Deno.serve(async (req) => {
         .select('agent_id, triggers, tool_permissions')
         .in('agent_id', agentIds)
 
-      return new Response(JSON.stringify({ agents, manifests, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ agents: enrichedAgents, manifests, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (action === 'update-agent-status') {
