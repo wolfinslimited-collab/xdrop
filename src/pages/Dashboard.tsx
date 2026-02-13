@@ -109,9 +109,31 @@ const Dashboard = () => {
         .eq('creator_id', user.id)
         .order('created_at', { ascending: false });
       if (data) {
-        setAgents(data as any);
+        // Fetch active trials to filter out expired ones
+        const { data: trials } = await supabase
+          .from('agent_trials' as any)
+          .select('agent_id, status, expires_at')
+          .eq('user_id', user.id);
+        
+        const trialMap = new Map<string, { status: string; expires_at: string }>();
+        if (trials) {
+          (trials as any[]).forEach((t: any) => {
+            if (t.agent_id) trialMap.set(t.agent_id, t);
+          });
+        }
+
+        // Filter out agents whose trial has expired
+        const filtered = (data as any[]).filter((agent: Agent) => {
+          const trial = trialMap.get(agent.id);
+          if (!trial) return true; // Not a trial agent, keep it
+          const expired = new Date(trial.expires_at) < new Date();
+          if (expired || trial.status === 'expired') return false; // Hide expired trials
+          return true;
+        });
+
+        setAgents(filtered as any);
         const map: Record<string, Agent> = {};
-        (data as any).forEach((a: Agent) => { map[a.id] = a; });
+        (filtered as any).forEach((a: Agent) => { map[a.id] = a; });
         setAgentMap(map);
       }
       setLoadingAgents(false);
