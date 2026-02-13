@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Wallet, AlertTriangle, CheckCircle, Loader2, Hexagon } from 'lucide-react';
+import { Wallet, AlertTriangle, CheckCircle, Loader2, Hexagon, Clock, Lock } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,29 +21,76 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  const [startingTrial, setStartingTrial] = useState(false);
+  const [trialUsed, setTrialUsed] = useState(false);
+  const [checkingTrial, setCheckingTrial] = useState(true);
   const [mintedNft, setMintedNft] = useState<any>(null);
   const [mintingNft, setMintingNft] = useState(false);
-  useEffect(() => {
-    if (!open || !user) return;
-    setLoadingWallet(true);
-    setMintedNft(null);
+  const [trialStarted, setTrialStarted] = useState<{ expiresAt: string } | null>(null);
 
-    supabase
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', user.id)
-      .eq('currency', 'USDC')
-      .maybeSingle()
-      .then(({ data }) => {
-        setWalletBalance(data?.balance ?? 0);
-        setLoadingWallet(false);
-      });
-  }, [open, user]);
+  useEffect(() => {
+    if (!open || !user || !template) return;
+    setLoadingWallet(true);
+    setCheckingTrial(true);
+    setMintedNft(null);
+    setTrialStarted(null);
+
+    // Fetch wallet + check trial status in parallel
+    Promise.all([
+      supabase
+        .from('wallets')
+        .select('balance')
+        .eq('user_id', user.id)
+        .eq('currency', 'USDC')
+        .maybeSingle(),
+      supabase
+        .from('agent_trials' as any)
+        .select('id, status')
+        .eq('user_id', user.id)
+        .eq('template_id', template.id)
+        .maybeSingle(),
+    ]).then(([walletRes, trialRes]) => {
+      setWalletBalance(walletRes.data?.balance ?? 0);
+      setLoadingWallet(false);
+      setTrialUsed(!!(trialRes.data as any));
+      setCheckingTrial(false);
+    });
+  }, [open, user, template]);
 
   if (!template) return null;
 
   const price = template.yearlyPrice;
   const hasEnough = walletBalance !== null && walletBalance >= price;
+
+  const handleStartTrial = async () => {
+    if (!user) {
+      toast({ title: 'Please sign in first', variant: 'destructive' });
+      return;
+    }
+    setStartingTrial(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('start-trial', {
+        body: {
+          templateId: template.id,
+          templateName: template.name,
+          templateDescription: template.description,
+          templateAvatar: template.icon,
+          templateCategory: template.category,
+          monthlyReturnMin: template.monthlyReturnMin,
+          monthlyReturnMax: template.monthlyReturnMax,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setTrialStarted({ expiresAt: data.trial.expiresAt });
+      toast({ title: '🎉 Free Trial Started!', description: `${template.name} is active for 7 days. Earnings are locked until you purchase.` });
+    } catch (err: any) {
+      toast({ title: 'Trial Failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setStartingTrial(false);
+    }
+  };
 
   const handlePurchase = async () => {
     if (!user) {
@@ -69,7 +116,6 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
 
       toast({ title: '✅ Agent Purchased!', description: `${template.name} is now active. Generating NFT card...` });
 
-      // Mint NFT after successful purchase
       setMintingNft(true);
       setPurchasing(false);
       try {
@@ -90,7 +136,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
         }
       } catch (nftErr: any) {
         console.error('NFT minting error:', nftErr);
-        toast({ title: 'NFT Generation Issue', description: 'Agent purchased but NFT card had an issue. You can retry later.', variant: 'destructive' });
+        toast({ title: 'NFT Generation Issue', description: 'Agent purchased but NFT card had an issue.', variant: 'destructive' });
       } finally {
         setMintingNft(false);
       }
@@ -100,7 +146,51 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
     }
   };
 
-  // Show NFT skeleton while minting
+  // Trial started success view
+  if (trialStarted) {
+    const expDate = new Date(trialStarted.expiresAt);
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              Trial Started!
+            </DialogTitle>
+            <DialogDescription>Your 7-day free trial is now active.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+              <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+              <p className="text-sm text-foreground">
+                <span className="font-semibold">{template.name}</span> is running for free until {expDate.toLocaleDateString()}.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+              <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Earnings during trial are locked and will be released when you purchase the agent.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+            <Button
+              onClick={handlePurchase}
+              disabled={!hasEnough || loadingWallet || purchasing}
+              className="bg-foreground text-background hover:bg-foreground/90"
+            >
+              {purchasing ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Processing...</> : `Buy Now — ${price} USDC`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // NFT minting skeleton
   if (mintingNft) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
@@ -129,7 +219,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
     );
   }
 
-  // Show NFT result view
+  // NFT result view
   if (mintedNft) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -141,12 +231,7 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
             </DialogTitle>
             <DialogDescription>Your agent NFT has been generated on Solana.</DialogDescription>
           </DialogHeader>
-          <NftCard
-            nft={mintedNft}
-            agentName={template.name}
-            agentCategory={template.category}
-            pricePaid={price}
-          />
+          <NftCard nft={mintedNft} agentName={template.name} agentCategory={template.category} pricePaid={price} />
           <DialogFooter>
             <Button onClick={() => onOpenChange(false)} className="w-full bg-foreground text-background hover:bg-foreground/90">
               Done
@@ -169,9 +254,40 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
         </DialogHeader>
 
         <div className="space-y-4 py-2">
+          {/* Free Trial Banner */}
+          {!checkingTrial && !trialUsed && (
+            <div className="p-3 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Clock className="w-4 h-4 text-primary shrink-0" />
+                <p className="text-sm font-semibold text-foreground">7-Day Free Trial Available</p>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">
+                Try this agent free for 7 days. Earnings are locked until you purchase. One trial per agent.
+              </p>
+              <Button
+                onClick={handleStartTrial}
+                disabled={startingTrial}
+                variant="outline"
+                size="sm"
+                className="w-full border-primary/30 text-primary hover:bg-primary/10"
+              >
+                {startingTrial ? <><Loader2 className="w-4 h-4 animate-spin mr-1" /> Starting Trial...</> : 'Start Free Trial'}
+              </Button>
+            </div>
+          )}
+
+          {!checkingTrial && trialUsed && (
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg border border-border">
+              <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+              <p className="text-xs text-muted-foreground">
+                Free trial already used for this agent.
+              </p>
+            </div>
+          )}
+
           {/* Price */}
           <div className="flex items-center justify-between p-3 bg-secondary rounded-lg border border-border">
-            <span className="text-sm text-muted-foreground">Price</span>
+            <span className="text-sm text-muted-foreground">Lifetime Price</span>
             <span className="text-lg font-bold text-foreground">{price} USDC</span>
           </div>
 
@@ -215,7 +331,6 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
               An AI-generated Solana NFT card will be minted to your wallet after purchase.
             </p>
           </div>
-
 
           {/* Returns */}
           <div className="p-3 bg-secondary rounded-lg border border-border">
