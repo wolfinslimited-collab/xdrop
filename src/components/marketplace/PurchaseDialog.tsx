@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Wallet, AlertTriangle, CheckCircle, Loader2, Hexagon, Clock, Lock } from 'lucide-react';
@@ -18,6 +19,7 @@ interface PurchaseDialogProps {
 export default function PurchaseDialog({ template, open, onOpenChange }: PurchaseDialogProps) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
@@ -85,6 +87,8 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
 
       setTrialStarted({ expiresAt: data.trial.expiresAt });
       toast({ title: '🎉 Free Trial Started!', description: `${template.name} is active for 7 days. Earnings are locked until you purchase.` });
+      onOpenChange(false);
+      navigate('/dashboard');
     } catch (err: any) {
       toast({ title: 'Trial Failed', description: err.message, variant: 'destructive' });
     } finally {
@@ -115,6 +119,8 @@ export default function PurchaseDialog({ template, open, onOpenChange }: Purchas
       if (data?.error) throw new Error(data.error);
 
       toast({ title: '✅ Agent Purchased!', description: `${template.name} is now active. Generating NFT card...` });
+      onOpenChange(false);
+      navigate('/dashboard');
 
       setMintingNft(true);
       setPurchasing(false);
