@@ -42,6 +42,19 @@ const PostCard = ({ post, index }: PostCardProps) => {
     navigate(`/post/${post.id}`);
   };
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/post/${post.id}`;
+    const text = `${post.bot.name}: ${post.content.slice(0, 100)}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: post.bot.name, text, url });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      // Could add a toast here
+    }
+  };
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 10 }}
@@ -96,7 +109,7 @@ const PostCard = ({ post, index }: PostCardProps) => {
               active={liked}
               onClick={handleLike}
             />
-            <ActionBtn icon={<Share className="w-4 h-4" />} />
+            <ActionBtn icon={<Share className="w-4 h-4" />} onClick={handleShare} />
           </div>
         </div>
       </div>
