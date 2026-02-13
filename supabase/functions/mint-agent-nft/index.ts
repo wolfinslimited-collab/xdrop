@@ -7,6 +7,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const TOTAL_AVATARS = 37;
+const SITE_URL = "https://xdrop.lovable.app";
+
+function getAvatarIndex(name: string): number {
+  const hash = Array.from(name || "bot").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return (hash % TOTAL_AVATARS) + 1;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -14,15 +22,7 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY") ?? "";
   const tatumApiKey = Deno.env.get("TATUM_API_KEY") ?? "";
-
-  if (!lovableApiKey) {
-    return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
 
   if (!tatumApiKey) {
     return new Response(JSON.stringify({ error: "TATUM_API_KEY not configured" }), {
@@ -51,72 +51,19 @@ serve(async (req) => {
     const tokenName = `${agentName} #${serialNumber}`;
     const tokenSymbol = "XCLAW";
 
-    // 2. Generate AI art for the NFT card
-    console.log("Generating AI art for NFT...");
-    const artPrompt = `Create a premium digital collectible NFT card art for an AI agent called "${agentName}". Category: ${agentCategory || "AI Agent"}. Description: ${agentDescription || agentName}. The card should have a futuristic cyberpunk aesthetic with glowing neon accents, dark background, circuit board patterns, and a central holographic icon representing the agent. Include text "${tokenName}" at the bottom. Style: high-quality digital art, trading card format, portrait orientation. Ultra high resolution.`;
+    // 2. Pick a bot avatar deterministically based on agent name
+    const avatarIndex = getAvatarIndex(agentName);
+    const avatarUrl = `${SITE_URL}/avatars/bot-${avatarIndex}.png`;
+    console.log(`Using bot avatar #${avatarIndex} for NFT: ${avatarUrl}`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-image",
-        messages: [{ role: "user", content: artPrompt }],
-        modalities: ["image", "text"],
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      throw new Error(`AI image generation failed: ${errText}`);
+    // Fetch the avatar image
+    const avatarResponse = await fetch(avatarUrl);
+    if (!avatarResponse.ok) {
+      throw new Error(`Failed to fetch avatar image: ${avatarResponse.status}`);
     }
-
-    const aiData = await aiResponse.json();
-    console.log("AI response keys:", JSON.stringify(Object.keys(aiData)));
-    console.log("AI choices length:", aiData.choices?.length);
-    if (aiData.choices?.[0]?.message) {
-      const msg = aiData.choices[0].message;
-      console.log("Message keys:", JSON.stringify(Object.keys(msg)));
-      console.log("Has images:", !!msg.images, "images length:", msg.images?.length);
-      // Also check for inline_data format
-      if (msg.content && Array.isArray(msg.content)) {
-        console.log("Content is array, length:", msg.content.length);
-        for (const part of msg.content) {
-          console.log("Content part type:", part.type);
-        }
-      }
-    }
-
-    // Try multiple paths to find the image
-    let imageBase64 = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-    
-    // Fallback: check content array for image parts
-    if (!imageBase64 && aiData.choices?.[0]?.message?.content) {
-      const content = aiData.choices[0].message.content;
-      if (Array.isArray(content)) {
-        for (const part of content) {
-          if (part.type === "image_url" && part.image_url?.url) {
-            imageBase64 = part.image_url.url;
-            break;
-          }
-          if (part.type === "image" && part.image_url?.url) {
-            imageBase64 = part.image_url.url;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!imageBase64) {
-      console.error("Full AI response:", JSON.stringify(aiData).substring(0, 500));
-      throw new Error("No image generated from AI");
-    }
+    const imageBytes = new Uint8Array(await avatarResponse.arrayBuffer());
 
     // 3. Upload image to Supabase Storage
-    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
-    const imageBytes = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
     const imagePath = `${agentId}/${serialNumber}.png`;
 
     const { error: uploadError } = await serviceClient.storage
@@ -166,7 +113,6 @@ serve(async (req) => {
     let nftStatus = "metadata_ready";
 
     try {
-      // Get user's wallet address
       const { data: wallet } = await serviceClient
         .from("wallets")
         .select("address")
