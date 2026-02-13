@@ -588,14 +588,14 @@ const AgentBuilder = () => {
                       <X className="w-4 h-4" />
                     </button>
                   </div>
-                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} />
+                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} userCredits={credits ?? 0} />
                 </div>
               </motion.aside>
             )}
           </AnimatePresence>
         ) : (
           <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} />
+            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} userCredits={credits ?? 0} />
           </div>
         )}
       </div>

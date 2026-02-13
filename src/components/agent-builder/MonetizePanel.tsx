@@ -1,10 +1,11 @@
-import { DollarSign, Tag, TrendingUp, Users, Zap } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, Zap, Coins } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface MonetizePanelProps {
   config: AgentConfig;
   onConfigChange: (config: AgentConfig) => void;
+  userCredits?: number;
 }
 
 const PRICING_MODELS = [
@@ -14,13 +15,22 @@ const PRICING_MODELS = [
   { id: 'freemium', label: 'Freemium', desc: 'Free tier + paid upgrades', icon: '🎁' },
 ];
 
-const MonetizePanel = ({ config, onConfigChange }: MonetizePanelProps) => {
+const LISTING_FEE = 1000;
+
+const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePanelProps) => {
   const price = (config as any).price ?? 0;
   const subscriptionPrice = (config as any).subscriptionPrice ?? 0;
   const pricingModel = (config as any).pricingModel ?? 'free';
+  const isListed = (config as any).listOnMarketplace ?? false;
+  const canAffordListing = userCredits >= LISTING_FEE;
 
   const updateField = (field: string, value: any) => {
     onConfigChange({ ...config, [field]: value } as any);
+  };
+
+  const handleToggleListing = () => {
+    if (!isListed && !canAffordListing) return;
+    updateField('listOnMarketplace', !isListed);
   };
 
   return (
@@ -111,20 +121,54 @@ const MonetizePanel = ({ config, onConfigChange }: MonetizePanelProps) => {
       </div>
 
       {/* Marketplace listing toggle */}
-      <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-border">
-        <div className="flex items-center gap-2">
-          <Users className="w-3.5 h-3.5 text-muted-foreground" />
+      <div className="space-y-2">
+        <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+          isListed ? 'bg-primary/5 border-primary/20' : 'bg-muted/50 border-border'
+        }`}>
+          <div className="flex items-center gap-2">
+            <Users className="w-3.5 h-3.5 text-muted-foreground" />
+            <div>
+              <p className="text-xs font-medium text-foreground">List on Marketplace</p>
+              <p className="text-[9px] text-muted-foreground">Make discoverable to other users</p>
+            </div>
+          </div>
+          <button
+            onClick={handleToggleListing}
+            disabled={!isListed && !canAffordListing}
+            className={`w-9 h-5 rounded-full transition-colors ${
+              isListed ? 'bg-foreground' : canAffordListing ? 'bg-muted hover:bg-muted-foreground/30' : 'bg-muted opacity-50 cursor-not-allowed'
+            }`}
+          >
+            <div className={`w-4 h-4 rounded-full bg-background transition-transform ${isListed ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
+          </button>
+        </div>
+
+        {/* Listing fee info */}
+        <div className={`p-2.5 rounded-lg border flex items-start gap-2 ${
+          canAffordListing ? 'border-border bg-muted/30' : 'border-destructive/30 bg-destructive/5'
+        }`}>
+          <Coins className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${canAffordListing ? 'text-muted-foreground' : 'text-destructive'}`} />
           <div>
-            <p className="text-xs font-medium text-foreground">List on Marketplace</p>
-            <p className="text-[9px] text-muted-foreground">Make discoverable to other users</p>
+            <p className="text-[11px] font-medium text-foreground">
+              Listing fee: {LISTING_FEE.toLocaleString()} credits
+            </p>
+            <p className={`text-[10px] ${canAffordListing ? 'text-muted-foreground' : 'text-destructive'}`}>
+              {canAffordListing
+                ? `You have ${userCredits.toLocaleString()} credits available`
+                : `You need ${(LISTING_FEE - userCredits).toLocaleString()} more credits (balance: ${userCredits.toLocaleString()})`
+              }
+            </p>
           </div>
         </div>
-        <button
-          onClick={() => updateField('listOnMarketplace', !(config as any).listOnMarketplace)}
-          className={`w-9 h-5 rounded-full transition-colors ${(config as any).listOnMarketplace ? 'bg-foreground' : 'bg-muted'}`}
-        >
-          <div className={`w-4 h-4 rounded-full bg-background transition-transform ${(config as any).listOnMarketplace ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-        </button>
+
+        {!canAffordListing && (
+          <a href="/credits" className="block">
+            <Button variant="outline" size="sm" className="w-full gap-2 text-xs">
+              <Coins className="w-3.5 h-3.5" />
+              Purchase Credits
+            </Button>
+          </a>
+        )}
       </div>
     </div>
   );
