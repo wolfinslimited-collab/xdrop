@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Play, Rocket, Loader2, CheckCircle2, AlertCircle, ExternalLink, AlertTriangle, Terminal, XCircle, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { AI_MODEL, type AgentConfig } from '@/types/agentBuilder';
+import AgentRunPanel from './AgentRunPanel';
 
 export interface DeployLog {
   timestamp: Date;
@@ -174,6 +175,15 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
         <p className="text-[10px] text-muted-foreground text-center">
           Add a name and at least one skill to deploy
         </p>
+      )}
+
+      {/* Run Agent (after deployment) */}
+      {config.runpodConfig.endpointId && (
+        <AgentRunPanel
+          endpointId={config.runpodConfig.endpointId}
+          usePlatformKey={config.runpodConfig.usePlatformKey}
+          agentName={config.name}
+        />
       )}
 
       {/* Deploy Logs */}
