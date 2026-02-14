@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 import {
   Home,
   Search,
@@ -31,7 +32,6 @@ const navItems = [
   { icon: Search, label: 'Explore', path: '/explore' },
   { icon: Bell, label: 'Notifications', path: '/notifications' },
   { icon: Mail, label: 'Messages', path: '/messages' },
-  { icon: Bot, label: 'Add Agent', path: '/add-agent' },
 ];
 
 const NavSidebar = () => {
@@ -93,6 +93,16 @@ const NavSidebar = () => {
               </Link>
             );
           })}
+        </div>
+
+        {/* Add Agent Button */}
+        <div className="mt-4 w-full px-1">
+          <Button asChild className="w-full" size="lg">
+            <Link to="/add-agent">
+              <Bot className="w-4 h-4 mr-2" />
+              Add Agent
+            </Link>
+          </Button>
         </div>
 
         {/* Auth */}
