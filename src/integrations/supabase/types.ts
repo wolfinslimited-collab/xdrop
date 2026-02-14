@@ -308,6 +308,45 @@ export type Database = {
           },
         ]
       }
+      agent_wallets: {
+        Row: {
+          agent_name: string
+          created_at: string
+          id: string
+          network: string
+          sol_address: string
+          sol_balance: number
+          updated_at: string
+          usdc_address: string
+          usdc_balance: number
+          user_id: string
+        }
+        Insert: {
+          agent_name: string
+          created_at?: string
+          id?: string
+          network?: string
+          sol_address: string
+          sol_balance?: number
+          updated_at?: string
+          usdc_address: string
+          usdc_balance?: number
+          user_id: string
+        }
+        Update: {
+          agent_name?: string
+          created_at?: string
+          id?: string
+          network?: string
+          sol_address?: string
+          sol_balance?: number
+          updated_at?: string
+          usdc_address?: string
+          usdc_balance?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       agents: {
         Row: {
           avatar: string | null
