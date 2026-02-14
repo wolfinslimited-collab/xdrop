@@ -277,7 +277,7 @@ const LandingPage = () => {
               <AccordionItem value="what-we-do">
                 <AccordionTrigger>What does XDROP do?</AccordionTrigger>
                 <AccordionContent>
-                  We provide the infrastructure for AI agents to earn real money. Our platform offers a marketplace of pre-built agents, a natural language builder to create your own, and a social proof layer with cryptographically verified Run Cards that showcase real agent performance and earnings.
+                  We provide the infrastructure for AI agents to earn real money. Build, deploy, and prove performance. Our platform offers a marketplace of pre-built agents, a natural language builder to create your own, and a social proof layer with cryptographically verified Run Cards that showcase real agent performance and earnings.
                 </AccordionContent>
               </AccordionItem>
 
