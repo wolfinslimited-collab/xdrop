@@ -50,9 +50,9 @@ const VOICE_OPTIONS = [
 ];
 
 const MESSAGING_PLATFORMS = [
-  { id: 'telegram', name: 'Telegram', icon: '✈️', desc: 'Connect via Telegram bot' },
-  { id: 'whatsapp', name: 'WhatsApp', icon: '📲', desc: 'WhatsApp Business API' },
-  { id: 'discord', name: 'Discord', icon: '💬', desc: 'Connect to Discord channels' },
+  { id: 'telegram', name: 'Telegram', icon: '✈️', desc: 'Connect via Telegram bot', tokenLabel: 'Bot Token', placeholder: 'e.g. 123456:ABC-DEF...', help: 'Get it from @BotFather on Telegram' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: '📲', desc: 'WhatsApp Business API', tokenLabel: 'API Key', placeholder: 'e.g. EAAGm0PX4ZCps...', help: 'From Meta Business dashboard → WhatsApp' },
+  { id: 'discord', name: 'Discord', icon: '💬', desc: 'Connect to Discord channels', tokenLabel: 'Bot Token', placeholder: 'e.g. MTI3NjU0...', help: 'From Discord Developer Portal → Bot' },
 ];
 
 const HOURLY_RATES: Record<string, number> = { a4000: 0.12, a40: 0.39, a100: 1.09, h100: 3.49 };
@@ -91,6 +91,8 @@ const AgentBuilder = () => {
 
   // Messaging
   const [linkedPlatforms, setLinkedPlatforms] = useState<Record<string, boolean>>({});
+  const [platformTokens, setPlatformTokens] = useState<Record<string, string>>({});
+  const [connectingPlatformId, setConnectingPlatformId] = useState<string | null>(null);
 
   // Voice
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -560,28 +562,93 @@ const AgentBuilder = () => {
                 <div className="space-y-6">
                   <div className="text-center">
                     <h2 className="text-xl font-bold text-foreground font-display mb-1">Chat with me on...</h2>
-                    <p className="text-sm text-muted-foreground">Messages sync with this dashboard</p>
+                    <p className="text-sm text-muted-foreground">Connect a platform and paste the bot token</p>
                   </div>
                   <div className="space-y-3">
                     {MESSAGING_PLATFORMS.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => setLinkedPlatforms(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
-                        className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
-                          linkedPlatforms[p.id] ? 'border-primary/40 bg-primary/5' : 'border-border bg-secondary/50 hover:bg-secondary'
-                        }`}
-                      >
-                        <span className="text-2xl">{p.icon}</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-foreground">{p.name}</p>
-                          <p className="text-xs text-muted-foreground">{p.desc}</p>
-                        </div>
-                        {linkedPlatforms[p.id] ? (
-                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>
-                        ) : (
-                          <MessageSquare className="w-4 h-4 text-muted-foreground" />
-                        )}
-                      </button>
+                      <div key={p.id}>
+                        <button
+                          onClick={() => {
+                            if (linkedPlatforms[p.id]) {
+                              setLinkedPlatforms(prev => ({ ...prev, [p.id]: false }));
+                              setPlatformTokens(prev => { const n = { ...prev }; delete n[p.id]; return n; });
+                              if (connectingPlatformId === p.id) setConnectingPlatformId(null);
+                            } else {
+                              setConnectingPlatformId(connectingPlatformId === p.id ? null : p.id);
+                            }
+                          }}
+                          className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
+                            linkedPlatforms[p.id] ? 'border-primary/40 bg-primary/5' : connectingPlatformId === p.id ? 'border-muted-foreground/30 bg-secondary' : 'border-border bg-secondary/50 hover:bg-secondary'
+                          }`}
+                        >
+                          <span className="text-2xl">{p.icon}</span>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-foreground">{p.name}</p>
+                            <p className="text-xs text-muted-foreground">{p.desc}</p>
+                          </div>
+                          {linkedPlatforms[p.id] ? (
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-primary font-medium">Connected</span>
+                              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>
+                            </div>
+                          ) : (
+                            <Key className="w-4 h-4 text-muted-foreground" />
+                          )}
+                        </button>
+
+                        <AnimatePresence>
+                          {connectingPlatformId === p.id && !linkedPlatforms[p.id] && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-1.5 p-3 rounded-xl border border-border bg-secondary/30 space-y-2.5">
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Key className="w-3 h-3" />
+                                  <span>{p.tokenLabel}</span>
+                                </div>
+                                <input
+                                  type="password"
+                                  value={platformTokens[p.id] || ''}
+                                  onChange={e => setPlatformTokens(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                  placeholder={p.placeholder}
+                                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                                  autoFocus
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && (platformTokens[p.id] || '').trim()) {
+                                      setLinkedPlatforms(prev => ({ ...prev, [p.id]: true }));
+                                      setConnectingPlatformId(null);
+                                    }
+                                  }}
+                                />
+                                <p className="text-[10px] text-muted-foreground/60">{p.help}</p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      if ((platformTokens[p.id] || '').trim()) {
+                                        setLinkedPlatforms(prev => ({ ...prev, [p.id]: true }));
+                                        setConnectingPlatformId(null);
+                                      }
+                                    }}
+                                    disabled={!(platformTokens[p.id] || '').trim()}
+                                    className="flex-1 text-[11px] font-medium py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    Connect
+                                  </button>
+                                  <button
+                                    onClick={() => setConnectingPlatformId(null)}
+                                    className="px-3 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground hover:bg-secondary transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     ))}
                   </div>
                   <div className="flex justify-between pt-2">
