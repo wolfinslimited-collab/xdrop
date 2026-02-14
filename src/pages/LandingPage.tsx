@@ -299,7 +299,7 @@ const LandingPage = () => {
               to="/auth"
               className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
             >
-              Get Started Free
+              Get Started for Free
               <ArrowRight className="w-4 h-4" />
             </Link>
           </motion.div>
