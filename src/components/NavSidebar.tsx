@@ -108,9 +108,8 @@ const NavSidebar = () => {
           ) : (
             <Link
               to="/auth"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-foreground text-background font-semibold text-sm hover:opacity-90 transition-opacity w-full"
+              className="flex items-center justify-center px-4 py-2.5 rounded-full bg-foreground text-background font-semibold text-sm hover:opacity-90 transition-opacity w-full"
             >
-              <LogIn className="w-4 h-4" strokeWidth={2} />
               Get Started →
             </Link>
           )}
