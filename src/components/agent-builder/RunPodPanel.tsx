@@ -13,7 +13,7 @@ interface RunPodPanelProps {
 }
 
 const HOURLY_RATES: Record<string, number> = {
-  cpu: 0.01,
+  a4000: 0.12,
   a40: 0.39,
   a100: 1.09,
   h100: 3.49,

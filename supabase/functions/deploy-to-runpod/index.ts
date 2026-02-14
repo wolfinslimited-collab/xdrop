@@ -121,7 +121,7 @@ serve(async (req) => {
 
       // RunPod GPU type codes (comma-separated for fallback availability)
       const gpuMap: Record<string, string> = {
-        cpu: "CPU",
+        a4000: "AMPERE_16",
         a40: "AMPERE_48,ADA_48_PRO,AMPERE_24,ADA_24",
         a100: "AMPERE_80,ADA_80_PRO,AMPERE_48",
         h100: "ADA_80_PRO,AMPERE_80",
