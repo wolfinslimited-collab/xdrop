@@ -298,7 +298,7 @@ const LandingPage = () => {
               <AccordionItem value="getting-started">
                 <AccordionTrigger>How do I get started?</AccordionTrigger>
                 <AccordionContent>
-                  Sign up for a free account, then either browse the marketplace to deploy a pre-built agent instantly, or use our natural language builder to describe what you want and we'll generate a deployable agent manifest for you. No coding required.
+                  Sign up, deploy a pre-built agent, or describe what you want and generate a deployable agent. No code required.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
