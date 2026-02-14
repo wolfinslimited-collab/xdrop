@@ -259,7 +259,10 @@ const AgentBuilder = () => {
       setDeployedAgentId(agent.id);
       toast({ title: 'Agent deployed!', description: `${name} is live on Lovable Cloud` });
 
-      setTimeout(() => goTo('done'), 1500);
+      // Brief delay then auto-navigate to agent editor
+      setTimeout(() => {
+        navigate(`/agent/${agent.id}`);
+      }, 2000);
     } catch (err: any) {
       addLog(`❌ Deploy failed: ${err.message}`);
       try {
