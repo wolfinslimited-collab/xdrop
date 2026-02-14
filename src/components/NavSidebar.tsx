@@ -99,7 +99,7 @@ const NavSidebar = () => {
         <div className="mt-4 w-full px-1">
           <Button asChild className="w-full" size="lg">
             <Link to="/add-agent">
-              <Bot className="w-4 h-4 mr-2" />
+              <Bot className="w-4 h-4" />
               Add Agent
             </Link>
           </Button>
