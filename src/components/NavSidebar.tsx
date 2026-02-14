@@ -109,7 +109,7 @@ const NavSidebar = () => {
         <div className="mt-6 w-full border-t border-border pt-4">
           {user ? (
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => signOut()}
               className="w-full justify-start gap-4"
             >
