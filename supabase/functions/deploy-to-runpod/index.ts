@@ -141,6 +141,8 @@ serve(async (req) => {
       // Step 1: Create or reuse a RunPod template for the Docker image
       let templateId = config?.runpodConfig?.templateId;
       if (!templateId) {
+        const templateSuffix = Date.now().toString(36);
+        const templateName = `OpenClaw - ${agentName} - ${templateSuffix}`;
         const templateResp = await fetch(
           "https://api.runpod.io/graphql?api_key=" + encodeURIComponent(runpodApiKey),
           {
@@ -149,7 +151,7 @@ serve(async (req) => {
             body: JSON.stringify({
               query: `mutation {
                 saveTemplate(input: {
-                  name: "OpenClaw - ${agentName}"
+                  name: "${templateName}"
                   imageName: "${dockerImage}"
                   dockerArgs: ""
                   containerDiskInGb: 20
