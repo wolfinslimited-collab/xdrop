@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Users, Coins, Wallet, Copy, CheckCircle2, Loader2, AlertTriangle, Eye, EyeOff } from 'lucide-react';
+import { Users, Coins, Wallet, Copy, CheckCircle2, Loader2, AlertTriangle, Eye, EyeOff, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface MonetizePanelProps {
@@ -11,12 +12,10 @@ interface MonetizePanelProps {
   userCredits?: number;
 }
 
-
 const LISTING_FEE = 1000;
 
 interface AgentWalletData {
   sol_address: string;
-  usdc_address: string;
   sol_balance: number;
   usdc_balance: number;
   mnemonic?: string;
@@ -24,6 +23,17 @@ interface AgentWalletData {
   exists: boolean;
   warning?: string;
 }
+
+// Mock revenue data for chart
+const MOCK_REVENUE = [
+  { day: 'Mon', earnings: 0 },
+  { day: 'Tue', earnings: 0 },
+  { day: 'Wed', earnings: 0 },
+  { day: 'Thu', earnings: 0 },
+  { day: 'Fri', earnings: 0 },
+  { day: 'Sat', earnings: 0 },
+  { day: 'Sun', earnings: 0 },
+];
 
 const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePanelProps) => {
   const isListed = (config as any).listOnMarketplace ?? false;
@@ -64,7 +74,15 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed to create wallet');
 
-      setWalletData(data);
+      setWalletData({
+        sol_address: data.sol_address,
+        sol_balance: data.sol_balance,
+        usdc_balance: data.usdc_balance,
+        mnemonic: data.mnemonic,
+        privateKey: data.privateKey,
+        exists: data.exists,
+        warning: data.warning,
+      });
 
       if (!data.exists) {
         toast({
@@ -90,15 +108,17 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
       onClick={() => copyToClipboard(text, label)}
       className="w-5 h-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
     >
-      {copied === label ? <CheckCircle2 className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+      {copied === label ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
     </button>
   );
+
+  const totalBalance = walletData ? walletData.sol_balance + walletData.usdc_balance : 0;
 
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">Monetize</h3>
-        <p className="text-xs text-muted-foreground">Set pricing, wallets, and earn from your agent</p>
+        <p className="text-xs text-muted-foreground">Wallet, earnings, and marketplace listing</p>
       </div>
 
       {/* Bot Wallet Section */}
@@ -111,7 +131,7 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
         {!walletData ? (
           <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-2">
             <p className="text-[11px] text-muted-foreground">
-              Generate a Solana wallet for your bot to receive earnings, tips, and payments in SOL & USDC.
+              Generate a Solana wallet for your bot to receive earnings, tips, and payments.
             </p>
             <Button
               onClick={handleGenerateWallet}
@@ -130,43 +150,37 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
           </div>
         ) : (
           <div className="space-y-2">
-            {/* Wallet addresses */}
+            {/* Single wallet address */}
             <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-3">
-              {/* SOL */}
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">SOL Address</span>
-                  <CopyButton text={walletData.sol_address} label="sol" />
+                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Wallet Address</span>
+                  <CopyButton text={walletData.sol_address} label="address" />
                 </div>
                 <p className="text-[11px] text-foreground font-mono break-all leading-relaxed">
                   {walletData.sol_address}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Balance: <span className="text-foreground font-medium">{walletData.sol_balance} SOL</span>
-                </p>
               </div>
 
-              {/* USDC */}
-              <div className="pt-2 border-t border-border">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">USDC Address</span>
-                  <CopyButton text={walletData.usdc_address} label="usdc" />
+              {/* Balance cards */}
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                <div className="p-2 rounded-md bg-background/50 border border-border">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">SOL</p>
+                  <p className="text-sm font-semibold text-foreground">{walletData.sol_balance.toFixed(4)}</p>
                 </div>
-                <p className="text-[11px] text-foreground font-mono break-all leading-relaxed">
-                  {walletData.usdc_address}
-                </p>
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Balance: <span className="text-foreground font-medium">${walletData.usdc_balance.toFixed(2)} USDC</span>
-                </p>
+                <div className="p-2 rounded-md bg-background/50 border border-border">
+                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">USDC</p>
+                  <p className="text-sm font-semibold text-foreground">${walletData.usdc_balance.toFixed(2)}</p>
+                </div>
               </div>
             </div>
 
             {/* Secret keys (only shown on first creation) */}
             {walletData.mnemonic && walletData.privateKey && (
-              <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/5 space-y-2">
+              <div className="p-3 rounded-lg border border-accent/30 bg-accent/5 space-y-2">
                 <div className="flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                  <p className="text-[11px] font-medium text-amber-400">Save these — shown only once!</p>
+                  <AlertTriangle className="w-3.5 h-3.5 text-accent-foreground flex-shrink-0" />
+                  <p className="text-[11px] font-medium text-accent-foreground">Save these — shown only once!</p>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -208,6 +222,53 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
         )}
       </div>
 
+      {/* Revenue Income Chart */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 mb-1">
+          <TrendingUp className="w-3.5 h-3.5 text-muted-foreground" />
+          <label className="text-xs font-medium text-foreground">Revenue</label>
+        </div>
+        <div className="p-3 rounded-lg border border-border bg-muted/30">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Earnings</p>
+              <p className="text-lg font-bold text-foreground">${walletData ? walletData.usdc_balance.toFixed(2) : '0.00'}</p>
+            </div>
+            <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted border border-border">7d</span>
+          </div>
+          <div className="h-24">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={MOCK_REVENUE} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="earningsGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis dataKey="day" tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  contentStyle={{
+                    background: 'hsl(var(--popover))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    color: 'hsl(var(--popover-foreground))',
+                  }}
+                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Earnings']}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="earnings"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={1.5}
+                  fill="url(#earningsGrad)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
 
       {/* Marketplace listing toggle */}
       <div className="space-y-2">
