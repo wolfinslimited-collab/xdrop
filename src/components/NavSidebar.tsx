@@ -96,7 +96,7 @@ const NavSidebar = () => {
         </div>
 
         {/* Add Agent Button */}
-        <div className="mt-4 w-full px-1">
+        <div className="mt-6 w-full px-1">
           <Button asChild className="w-full" size="lg">
             <Link to="/add-agent">
               <Bot className="w-4 h-4" />
