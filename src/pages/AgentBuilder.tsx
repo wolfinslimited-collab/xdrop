@@ -1,626 +1,840 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ArrowLeft, ArrowRight, Check, Copy, CheckCircle2, Loader2, Play, Square, Volume2, Wallet, Eye, EyeOff, AlertTriangle, Coins, Cpu, Key, Zap, ExternalLink, Link2, X, Search, MessageSquare, Settings2 } from 'lucide-react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock, Coins, AlertTriangle } from 'lucide-react';
-import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
-import { useIsMobile } from '@/hooks/use-mobile';
-import ReactMarkdown from 'react-markdown';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import SEOHead from '@/components/SEOHead';
-import NavSidebar from '@/components/NavSidebar';
 import MobileHeader from '@/components/MobileHeader';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { useAuth } from '@/contexts/AuthContext';
-import ConfigSidebar from '@/components/agent-builder/ConfigSidebar';
-
-import { DEFAULT_CONFIG, type AgentConfig } from '@/types/agentBuilder';
-import type { DeployLog } from '@/components/agent-builder/TestDeployPanel';
+import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import openclawLogo from '@/assets/openclaw-logo.png';
-import claudeLogo from '@/assets/claude-logo.png';
-import OpenClawMascot from '@/components/agent-builder/OpenClawMascot';
-import SessionHistory from '@/components/agent-builder/SessionHistory';
-import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
+import { botAvatars } from '@/data/botAvatars';
+import { DEFAULT_CONFIG, DEFAULT_SKILLS, DEFAULT_INTEGRATIONS, GPU_TIERS, AI_MODEL, type AgentConfig, type AgentSkill, type AgentIntegration } from '@/types/agentBuilder';
 import { generateOpenClawConfig } from '@/lib/openclawConfig';
+import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+// ─── Wizard steps ───
+type WizardStep = 'start' | 'identity' | 'personality' | 'avatar' | 'brain' | 'skills' | 'tools' | 'messaging' | 'voice' | 'wallet' | 'deploy' | 'deploying' | 'done';
 
-const STARTER_SUGGESTIONS = [
-  'Build an OpenClaw crypto DCA bot with automated stop-loss',
-  'Create a lead gen agent using ClawhHub skills + Telegram',
-  'Deploy a customer support bot on Lovable Cloud',
-  'Build a social media agent that auto-posts via OpenClaw',
+const STEPS_ORDER: WizardStep[] = ['start', 'identity', 'personality', 'avatar', 'brain', 'skills', 'tools', 'messaging', 'voice', 'wallet', 'deploy', 'deploying', 'done'];
+
+const PERSONALITY_OPTIONS = [
+  { id: 'casual', label: 'no caps, no stress', desc: 'Relaxed and laid-back tone' },
+  { id: 'polished', label: 'crisp & polished', desc: 'Professional and clear' },
+  { id: 'friendly', label: 'like texting a friend', desc: 'Warm and conversational' },
+  { id: 'unhinged', label: 'delightfully unhinged', desc: 'Creative and unpredictable' },
 ];
 
-const extractSuggestions = (content: string): string[] => {
-  // Extract [suggest: text] tags from AI response
-  const matches = content.match(/\[suggest:\s*([^\]]+)\]/g);
-  if (!matches) return [];
-  return matches
-    .map(m => {
-      const inner = m.match(/\[suggest:\s*([^\]]+)\]/);
-      return inner ? inner[1].trim() : '';
-    })
-    .filter(Boolean)
-    .slice(0, 4);
-};
+const VOICE_OPTIONS = [
+  { id: 'roger', name: 'Roger', desc: 'Deep, authoritative male' },
+  { id: 'sarah', name: 'Sarah', desc: 'Warm, friendly female' },
+  { id: 'charlie', name: 'Charlie', desc: 'Casual, young male' },
+  { id: 'alice', name: 'Alice', desc: 'Clear, professional female' },
+  { id: 'brian', name: 'Brian', desc: 'Confident narrator' },
+  { id: 'lily', name: 'Lily', desc: 'Soft, gentle female' },
+  { id: 'eric', name: 'Eric', desc: 'Energetic male' },
+  { id: 'jessica', name: 'Jessica', desc: 'Articulate, precise female' },
+  { id: 'daniel', name: 'Daniel', desc: 'Calm, measured male' },
+  { id: 'chris', name: 'Chris', desc: 'Upbeat, dynamic male' },
+  { id: 'matilda', name: 'Matilda', desc: 'Elegant, refined female' },
+  { id: 'river', name: 'River', desc: 'Neutral, versatile' },
+  { id: 'george', name: 'George', desc: 'Warm British male' },
+  { id: 'callum', name: 'Callum', desc: 'Friendly Scottish male' },
+  { id: 'liam', name: 'Liam', desc: 'Smooth, youthful male' },
+];
 
-const stripSuggestionTags = (content: string): string => {
-  return content.replace(/\[suggest:\s*[^\]]+\]/g, '').trim();
-};
+const MESSAGING_PLATFORMS = [
+  { id: 'telegram', name: 'Telegram', icon: '✈️', desc: 'Connect via Telegram bot' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: '📲', desc: 'WhatsApp Business API' },
+  { id: 'discord', name: 'Discord', icon: '💬', desc: 'Connect to Discord channels' },
+];
+
+const HOURLY_RATES: Record<string, number> = { a4000: 0.12, a40: 0.39, a100: 1.09, h100: 3.49 };
 
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const { credits, deductCredits, refetch: refetchCredits } = useCredits();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const isMobile = useIsMobile();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [config, setConfig] = useState<AgentConfig>({ ...DEFAULT_CONFIG });
-  const [showConfig, setShowConfig] = useState(false);
-  const [showHistory, setShowHistory] = useState(false);
-  const [isDeploying, setIsDeploying] = useState(false);
-  const [deployLogs, setDeployLogs] = useState<DeployLog[]>([]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [showCreditsPurchase, setShowCreditsPurchase] = useState(false);
-  const [shouldAutodeploy, setShouldAutodeploy] = useState(false);
-  const [sessionLoaded, setSessionLoaded] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Load most recent session on mount
-  useEffect(() => {
-    if (!user) return;
-    const loadSession = async () => {
-      const { data } = await supabase
-        .from('builder_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data) {
-        setSessionId(data.id);
-        setMessages((data.messages as unknown as ChatMessage[]) || []);
-        try {
-          const savedConfig = data.config as unknown as Partial<AgentConfig>;
-          if (savedConfig && typeof savedConfig === 'object' && 'skills' in savedConfig) {
-            setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
-          }
-        } catch { /* use default */ }
-      }
-      setSessionLoaded(true);
-    };
-    loadSession();
-  }, [user]);
+  const [step, setStep] = useState<WizardStep>('start');
+  const [direction, setDirection] = useState(1);
 
-  // Auto-save session (debounced)
-  const saveSession = useCallback(async (msgs: ChatMessage[], cfg: AgentConfig, sid: string | null) => {
-    if (!user || msgs.length === 0) return;
-    const sessionData = {
-      user_id: user.id,
-      name: cfg.name || 'Untitled Agent',
-      messages: msgs as unknown as import('@/integrations/supabase/types').Json,
-      config: cfg as unknown as import('@/integrations/supabase/types').Json,
-    };
-    if (sid) {
-      await supabase.from('builder_sessions').update(sessionData).eq('id', sid);
-    } else {
-      const { data } = await supabase.from('builder_sessions').insert(sessionData).select('id').single();
-      if (data) setSessionId(data.id);
-    }
-  }, [user]);
+  // Identity
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [lore, setLore] = useState('');
 
-  useEffect(() => {
-    if (!sessionLoaded || messages.length === 0) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveSession(messages, config, sessionId);
-    }, 1500);
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [messages, config, sessionLoaded, sessionId, saveSession]);
+  // Personality
+  const [personality, setPersonality] = useState('');
 
-  useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-  }, [messages]);
+  // Avatar
+  const [selectedAvatar, setSelectedAvatar] = useState(0);
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px';
-    }
-  }, [input]);
+  // Brain
+  const [model] = useState(AI_MODEL);
 
-  // Handle credits_purchased URL param (after Stripe redirect)
-  useEffect(() => {
-    const purchased = searchParams.get('credits_purchased');
-    if (purchased && user) {
-      // Credits were already added via checkout metadata — just refetch balance
-      refetchCredits();
-      toast({ title: 'Credits purchased!', description: `${purchased} credits added to your account.` });
-      searchParams.delete('credits_purchased');
-      setSearchParams(searchParams, { replace: true });
-    }
-  }, [searchParams, user]);
+  // Skills
+  const [skills, setSkills] = useState<AgentSkill[]>([...DEFAULT_SKILLS]);
 
-  // Auto-deploy when chat AI triggers it
-  useEffect(() => {
-    if (shouldAutodeploy && !isStreaming && !isDeploying && config.name.trim()) {
-      setShouldAutodeploy(false);
-      handleDeploy();
-    }
-  }, [shouldAutodeploy, isStreaming, isDeploying, config]);
+  // Tools (integrations subset - top ones)
+  const [integrations, setIntegrations] = useState<AgentIntegration[]>([...DEFAULT_INTEGRATIONS]);
+  const [toolSearch, setToolSearch] = useState('');
+  const [connectingToolId, setConnectingToolId] = useState<string | null>(null);
+  const [toolApiKey, setToolApiKey] = useState('');
+
+  // Messaging
+  const [linkedPlatforms, setLinkedPlatforms] = useState<Record<string, boolean>>({});
+
+  // Voice
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('');
+  const [previewing, setPreviewing] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Wallet
+  const [walletData, setWalletData] = useState<any>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+
+  // Deploy
+  const [gpuTier, setGpuTier] = useState<'a4000' | 'a40' | 'a100' | 'h100'>('a4000');
+  const [usePlatformKey, setUsePlatformKey] = useState(true);
+  const [deployLogs, setDeployLogs] = useState<string[]>([]);
+  const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
+
+  const [copied, setCopied] = useState<string | null>(null);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  const parseConfigFromResponse = (content: string) => {
-    const nameMatch = content.match(/(?:agent name|name)[:\s]*["']?([^"'\n]+)["']?/i);
-    if (nameMatch && !config.name) {
-      setConfig(prev => ({ ...prev, name: nameMatch[1].trim() }));
-    }
-    const skillKeywords: Record<string, string> = {
-      'web scraping': 'web-scraping', 'scrape': 'web-scraping', 'scraping': 'web-scraping',
-      'send email': 'email-send', 'email sending': 'email-send',
-      'read email': 'email-read', 'inbox': 'email-read', 'calendar': 'calendar',
-      'crypto trad': 'crypto-trade', 'trading': 'crypto-trade',
-      'dca': 'dca-bot', 'dollar.cost': 'dca-bot',
-      'social media': 'social-post', 'post.*twitter': 'social-post', 'tweet': 'social-post',
-      'lead gen': 'lead-gen', 'find.*lead': 'lead-gen', 'prospect': 'lead-gen',
-      'customer support': 'customer-support', 'support ticket': 'customer-support',
-      'file': 'file-management', 'browser': 'browser-automation',
-      'data analysis': 'data-analysis', 'analyze.*data': 'data-analysis',
-    };
-    const lower = content.toLowerCase();
-    setConfig(prev => ({
-      ...prev,
-      skills: prev.skills.map(skill => {
-        const shouldEnable = Object.entries(skillKeywords).some(
-          ([keyword, id]) => id === skill.id && new RegExp(keyword, 'i').test(lower)
-        );
-        return shouldEnable ? { ...skill, enabled: true } : skill;
-      }),
-    }));
-    const integKeywords: Record<string, string> = {
-      'telegram': 'telegram', 'discord': 'discord', 'twitter': 'twitter',
-      'shopify': 'shopify', 'gmail': 'gmail', 'slack': 'slack',
-      'notion': 'notion', 'github': 'github',
-    };
-    setConfig(prev => ({
-      ...prev,
-      integrations: prev.integrations.map(integ => {
-        const shouldConnect = Object.entries(integKeywords).some(
-          ([keyword, id]) => id === integ.id && lower.includes(keyword)
-        );
-        return shouldConnect ? { ...integ, connected: true } : integ;
-      }),
-    }));
+  const stepIndex = STEPS_ORDER.indexOf(step);
+  const totalVisibleSteps = STEPS_ORDER.length - 2; // exclude 'deploying' and 'done' from dots
 
-    // Auto-trigger deploy when AI says it's deploying now
-    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*(lovable\s*cloud|cloud))/i.test(content)) {
-      setShouldAutodeploy(true);
+  const goTo = (next: WizardStep) => {
+    const nextIdx = STEPS_ORDER.indexOf(next);
+    setDirection(nextIdx > stepIndex ? 1 : -1);
+    setStep(next);
+  };
+
+  const goNext = () => {
+    const nextIdx = stepIndex + 1;
+    if (nextIdx < STEPS_ORDER.length) {
+      setDirection(1);
+      setStep(STEPS_ORDER[nextIdx]);
     }
   };
 
-  const handleSend = async (overrideInput?: string) => {
-    const text = overrideInput || input.trim();
-    if (!text || isStreaming) return;
+  const goBack = () => {
+    const prevIdx = stepIndex - 1;
+    if (prevIdx >= 0) {
+      setDirection(-1);
+      setStep(STEPS_ORDER[prevIdx]);
+    }
+  };
 
-    // Check credits before sending
-    if (credits !== null && credits < CREDIT_COSTS.CHAT_MESSAGE) {
-      setShowCreditsPurchase(true);
+  const copyText = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(label);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const toggleSkill = (id: string) => {
+    setSkills(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
+  };
+
+  const toggleIntegration = (id: string) => {
+    setIntegrations(prev => prev.map(i => i.id === id ? { ...i, connected: !i.connected } : i));
+  };
+
+  const handlePreviewVoice = async (voiceId: string) => {
+    if (previewing === voiceId) {
+      audioRef.current?.pause();
+      setPreviewing(null);
       return;
     }
-
-    const userMsg: ChatMessage = { role: 'user', content: text };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInput('');
-    setIsStreaming(true);
-
-    // Deduct credit for chat message
-    const deductResult = await deductCredits(CREDIT_COSTS.CHAT_MESSAGE, 'chat_message', 'Builder chat message');
-    if (!deductResult.success) {
-      toast({ title: 'Credit deduction failed', description: deductResult.error || 'Try again.', variant: 'destructive' });
-      setMessages(messages); // rollback
-      setIsStreaming(false);
-      return;
-    }
-
+    setPreviewing(voiceId);
     try {
-      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/agent-builder`;
-      const resp = await fetch(CHAT_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({ messages: newMessages, currentConfig: config }),
+      const voice = VOICE_OPTIONS.find(v => v.id === voiceId);
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/bot-voice?action=preview&voice=${voiceId}&text=${encodeURIComponent(`Hi, I'm ${voice?.name}. This is how I sound!`)}`;
+      const resp = await fetch(url, {
+        headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
       });
-
-      if (!resp.ok || !resp.body) {
-        if (resp.status === 429) { toast({ title: 'Rate limited', description: 'Please wait and try again.', variant: 'destructive' }); throw new Error('Rate limited'); }
-        if (resp.status === 402) { toast({ title: 'Credits required', description: 'Please add funds.', variant: 'destructive' }); throw new Error('Credits required'); }
-        throw new Error('Failed to start stream');
-      }
-
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let assistantContent = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-          if (line.endsWith('\r')) line = line.slice(0, -1);
-          if (!line.startsWith('data: ')) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === '[DONE]') break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
-              setMessages([...newMessages, { role: 'assistant', content: assistantContent }]);
-            }
-          } catch { /* partial */ }
-        }
-      }
-
-      if (assistantContent) { parseConfigFromResponse(assistantContent); }
-      else { setMessages([...newMessages, { role: 'assistant', content: "Could you tell me more about the specific tasks and integrations you need?" }]); }
-    } catch (err) {
-      if (!(err instanceof Error && (err.message === 'Rate limited' || err.message === 'Credits required'))) {
-        setMessages([...newMessages, { role: 'assistant', content: 'Something went wrong. Please try again.' }]);
-      }
-    } finally { setIsStreaming(false); }
+      if (!resp.ok) throw new Error();
+      const blob = await resp.blob();
+      if (audioRef.current) audioRef.current.pause();
+      const audio = new Audio(URL.createObjectURL(blob));
+      audioRef.current = audio;
+      audio.onended = () => setPreviewing(null);
+      await audio.play();
+    } catch {
+      setPreviewing(null);
+    }
   };
 
-  const addLog = (message: string, type: DeployLog['type'] = 'info') => {
-    setDeployLogs(prev => [...prev, { timestamp: new Date(), message, type }]);
+  const handleGenerateWallet = async () => {
+    if (!name.trim()) return;
+    setWalletLoading(true);
+    try {
+      const session = await supabase.auth.getSession();
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-agent-wallet`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.data.session?.access_token}` },
+        body: JSON.stringify({ agentName: name }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed');
+      setWalletData(data);
+      if (!data.exists) toast({ title: '🔐 Wallet created!', description: 'Save your keys — shown only once.' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setWalletLoading(false);
+    }
   };
 
   const handleDeploy = async () => {
-    if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
-    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { setShowCreditsPurchase(true); return; }
-    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { setShowCreditsPurchase(true); return; }
+    goTo('deploying');
+    const logs: string[] = [];
+    const addLog = (msg: string) => { logs.push(msg); setDeployLogs([...logs]); };
 
-    // Deduct credits for agent creation
-    const deductResult = await deductCredits(CREDIT_COSTS.AGENT_CREATION, 'agent_creation', `Deploy agent: ${config.name}`);
-    if (!deductResult.success) { toast({ title: 'Credit deduction failed', description: deductResult.error || 'Try again.', variant: 'destructive' }); return; }
-
-    setIsDeploying(true);
-    setDeployLogs([]);
-    addLog('Starting deployment...');
     try {
-      const enabledSkills = config.skills.filter(s => s.enabled);
-      const connectedIntegrations = config.integrations.filter(i => i.connected);
+      if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) {
+        addLog('❌ Insufficient credits');
+        return;
+      }
 
-      addLog(`Agent: ${config.name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
-      addLog('Generating OpenClaw config...');
+      const deductResult = await deductCredits(CREDIT_COSTS.AGENT_CREATION, 'agent_creation', `Deploy agent: ${name}`);
+      if (!deductResult.success) { addLog('❌ Credit deduction failed'); return; }
 
-      const openclawConfig = generateOpenClawConfig(config);
-      addLog('OpenClaw config generated ✓', 'success');
+      addLog('Starting deployment...');
+      const enabledSkills = skills.filter(s => s.enabled);
+      const connectedIntegrations = integrations.filter(i => i.connected);
+      addLog(`Agent: ${name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
 
       addLog('Saving agent to database...');
-
-      // Save agent to DB
-      const { data: agent, error: agentErr } = await supabase.from('agents').insert({ name: config.name, description: config.description || `AI agent with ${enabledSkills.length} skills`, creator_id: user.id, price: 0, status: 'published', short_description: config.description, required_integrations: connectedIntegrations.map(i => i.id) }).select().single();
+      const { data: agent, error: agentErr } = await supabase.from('agents').insert({
+        name, description: description || `AI agent with ${enabledSkills.length} skills`,
+        creator_id: user.id, price: 0, status: 'published',
+        short_description: description, avatar: botAvatars[selectedAvatar],
+        required_integrations: connectedIntegrations.map(i => i.id),
+      }).select().single();
       if (agentErr) throw agentErr;
+      addLog(`Agent saved (ID: ${agent.id}) ✓`);
 
-      addLog(`Agent saved (ID: ${agent.id})`, 'success');
-      addLog('Saving agent manifest...');
-
-      const { error: manifestErr } = await supabase.from('agent_manifests').insert([{ agent_id: agent.id, version: '1.0.0', workflow_steps: enabledSkills.map(s => ({ skill: s.id, config: s.config })) as unknown as import('@/integrations/supabase/types').Json, triggers: config.triggers as unknown as import('@/integrations/supabase/types').Json, guardrails: config.guardrails as unknown as import('@/integrations/supabase/types').Json, tool_permissions: connectedIntegrations.map(i => ({ integration: i.id })) as unknown as import('@/integrations/supabase/types').Json }]);
+      addLog('Saving manifest...');
+      const { error: manifestErr } = await supabase.from('agent_manifests').insert([{
+        agent_id: agent.id, version: '1.0.0',
+        workflow_steps: enabledSkills.map(s => ({ skill: s.id, config: s.config })) as any,
+        triggers: [{ type: 'manual', enabled: true }] as any,
+        guardrails: { maxSpendPerRun: 10, requireApproval: true, rateLimitPerHour: 60, maxRunsPerDay: 100 } as any,
+        tool_permissions: connectedIntegrations.map(i => ({ integration: i.id })) as any,
+      }]);
       if (manifestErr) throw manifestErr;
+      addLog('Manifest saved ✓');
 
-      addLog('Manifest saved', 'success');
-      addLog('Deploying to Lovable Cloud...', 'info');
+      addLog('Deploying to Lovable Cloud...');
+      await new Promise(r => setTimeout(r, 1000));
+      addLog('Agent deployed ✓');
+      addLog('🚀 Deployment complete!');
 
-      // Set the deployed agent ID so the Run panel appears
-      setConfig(prev => ({ ...prev, deployedAgentId: agent.id }));
+      setDeployedAgentId(agent.id);
+      toast({ title: 'Agent deployed!', description: `${name} is live on Lovable Cloud` });
 
-      addLog('Agent deployed to Lovable Cloud ✓', 'success');
-      addLog('Billing: Platform credits (5 credits/run)', 'info');
-      addLog('Deployment complete! 🚀', 'success');
-
-      toast({ title: 'Agent deployed', description: `${config.name} is live on Lovable Cloud` });
-      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to Lovable Cloud! 🚀\n\nAgent ID: \`${agent.id}\`\nSkills: ${enabledSkills.map(s => s.name).join(', ')}\nBilling: Platform credits (5 credits/run)\n\nYour agent is now live and ready to accept tasks. Use the **Run Agent** panel in the Deploy tab to test it!` }]);
+      setTimeout(() => goTo('done'), 1500);
     } catch (err: any) {
-      console.error('Deploy error:', err);
-      addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');
-      addLog('Refunding deployment credits...', 'info');
-      // Refund the agent creation credits on failure
+      addLog(`❌ Deploy failed: ${err.message}`);
       try {
-        await supabase.rpc('add_credits', {
-          p_user_id: user.id,
-          p_amount: CREDIT_COSTS.AGENT_CREATION,
-          p_type: 'refund',
-          p_description: `Refund: deploy failed for ${config.name}`,
-        });
-        addLog(`${CREDIT_COSTS.AGENT_CREATION} credits refunded ✓`, 'success');
+        await supabase.rpc('add_credits', { p_user_id: user.id, p_amount: CREDIT_COSTS.AGENT_CREATION, p_type: 'refund', p_description: `Refund: deploy failed for ${name}` });
+        addLog('Credits refunded ✓');
         refetchCredits();
-      } catch { addLog('Credit refund failed — contact support', 'error'); }
-      toast({ title: 'Deploy failed', description: err.message || 'Something went wrong.', variant: 'destructive' });
+      } catch { addLog('⚠ Refund failed — contact support'); }
     }
-    finally { setIsDeploying(false); }
   };
 
-  const handleTryFix = (errorMessage: string) => {
-    const fixPrompt = `My deployment failed with this error: "${errorMessage}". Can you help me diagnose and fix this issue?`;
-    handleSend(fixPrompt);
+  // Filtered tools for the tools step
+  const query = toolSearch.toLowerCase().trim();
+  const filteredTools = query
+    ? integrations.filter(i => i.name.toLowerCase().includes(query) || i.description.toLowerCase().includes(query))
+    : integrations.slice(0, 12); // Show top 12 by default
+  const connectedToolsCount = integrations.filter(i => i.connected).length;
+
+  // Step dots (only show for main wizard steps, not deploying/done)
+  const dotSteps = STEPS_ORDER.slice(0, -2);
+  const currentDotIndex = Math.min(stepIndex, dotSteps.length - 1);
+
+  const pageVariants = {
+    enter: (d: number) => ({ x: d > 0 ? 60 : -60, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (d: number) => ({ x: d > 0 ? -60 : 60, opacity: 0 }),
   };
 
-  const handleNewChat = () => { setMessages([]); setConfig({ ...DEFAULT_CONFIG }); setInput(''); setSessionId(null); };
-
-  const handleSelectSession = (session: { id: string; name: string; messages: unknown[]; config?: unknown }) => {
-    setSessionId(session.id);
-    setMessages((session.messages as ChatMessage[]) || []);
-    try {
-      const savedConfig = session.config as Partial<AgentConfig> | undefined;
-      if (savedConfig && typeof savedConfig === 'object' && 'skills' in savedConfig) {
-        setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
-      } else {
-        setConfig({ ...DEFAULT_CONFIG });
-      }
-    } catch { setConfig({ ...DEFAULT_CONFIG }); }
-  };
-
-  const handleDeleteSession = (deletedId: string) => {
-    if (deletedId === sessionId) { handleNewChat(); }
-  };
-
-  const hasMessages = messages.length > 0;
-
-  const mdClasses = "prose prose-invert max-w-none text-sm leading-[1.7] [&>p]:my-2.5 [&>ul]:my-2.5 [&>ol]:my-2.5 [&>ul]:pl-5 [&>ol]:pl-5 [&_li]:my-1 [&_li]:leading-[1.65] [&_strong]:text-foreground [&_strong]:font-medium [&>p:first-child]:mt-0 [&>p:last-child]:mb-0 [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_code]:font-mono [&_pre]:bg-muted [&_pre]:rounded-lg [&_pre]:p-3.5 [&_pre]:my-3 [&>blockquote]:border-l-2 [&>blockquote]:border-muted-foreground/20 [&>blockquote]:pl-3 [&>blockquote]:my-3 [&>blockquote]:text-muted-foreground [&_h1]:text-base [&_h1]:font-semibold [&_h1]:mt-5 [&_h1]:mb-2 [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-1.5 [&_h3]:text-sm [&_h3]:font-medium [&_h3]:mt-3 [&_h3]:mb-1 [&>ul]:list-disc [&>ol]:list-decimal [&_em]:text-muted-foreground";
+  const avatarForDisplay = botAvatars[selectedAvatar];
 
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden">
-      <SEOHead title="Agent Builder — XDROP" description="Build and deploy AI agents." canonicalPath="/builder" />
+      <SEOHead title="Build Agent — XDROP" description="Create and deploy your AI agent." canonicalPath="/builder" />
       <MobileHeader />
-      {user && (
-        <SessionHistory
-          userId={user.id}
-          currentSessionId={sessionId}
-          onSelectSession={handleSelectSession}
-          onDeleteSession={handleDeleteSession}
-          open={showHistory}
-          onClose={() => setShowHistory(false)}
-        />
-      )}
-      <div className="flex flex-1 w-full">
-        {/* Chat panel — left side */}
-        <div className={`flex flex-col h-screen ${isMobile ? 'w-full' : 'w-[462px] flex-shrink-0'} border-r border-border`}>
-          {/* Chat header */}
-          <header className="sticky top-0 z-20 bg-background border-b border-border h-12 flex items-center px-4">
-            <button onClick={() => navigate('/home')} className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors mr-2">
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <span className="text-sm font-medium text-foreground font-display flex-1">Clawdbot</span>
-            <div className="flex items-center gap-1">
-              {credits !== null && (
-                <CreditsPurchaseDialog credits={credits}>
-                  <button className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted border border-border mr-1 hover:bg-muted/80 transition-colors" title="Credits remaining — click to buy more">
-                    <Coins className="w-3 h-3 text-primary" />
-                    <span className={`text-xs font-mono font-semibold ${credits <= 10 ? 'text-destructive' : 'text-foreground'}`}>{credits}</span>
-                  </button>
-                </CreditsPurchaseDialog>
-              )}
-              <button
-                onClick={() => setShowHistory(true)}
-                className="h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                title="Session history"
-              >
-                <Clock className="w-3.5 h-3.5" />
-              </button>
-              {hasMessages && (
-                <button onClick={handleNewChat} className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 rounded-md hover:bg-muted transition-colors">
-                  <Plus className="w-3.5 h-3.5" /> New
-                </button>
-              )}
-              {isMobile && (
-                <button
-                  onClick={() => setShowConfig(!showConfig)}
-                  className={`h-7 px-2 text-xs flex items-center gap-1 rounded-md transition-colors ${showConfig ? 'text-foreground bg-muted' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-                >
-                  <Settings2 className="w-3.5 h-3.5" />
-                </button>
-              )}
-            </div>
-          </header>
 
-          {/* Low credits warning */}
-          {credits !== null && credits < 10 && credits > 0 && (
-            <div className="px-4 py-2 bg-destructive/10 border-b border-destructive/20 flex items-center gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0" />
-              <span className="text-xs text-destructive flex-1">Only {credits} credit{credits !== 1 ? 's' : ''} left.</span>
-              <CreditsPurchaseDialog credits={credits}>
-                <button className="text-xs font-semibold text-destructive underline underline-offset-2 hover:opacity-80">Buy more</button>
-              </CreditsPurchaseDialog>
-            </div>
-          )}
-          {credits !== null && credits <= 0 && (
-            <div className="px-4 py-2 bg-destructive/15 border-b border-destructive/30 flex items-center gap-2">
-              <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0" />
-              <span className="text-xs text-destructive font-medium flex-1">No credits remaining.</span>
-              <CreditsPurchaseDialog credits={credits}>
-                <button className="text-xs font-semibold text-destructive underline underline-offset-2 hover:opacity-80">Purchase credits</button>
-              </CreditsPurchaseDialog>
+      <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8">
+        <div className="w-full max-w-lg">
+
+          {/* Agent name + avatar header (shown after identity step) */}
+          {stepIndex > 1 && stepIndex < STEPS_ORDER.length - 1 && (
+            <div className="flex flex-col items-center mb-4">
+              <p className="text-sm font-semibold text-foreground mb-2">{name || 'My Agent'}</p>
+              <img src={avatarForDisplay} alt="Bot" className="w-20 h-20 rounded-full border-2 border-border shadow-lg shadow-primary/10" />
             </div>
           )}
 
-          {/* Chat content */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto">
-            {!hasMessages ? (
-              <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)] px-4">
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center max-w-md">
-                  <div className="mb-5">
-                    <OpenClawMascot size="lg" />
+          {/* Progress dots */}
+          {stepIndex > 0 && stepIndex < STEPS_ORDER.length - 1 && (
+            <div className="flex items-center justify-center gap-1.5 mb-4">
+              {dotSteps.map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full transition-all ${i <= currentDotIndex ? 'bg-foreground' : 'bg-muted-foreground/30'}`} />
+              ))}
+            </div>
+          )}
+
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={step}
+              custom={direction}
+              variants={pageVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+            >
+
+              {/* ═══ STEP: Start ═══ */}
+              {step === 'start' && (
+                <div className="flex flex-col items-center text-center space-y-6">
+                  <img src={botAvatars[0]} alt="Bot" className="w-24 h-24 rounded-full border-2 border-border shadow-lg shadow-primary/10" />
+                  <div>
+                    <h1 className="text-2xl font-bold text-foreground font-display mb-2">Create your AI agent</h1>
+                    <p className="text-sm text-muted-foreground">How would you like to start?</p>
                   </div>
-                  <h2 className="text-xl font-semibold text-foreground font-display mb-1">Build your OpenClaw agent</h2>
-                  <p className="text-sm text-muted-foreground mb-1">Describe what you need — I'll configure skills, model, and cloud deployment.</p>
-                  <p className="text-[10px] text-muted-foreground/50 mb-8">Powered by OpenClaw · Deployed on Lovable Cloud</p>
-                  <div className="flex flex-col gap-2 max-w-sm mx-auto">
-                    {STARTER_SUGGESTIONS.map((s, i) => (
+                  <div className="w-full space-y-3">
+                    <button
+                      onClick={() => goTo('identity')}
+                      className="w-full p-4 rounded-xl border border-border bg-secondary/50 hover:bg-secondary hover:border-muted-foreground/30 transition-all text-left"
+                    >
+                      <p className="text-sm font-semibold text-foreground mb-1">🚀 Create from zero</p>
+                      <p className="text-xs text-muted-foreground">Build a new agent step by step</p>
+                    </button>
+                    <button
+                      onClick={() => navigate('/add-agent')}
+                      className="w-full p-4 rounded-xl border border-border bg-secondary/50 hover:bg-secondary hover:border-muted-foreground/30 transition-all text-left"
+                    >
+                      <p className="text-sm font-semibold text-foreground mb-1">🔗 Connect yours via API</p>
+                      <p className="text-xs text-muted-foreground">Link an existing bot to the XDROP network</p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Identity ═══ */}
+              {step === 'identity' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">What's my name?</h2>
+                    <p className="text-sm text-muted-foreground">Give your agent an identity</p>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Name *</label>
+                      <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. CryptoOracle" maxLength={30} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Short description</label>
+                      <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="What does your agent do?" maxLength={100} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Lore / backstory</label>
+                      <Textarea value={lore} onChange={e => setLore(e.target.value)} placeholder="Add personality, backstory, or special instructions..." rows={3} className="bg-secondary border-border resize-none" maxLength={500} />
+                      <p className="text-[10px] text-muted-foreground/50 mt-1">{lore.length}/500</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={goNext} disabled={!name.trim()} className="gap-2">
+                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Personality ═══ */}
+              {step === 'personality' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">How should I write?</h2>
+                    <p className="text-sm text-muted-foreground">Pick a communication style</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {PERSONALITY_OPTIONS.map(opt => (
                       <button
-                        key={i}
-                        onClick={() => handleSend(s)}
-                        className="text-left px-3.5 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 transition-colors"
+                        key={opt.id}
+                        onClick={() => setPersonality(opt.id)}
+                        className={`p-4 rounded-xl border text-left transition-all ${
+                          personality === opt.id ? 'border-foreground bg-foreground/5 ring-1 ring-foreground/20' : 'border-border bg-secondary/50 hover:border-muted-foreground/30'
+                        }`}
                       >
-                        {s}
+                        <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">{opt.desc}</p>
                       </button>
                     ))}
                   </div>
-                </motion.div>
-              </div>
-            ) : (
-              <div className="py-4">
-                {messages.map((msg, i) => (
-                  <div key={i} className={`px-4 py-2 ${msg.role === 'user' ? '' : 'bg-muted/30'}`}>
-                    <div className="max-w-full">
-                      {msg.role === 'user' ? (
-                        <div className="flex justify-end">
-                          <div className="max-w-[85%] text-sm text-foreground leading-relaxed">
-                            {msg.content}
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={goNext} className="gap-2">
+                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Avatar ═══ */}
+              {step === 'avatar' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Choose my look!</h2>
+                    <p className="text-sm text-muted-foreground">Pick an avatar for your agent</p>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2 max-h-[280px] overflow-y-auto pr-1">
+                    {botAvatars.map((a, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedAvatar(i)}
+                        className={`w-full aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedAvatar === i ? 'border-foreground scale-105 ring-2 ring-foreground/20' : 'border-border hover:border-muted-foreground'
+                        }`}
+                      >
+                        <img src={a} alt={`Avatar ${i + 1}`} className="w-full h-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={goNext} className="gap-2">
+                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Brain ═══ */}
+              {step === 'brain' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Choose my brain!</h2>
+                    <p className="text-sm text-muted-foreground">Which model should power me?</p>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-xl border border-foreground bg-foreground/5 ring-1 ring-foreground/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">Claude Sonnet 4</p>
+                          <p className="text-xs text-muted-foreground">Balanced</p>
+                        </div>
+                        <span className="text-sm text-muted-foreground font-mono">$$</span>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground text-center">5 credits per agent run · You can change this later in settings.</p>
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={goNext} className="gap-2">
+                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Skills ═══ */}
+              {step === 'skills' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">What can I do?</h2>
+                    <p className="text-sm text-muted-foreground">Select your agent's main skills</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                    {skills.map(skill => (
+                      <button
+                        key={skill.id}
+                        onClick={() => toggleSkill(skill.id)}
+                        className={`relative flex items-start gap-2 p-3 rounded-xl border text-left transition-all ${
+                          skill.enabled ? 'border-primary/40 bg-primary/5' : 'border-border bg-secondary/50 hover:bg-secondary'
+                        }`}
+                      >
+                        {skill.enabled && (
+                          <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-primary-foreground" />
+                          </div>
+                        )}
+                        <span className="text-lg leading-none mt-0.5">{skill.icon}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-foreground">{skill.name}</p>
+                          <p className="text-[10px] text-muted-foreground leading-tight mt-0.5">{skill.description}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={goNext} className="gap-2">
+                      Continue <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Connect Tools ═══ */}
+              {step === 'tools' && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Connect my tools!</h2>
+                    <p className="text-sm text-muted-foreground">These let me work with your favorite services</p>
+                    <p className="text-xs text-primary mt-2 font-medium">{connectedToolsCount} tools connected</p>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/50" />
+                    <input value={toolSearch} onChange={e => setToolSearch(e.target.value)} placeholder="Search tools..." className="w-full bg-secondary/50 border border-border rounded-lg pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50" />
+                  </div>
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                    {filteredTools.map(integ => (
+                      <div key={integ.id}>
+                        <button
+                          onClick={() => {
+                            if (integ.connected) { toggleIntegration(integ.id); return; }
+                            if (integ.requiresApiKey) { setConnectingToolId(integ.id); setToolApiKey(''); }
+                            else toggleIntegration(integ.id);
+                          }}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                            integ.connected ? 'border-primary/40 bg-primary/5' : 'border-border bg-secondary/50 hover:bg-secondary'
+                          }`}
+                        >
+                          <span className="text-lg">{integ.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">{integ.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{integ.description}</p>
+                          </div>
+                          {integ.connected ? (
+                            <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center shrink-0"><Check className="w-3 h-3 text-primary-foreground" /></div>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground border border-border px-2 py-1 rounded-md">Connect</span>
+                          )}
+                        </button>
+                        {connectingToolId === integ.id && (
+                          <div className="mt-1 p-3 rounded-xl border border-border bg-secondary/30 space-y-2">
+                            <input type="password" value={toolApiKey} onChange={e => setToolApiKey(e.target.value)} placeholder={`Enter ${integ.apiKeyLabel || 'API Key'}...`} className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs" autoFocus onKeyDown={e => e.key === 'Enter' && toolApiKey.trim() && (toggleIntegration(integ.id), setConnectingToolId(null))} />
+                            <div className="flex gap-2">
+                              <button onClick={() => { if (toolApiKey.trim()) { toggleIntegration(integ.id); setConnectingToolId(null); } }} disabled={!toolApiKey.trim()} className="flex-1 text-[11px] font-medium py-1.5 rounded-lg bg-primary text-primary-foreground disabled:opacity-40">Connect</button>
+                              <button onClick={() => setConnectingToolId(null)} className="px-3 py-1.5 rounded-lg border border-border text-[11px] text-muted-foreground"><X className="w-3 h-3" /></button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground text-center">I support 90+ more tools — connect them later in the editor</p>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={goNext} size="sm">Skip</Button>
+                      <Button onClick={goNext} className="gap-2">Continue <ArrowRight className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Messaging ═══ */}
+              {step === 'messaging' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Chat with me on...</h2>
+                    <p className="text-sm text-muted-foreground">Messages sync with this dashboard</p>
+                  </div>
+                  <div className="space-y-3">
+                    {MESSAGING_PLATFORMS.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setLinkedPlatforms(prev => ({ ...prev, [p.id]: !prev[p.id] }))}
+                        className={`w-full flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
+                          linkedPlatforms[p.id] ? 'border-primary/40 bg-primary/5' : 'border-border bg-secondary/50 hover:bg-secondary'
+                        }`}
+                      >
+                        <span className="text-2xl">{p.icon}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-foreground">{p.name}</p>
+                          <p className="text-xs text-muted-foreground">{p.desc}</p>
+                        </div>
+                        {linkedPlatforms[p.id] ? (
+                          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center"><Check className="w-3 h-3 text-primary-foreground" /></div>
+                        ) : (
+                          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={goNext} size="sm">Skip</Button>
+                      <Button onClick={goNext} className="gap-2">Continue <ArrowRight className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Voice ═══ */}
+              {step === 'voice' && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Give me a voice!</h2>
+                    <p className="text-sm text-muted-foreground">Voice tweets cost 3 credits each</p>
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-secondary/50">
+                    <span className="text-sm text-foreground font-medium">Enable voice</span>
+                    <Switch checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
+                  </div>
+                  {voiceEnabled && (
+                    <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+                      {VOICE_OPTIONS.map(voice => (
+                        <button
+                          key={voice.id}
+                          onClick={() => setSelectedVoice(voice.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all text-xs ${
+                            selectedVoice === voice.id ? 'bg-primary/10 border border-primary/30' : 'bg-secondary/30 border border-transparent hover:bg-secondary/60'
+                          }`}
+                        >
+                          <div className="flex-1">
+                            <span className="font-medium text-foreground">{voice.name}</span>
+                            <span className="text-muted-foreground ml-2">{voice.desc}</span>
+                          </div>
+                          <button onClick={e => { e.stopPropagation(); handlePreviewVoice(voice.id); }} className="w-6 h-6 flex items-center justify-center rounded hover:bg-muted">
+                            {previewing === voice.id ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                          </button>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={goNext} size="sm">Skip</Button>
+                      <Button onClick={goNext} className="gap-2">Continue <ArrowRight className="w-3.5 h-3.5" /></Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Wallet ═══ */}
+              {step === 'wallet' && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Activate income wallet</h2>
+                    <p className="text-sm text-muted-foreground">Receive earnings on Solana</p>
+                  </div>
+                  {!walletData ? (
+                    <div className="p-4 rounded-xl border border-border bg-secondary/50 space-y-3 text-center">
+                      <Wallet className="w-8 h-8 text-muted-foreground mx-auto" />
+                      <p className="text-xs text-muted-foreground">Generate a Solana wallet for your agent to receive earnings, tips, and payments.</p>
+                      <Button onClick={handleGenerateWallet} disabled={walletLoading} className="gap-2">
+                        {walletLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Wallet className="w-4 h-4" />}
+                        {walletLoading ? 'Generating…' : 'Generate Wallet'}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="p-3 rounded-xl border border-border bg-secondary/50 space-y-3">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Address</span>
+                            <button onClick={() => copyText(walletData.sol_address, 'addr')} className="text-muted-foreground hover:text-foreground">
+                              {copied === 'addr' ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                          <p className="text-[11px] text-foreground font-mono break-all">{walletData.sol_address}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                          <div className="p-2 rounded-md bg-background/50 border border-border">
+                            <p className="text-[9px] text-muted-foreground uppercase">SOL</p>
+                            <p className="text-sm font-semibold text-foreground">{walletData.sol_balance?.toFixed(4) || '0.0000'}</p>
+                          </div>
+                          <div className="p-2 rounded-md bg-background/50 border border-border">
+                            <p className="text-[9px] text-muted-foreground uppercase">USDC</p>
+                            <p className="text-sm font-semibold text-foreground">${walletData.usdc_balance?.toFixed(2) || '0.00'}</p>
                           </div>
                         </div>
-                      ) : (
-                        <div className="flex gap-3 items-start">
-                          <img src={claudeLogo} alt="Claude" className="w-6 h-6 rounded-full mt-1 flex-shrink-0" />
-                          <div className={mdClasses}>
-                            <ReactMarkdown>{stripSuggestionTags(msg.content)}</ReactMarkdown>
+                      </div>
+                      {walletData.mnemonic && walletData.privateKey && (
+                        <div className="p-3 rounded-xl border border-accent/30 bg-accent/5 space-y-2">
+                          <div className="flex items-center gap-1.5">
+                            <AlertTriangle className="w-3.5 h-3.5 text-accent-foreground" />
+                            <p className="text-[11px] font-medium text-accent-foreground">Save these — shown only once!</p>
                           </div>
+                          <button onClick={() => setShowSecret(!showSecret)} className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            {showSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            {showSecret ? 'Hide' : 'Show'} secrets
+                          </button>
+                          {showSecret && (
+                            <div className="space-y-2">
+                              <div>
+                                <span className="text-[9px] text-muted-foreground uppercase">Mnemonic</span>
+                                <p className="text-[10px] font-mono bg-background/50 p-1.5 rounded border border-border break-all">{walletData.mnemonic}</p>
+                              </div>
+                              <div>
+                                <span className="text-[9px] text-muted-foreground uppercase">Private Key</span>
+                                <p className="text-[10px] font-mono bg-background/50 p-1.5 rounded border border-border break-all">{walletData.privateKey}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
-                  </div>
-                ))}
-
-                {/* Suggestions */}
-                {!isStreaming && messages.length > 0 && messages[messages.length - 1]?.role === 'assistant' && (() => {
-                  const suggestions = extractSuggestions(messages[messages.length - 1].content);
-                  if (suggestions.length === 0) return null;
-                  return (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1.5">
-                        {suggestions.map((s, idx) => (
-                          <button key={idx} onClick={() => handleSend(s)} className="px-3 py-1.5 text-xs rounded-md border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground/30 transition-colors">
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </motion.div>
-                  );
-                })()}
-
-                {/* Typing */}
-                {isStreaming && messages[messages.length - 1]?.role === 'user' && (
-                  <div className="px-4 py-3 bg-muted/30">
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:150ms]" />
-                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse [animation-delay:300ms]" />
+                  )}
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" onClick={goNext} size="sm">Skip</Button>
+                      <Button onClick={goNext} className="gap-2">Continue <ArrowRight className="w-3.5 h-3.5" /></Button>
                     </div>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Input */}
-          <div className={`border-t border-border px-4 py-3 ${isMobile ? 'pb-20' : ''}`}>
-            <div>
-              <div className="relative flex items-end rounded-xl border border-border bg-muted/40 focus-within:border-muted-foreground/30 transition-colors">
-                <textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                  placeholder="Message Clawdbot..."
-                  rows={1}
-                  className="flex-1 bg-transparent py-3 pl-3.5 pr-12 text-sm text-foreground placeholder:text-muted-foreground resize-none outline-none max-h-[160px] leading-relaxed"
-                  style={{ minHeight: '44px' }}
-                />
-                <button
-                  onClick={() => handleSend()}
-                  disabled={!input.trim() || isStreaming}
-                  className="absolute right-1.5 bottom-1.5 w-7 h-7 rounded-lg bg-foreground text-background flex items-center justify-center disabled:opacity-20 disabled:cursor-not-allowed transition-opacity"
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                </button>
-              </div>
-              <p className="text-[10px] text-muted-foreground/60 text-center mt-1.5">
-                Clawdbot may make mistakes. Review config before deploying.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Config panel — center/main area (hidden on mobile unless toggled) */}
-        {isMobile ? (
-          <AnimatePresence>
-            {showConfig && (
-              <motion.aside
-                initial={{ x: '100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '100%' }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="fixed inset-0 z-50 bg-background"
-              >
-                <div className="h-screen overflow-y-auto">
-                  <div className="flex items-center justify-between px-4 h-12 border-b border-border">
-                    <span className="text-sm font-medium text-foreground">Config</span>
-                    <button onClick={() => setShowConfig(false)} className="w-7 h-7 flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} userCredits={credits ?? 0} />
                 </div>
-              </motion.aside>
-            )}
-          </AnimatePresence>
-        ) : (
-          <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-            <ConfigSidebar config={config} onConfigChange={setConfig} onDeploy={handleDeploy} isDeploying={isDeploying} deployLogs={deployLogs} onTryFix={handleTryFix} onClearLogs={() => setDeployLogs([])} userCredits={credits ?? 0} />
-          </div>
-        )}
-      </div>
-      <MobileBottomNav />
+              )}
 
-      {/* Insufficient credits purchase modal */}
-      <Dialog open={showCreditsPurchase} onOpenChange={setShowCreditsPurchase}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <Coins className="w-5 h-5 text-primary" />
-              Insufficient Credits
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Agent deployment requires <span className="font-semibold text-foreground">{CREDIT_COSTS.AGENT_CREATION} credits</span>. Your current balance is <span className="font-semibold text-foreground">{credits ?? 0} credits</span>.
-          </p>
-          <CreditsPurchaseDialog credits={credits}>
-            <Button className="w-full gap-2 mt-2">
-              <Coins className="w-4 h-4" />
-              Buy Credits
-            </Button>
-          </CreditsPurchaseDialog>
-        </DialogContent>
-      </Dialog>
+              {/* ═══ STEP: Deploy config ═══ */}
+              {step === 'deploy' && (
+                <div className="space-y-5">
+                  <div className="text-center">
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Deployment</h2>
+                    <p className="text-sm text-muted-foreground">Choose server and review costs</p>
+                  </div>
+
+                  {/* GPU tier */}
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">GPU Tier</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {GPU_TIERS.map(tier => (
+                        <button
+                          key={tier.id}
+                          onClick={() => setGpuTier(tier.id)}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            gpuTier === tier.id ? 'border-foreground bg-foreground/5 ring-1 ring-foreground/20' : 'border-border bg-secondary/50 hover:border-muted-foreground/30'
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <Cpu className="w-3 h-3 text-muted-foreground" />
+                            <span className="text-[11px] font-medium text-foreground">{tier.name}</span>
+                          </div>
+                          <p className="text-[9px] text-muted-foreground">{tier.price} · {tier.vram}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Billing method */}
+                  <div className="p-3 rounded-xl border border-border bg-secondary/50 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-primary" />
+                      <span className="text-xs font-semibold text-foreground">Platform Credits</span>
+                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">Recommended</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">5 credits/run · No RunPod account needed</p>
+                  </div>
+
+                  {/* Cost summary */}
+                  <div className="p-3 rounded-xl border border-border bg-muted/30 space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cost Summary</p>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Deployment</span>
+                      <span className="text-foreground">{CREDIT_COSTS.AGENT_CREATION} credits</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">Per run</span>
+                      <span className="text-foreground">5 credits</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">GPU compute</span>
+                      <span className="text-foreground">${HOURLY_RATES[gpuTier]}/hr</span>
+                    </div>
+                    <div className="border-t border-border pt-1.5 flex justify-between text-xs font-semibold">
+                      <span className="text-foreground">Your balance</span>
+                      <span className="text-primary">{credits ?? 0} credits</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-2">
+                    <button onClick={goBack} className="text-sm text-muted-foreground hover:text-foreground transition-colors">Back</button>
+                    <Button onClick={handleDeploy} disabled={!name.trim() || (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION)} className="gap-2 px-6">
+                      🚀 Deploy Agent
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Deploying ═══ */}
+              {step === 'deploying' && (
+                <div className="space-y-6 text-center">
+                  <Loader2 className="w-10 h-10 text-primary mx-auto animate-spin" />
+                  <div>
+                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Deploying {name}...</h2>
+                    <p className="text-sm text-muted-foreground">This may take a moment</p>
+                  </div>
+                  <div className="bg-muted/30 rounded-xl border border-border p-3 text-left max-h-48 overflow-y-auto">
+                    {deployLogs.map((log, i) => (
+                      <p key={i} className="text-[11px] font-mono text-muted-foreground leading-relaxed">{log}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ═══ STEP: Done ═══ */}
+              {step === 'done' && (
+                <div className="space-y-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                    <Check className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground font-display mb-1">{name} is live! 🚀</h2>
+                    <p className="text-sm text-muted-foreground">Your agent has been deployed to Lovable Cloud</p>
+                  </div>
+                  {deployedAgentId && (
+                    <div className="p-3 rounded-xl border border-border bg-secondary/50">
+                      <p className="text-[10px] text-muted-foreground uppercase mb-1">Agent ID</p>
+                      <div className="flex items-center gap-2 justify-center">
+                        <code className="text-xs font-mono text-foreground">{deployedAgentId}</code>
+                        <button onClick={() => copyText(deployedAgentId, 'agentId')} className="text-muted-foreground hover:text-foreground">
+                          {copied === 'agentId' ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <Button onClick={() => navigate(deployedAgentId ? `/agent/${deployedAgentId}` : '/dashboard')} className="w-full gap-2">
+                      <Settings2 className="w-4 h-4" /> Open Editor
+                    </Button>
+                    <Button variant="outline" onClick={() => navigate('/home')} className="w-full">
+                      Back to Home
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      <MobileBottomNav />
     </div>
   );
 };
