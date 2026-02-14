@@ -18,6 +18,7 @@ import { botAvatars } from '@/data/botAvatars';
 import { DEFAULT_CONFIG, DEFAULT_SKILLS, DEFAULT_INTEGRATIONS, GPU_TIERS, AI_MODEL, type AgentConfig, type AgentSkill, type AgentIntegration } from '@/types/agentBuilder';
 import { generateOpenClawConfig } from '@/lib/openclawConfig';
 import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
+import { IntegrationIcon } from '@/components/agent-builder/IntegrationIcons';
 
 // ─── Wizard steps ───
 type WizardStep = 'start' | 'identity' | 'personality' | 'avatar' | 'brain' | 'skills' | 'tools' | 'messaging' | 'voice' | 'wallet' | 'deploy' | 'deploying' | 'done';
@@ -536,7 +537,7 @@ const AgentBuilder = () => {
                             integ.connected ? 'border-primary/40 bg-primary/5' : 'border-border bg-secondary/50 hover:bg-secondary'
                           }`}
                         >
-                          <span className="text-lg">{integ.icon}</span>
+                          <IntegrationIcon id={integ.id} fallback={integ.icon} />
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-foreground">{integ.name}</p>
                             <p className="text-[10px] text-muted-foreground truncate">{integ.description}</p>
