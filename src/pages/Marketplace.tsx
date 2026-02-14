@@ -270,7 +270,7 @@ const Marketplace = () => {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Server className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">RunPod GPU</span>
+                            <span className="text-[10px] text-muted-foreground">Lovable Cloud</span>
                           </div>
                         </div>
                       </div>

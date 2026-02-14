@@ -2,7 +2,7 @@ import type { AgentConfig } from '@/types/agentBuilder';
 
 /**
  * Generate OpenClaw YAML-style config from builder state.
- * This JSON object is passed as OPENCLAW_CONFIG env var to the RunPod worker.
+ * This JSON object is passed as OPENCLAW_CONFIG to the Lovable Cloud worker.
  */
 export function generateOpenClawConfig(config: AgentConfig) {
   const enabledSkills = config.skills.filter(s => s.enabled);
