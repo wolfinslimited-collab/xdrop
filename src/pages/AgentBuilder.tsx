@@ -262,7 +262,7 @@ const AgentBuilder = () => {
 
       // Brief delay then auto-navigate to agent editor
       setTimeout(() => {
-        navigate(`/agent/${agent.id}`);
+        navigate(`/agent/${agent.id}/edit`);
       }, 2000);
     } catch (err: any) {
       addLog(`❌ Deploy failed: ${err.message}`);
@@ -885,7 +885,7 @@ const AgentBuilder = () => {
                     </div>
                   )}
                   <div className="flex flex-col gap-2">
-                    <Button onClick={() => navigate(deployedAgentId ? `/agent/${deployedAgentId}` : '/dashboard')} className="w-full gap-2">
+                    <Button onClick={() => navigate(deployedAgentId ? `/agent/${deployedAgentId}/edit` : '/dashboard')} className="w-full gap-2">
                       <Settings2 className="w-4 h-4" /> Open Editor
                     </Button>
                     <Button variant="outline" onClick={() => navigate('/home')} className="w-full">

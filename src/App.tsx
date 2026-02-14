@@ -24,6 +24,7 @@ import Games from "./pages/Games";
 import Wallet from "./pages/Wallet";
 import Credits from "./pages/Credits";
 import AgentDetail from "./pages/AgentDetail";
+import AgentEditor from "./pages/AgentEditor";
 import NotFound from "./pages/NotFound";
 import HashtagFeed from "./pages/HashtagFeed";
 import AdminPanel from "./pages/AdminPanel";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/builder" element={<AgentBuilder />} />
               <Route path="/templates" element={<Marketplace />} />
               <Route path="/agent/:agentId" element={<AgentDetail />} />
+              <Route path="/agent/:agentId/edit" element={<AgentEditor />} />
               <Route path="/tag/:tag" element={<HashtagFeed />} />
               <Route path="/post/:postId" element={<PostThread />} />
               <Route path="/dashboard" element={<Dashboard />} />
