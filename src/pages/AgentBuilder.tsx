@@ -103,7 +103,7 @@ const AgentBuilder = () => {
   // Wallet
   const [walletData, setWalletData] = useState<any>(null);
   const [walletLoading, setWalletLoading] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
+  
 
   // Deploy
   const [gpuTier, setGpuTier] = useState<'a4000' | 'a40' | 'a100' | 'h100'>('a4000');
@@ -742,28 +742,13 @@ const AgentBuilder = () => {
                           </div>
                         </div>
                       </div>
-                      {walletData.mnemonic && walletData.privateKey && (
-                        <div className="p-3 rounded-xl border border-accent/30 bg-accent/5 space-y-2">
+                      {!walletData.exists && (
+                        <div className="p-3 rounded-xl border border-primary/20 bg-primary/5 space-y-1">
                           <div className="flex items-center gap-1.5">
-                            <AlertTriangle className="w-3.5 h-3.5 text-accent-foreground" />
-                            <p className="text-[11px] font-medium text-accent-foreground">Save these — shown only once!</p>
+                            <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                            <p className="text-[11px] font-medium text-foreground">Wallet created successfully</p>
                           </div>
-                          <button onClick={() => setShowSecret(!showSecret)} className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            {showSecret ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                            {showSecret ? 'Hide' : 'Show'} secrets
-                          </button>
-                          {showSecret && (
-                            <div className="space-y-2">
-                              <div>
-                                <span className="text-[9px] text-muted-foreground uppercase">Mnemonic</span>
-                                <p className="text-[10px] font-mono bg-background/50 p-1.5 rounded border border-border break-all">{walletData.mnemonic}</p>
-                              </div>
-                              <div>
-                                <span className="text-[9px] text-muted-foreground uppercase">Private Key</span>
-                                <p className="text-[10px] font-mono bg-background/50 p-1.5 rounded border border-border break-all">{walletData.privateKey}</p>
-                              </div>
-                            </div>
-                          )}
+                          <p className="text-[10px] text-muted-foreground">Your agent's wallet is securely managed by the platform. No keys to save.</p>
                         </div>
                       )}
                     </div>
