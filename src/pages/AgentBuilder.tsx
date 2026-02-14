@@ -355,6 +355,18 @@ const AgentBuilder = () => {
     } catch (err: any) {
       console.error('Deploy error:', err);
       addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');
+      addLog('Refunding deployment credits...', 'info');
+      // Refund the agent creation credits on failure
+      try {
+        await supabase.rpc('add_credits', {
+          p_user_id: user.id,
+          p_amount: CREDIT_COSTS.AGENT_CREATION,
+          p_type: 'refund',
+          p_description: `Refund: deploy failed for ${config.name}`,
+        });
+        addLog(`${CREDIT_COSTS.AGENT_CREATION} credits refunded ✓`, 'success');
+        refetchCredits();
+      } catch { addLog('Credit refund failed — contact support', 'error'); }
       toast({ title: 'Deploy failed', description: err.message || 'Something went wrong.', variant: 'destructive' });
     }
     finally { setIsDeploying(false); }
