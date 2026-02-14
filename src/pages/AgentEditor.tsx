@@ -4,12 +4,15 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Send, Terminal, Settings2, Activity, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Bot, User, Trash2,
-  Square, RotateCcw,
+  Square, RotateCcw, Pencil, Save, Plus, X,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
@@ -66,6 +69,14 @@ const AgentEditor = () => {
   // Runs state
   const [runs, setRuns] = useState<any[]>([]);
   const [agentStatus, setAgentStatus] = useState<'running' | 'stopped'>('running');
+
+  // Config editing state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editIntegrations, setEditIntegrations] = useState<string[]>([]);
+  const [newIntegration, setNewIntegration] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   useEffect(() => {
     if (!agentId) return;
     const fetchAgent = async () => {
@@ -188,6 +199,37 @@ const AgentEditor = () => {
   };
 
   const formatTime = (d: Date) => d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  const startEditing = () => {
+    setEditName(agent.name);
+    setEditDescription(agent.description || '');
+    setEditIntegrations(agent.required_integrations || []);
+    setIsEditing(true);
+  };
+
+  const saveConfig = async () => {
+    if (!editName.trim()) { toast.error('Name is required'); return; }
+    setIsSaving(true);
+    const { error } = await supabase
+      .from('agents')
+      .update({ name: editName.trim(), description: editDescription.trim(), required_integrations: editIntegrations })
+      .eq('id', agent.id);
+    if (error) { toast.error('Failed to save'); } else {
+      setAgent({ ...agent, name: editName.trim(), description: editDescription.trim(), required_integrations: editIntegrations });
+      setIsEditing(false);
+      toast.success('Agent updated');
+      setLogs(prev => [...prev, { type: 'success', message: 'Agent configuration updated', timestamp: new Date() }]);
+    }
+    setIsSaving(false);
+  };
+
+  const addIntegration = () => {
+    const val = newIntegration.trim();
+    if (val && !editIntegrations.includes(val)) {
+      setEditIntegrations([...editIntegrations, val]);
+      setNewIntegration('');
+    }
+  };
 
   if (loading) {
     return (
@@ -439,15 +481,40 @@ const AgentEditor = () => {
 
         {/* ─── Config Tab ─── */}
         <TabsContent value="config" className="flex-1 m-0 overflow-y-auto p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Agent Configuration</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Agent Configuration</h3>
+            {!isEditing ? (
+              <Button variant="ghost" size="sm" onClick={startEditing} className="gap-1.5 text-xs">
+                <Pencil className="w-3 h-3" /> Edit
+              </Button>
+            ) : (
+              <div className="flex gap-1.5">
+                <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="gap-1 text-xs text-muted-foreground">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={saveConfig} disabled={isSaving} className="gap-1.5 text-xs">
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                  Save
+                </Button>
+              </div>
+            )}
+          </div>
           <div className="space-y-3">
             <div className="p-3 rounded-lg border border-border bg-secondary/30">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Name</p>
-              <p className="text-sm text-foreground font-medium">{agent.name}</p>
+              {isEditing ? (
+                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-8 text-sm" placeholder="Agent name" />
+              ) : (
+                <p className="text-sm text-foreground font-medium">{agent.name}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg border border-border bg-secondary/30">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Description</p>
-              <p className="text-sm text-foreground">{agent.description || '—'}</p>
+              {isEditing ? (
+                <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} className="text-sm min-h-[60px]" placeholder="Agent description" />
+              ) : (
+                <p className="text-sm text-foreground">{agent.description || '—'}</p>
+              )}
             </div>
             <div className="p-3 rounded-lg border border-border bg-secondary/30">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</p>
@@ -457,18 +524,43 @@ const AgentEditor = () => {
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Agent ID</p>
               <p className="text-xs text-foreground font-mono">{agent.id}</p>
             </div>
-            {agent.required_integrations?.length > 0 && (
-              <div className="p-3 rounded-lg border border-border bg-secondary/30">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Integrations</p>
+            <div className="p-3 rounded-lg border border-border bg-secondary/30">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Integrations</p>
+              {isEditing ? (
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-1.5">
+                    {editIntegrations.map(i => (
+                      <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+                        {i}
+                        <button onClick={() => setEditIntegrations(editIntegrations.filter(x => x !== i))} className="hover:text-destructive">
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <Input
+                      value={newIntegration}
+                      onChange={e => setNewIntegration(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addIntegration(); } }}
+                      placeholder="Add integration..."
+                      className="h-7 text-xs flex-1"
+                    />
+                    <Button variant="outline" size="sm" onClick={addIntegration} className="h-7 px-2">
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
                 <div className="flex flex-wrap gap-1.5">
-                  {agent.required_integrations.map((i: string) => (
+                  {(agent.required_integrations?.length > 0) ? agent.required_integrations.map((i: string) => (
                     <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
                       {i}
                     </span>
-                  ))}
+                  )) : <p className="text-xs text-muted-foreground">None</p>}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             <div className="p-3 rounded-lg border border-border bg-secondary/30">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Created</p>
               <p className="text-sm text-foreground">{new Date(agent.created_at).toLocaleString()}</p>
