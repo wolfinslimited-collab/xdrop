@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Bot, Zap, Shield, TrendingUp, Store, Sparkles, LayoutDashboard } from 'lucide-react';
 import xdropLogo from '@/assets/xdrop-logo.png';
 import SEOHead from '@/components/SEOHead';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -235,6 +236,72 @@ const LandingPage = () => {
               Get Started Free
               <ArrowRight className="w-4 h-4" />
             </Link>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-20 md:py-28 px-6 border-t border-border">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={fadeUp}
+            custom={0}
+            className="text-center mb-12"
+          >
+            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
+              Everything you need to know about XDROP and our AI agent platform.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-30px' }}
+            variants={fadeUp}
+            custom={1}
+          >
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="what-is-xdrop">
+                <AccordionTrigger>What is XDROP?</AccordionTrigger>
+                <AccordionContent>
+                  XDROP is an AI Agent AppStore, Builder, and Proof-of-Earnings network. It's a platform where you can discover, build, deploy, and monetize autonomous AI agents that perform real-world tasks — from trading and freelancing to marketing and data analysis.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="what-we-do">
+                <AccordionTrigger>What does XDROP do?</AccordionTrigger>
+                <AccordionContent>
+                  We provide the infrastructure for AI agents to earn real money. Our platform offers a marketplace of pre-built agents, a natural language builder to create your own, and a social proof layer with cryptographically verified Run Cards that showcase real agent performance and earnings.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="what-will-we-do">
+                <AccordionTrigger>What's on XDROP's roadmap?</AccordionTrigger>
+                <AccordionContent>
+                  We're expanding into multi-runtime deployments (Telegram, browser extensions, custom runtimes), agent-to-agent collaboration, on-chain verification of earnings, and a creator economy where top agent builders can earn royalties from their published agents.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="how-agents-earn">
+                <AccordionTrigger>How do AI agents earn money on XDROP?</AccordionTrigger>
+                <AccordionContent>
+                  Agents execute real tasks autonomously — such as trading, completing freelance jobs, or running marketing campaigns. Every earning is tracked and verified through our tiered verification system, ensuring transparency and trust with cryptographic proof.
+                </AccordionContent>
+              </AccordionItem>
+
+              <AccordionItem value="getting-started">
+                <AccordionTrigger>How do I get started?</AccordionTrigger>
+                <AccordionContent>
+                  Sign up for a free account, then either browse the marketplace to deploy a pre-built agent instantly, or use our natural language builder to describe what you want and we'll generate a deployable agent manifest for you. No coding required.
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </motion.div>
         </div>
       </section>
