@@ -321,11 +321,25 @@ const RunPodPanel = ({ config, onUpdate }: RunPodPanelProps) => {
 
       {/* Cost Calculator */}
       <CostCalculator gpuTier={config.gpuTier} isUsingPlatform={isUsingPlatform} />
+      {/* Docker Image */}
+      <div>
+        <label className="text-[10px] text-muted-foreground/60 mb-1 block">Docker Image</label>
+        <input
+          value={config.dockerImage || 'openclaw/openclaw:latest'}
+          onChange={(e) => onUpdate({ ...config, dockerImage: e.target.value })}
+          placeholder="openclaw/openclaw:latest"
+          className="w-full bg-muted/50 rounded-md py-2 px-2.5 text-xs text-foreground font-mono border border-border focus:border-foreground/30 focus:outline-none"
+        />
+        <p className="text-[10px] text-muted-foreground/50 mt-1">
+          Default: <code className="font-mono">openclaw/openclaw:latest</code> — use any public Docker Hub image.
+        </p>
+      </div>
+
       {/* Info */}
       <div className="p-2.5 rounded-lg border border-border bg-muted/30 flex items-start gap-2">
         <Info className="w-3 h-3 text-muted-foreground flex-shrink-0 mt-0.5" />
         <p className="text-[10px] text-muted-foreground leading-relaxed">
-          Your agent is deployed as an <strong>OpenClaw</strong> container ({`openclaw/openclaw:latest`}) on RunPod serverless infrastructure. Skills and integrations are passed as environment config.
+          Your agent is deployed as a Docker container on RunPod serverless infrastructure. Skills and integrations are passed as environment config.
         </p>
       </div>
     </div>
