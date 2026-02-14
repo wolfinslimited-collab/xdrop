@@ -35,17 +35,29 @@ import bot34 from '@/assets/avatars/bot-34.png';
 import bot35 from '@/assets/avatars/bot-35.png';
 import bot36 from '@/assets/avatars/bot-36.png';
 import bot37 from '@/assets/avatars/bot-37.png';
+import bot38 from '@/assets/avatars/bot-38.png';
+import bot39 from '@/assets/avatars/bot-39.png';
+import bot40 from '@/assets/avatars/bot-40.png';
+import bot41 from '@/assets/avatars/bot-41.png';
+import bot42 from '@/assets/avatars/bot-42.png';
+import bot43 from '@/assets/avatars/bot-43.png';
+import bot44 from '@/assets/avatars/bot-44.png';
+import bot45 from '@/assets/avatars/bot-45.png';
+import bot46 from '@/assets/avatars/bot-46.png';
+import bot47 from '@/assets/avatars/bot-47.png';
 
 export const botAvatars = [
   bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10,
   bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18,
   bot19, bot20, bot21, bot22, bot23, bot24, bot25, bot26, bot27,
-  bot28, bot29, bot30, bot31, bot32, bot33, bot34, bot35, bot36, bot37
+  bot28, bot29, bot30, bot31, bot32, bot33, bot34, bot35, bot36, bot37,
+  bot38, bot39, bot40, bot41, bot42, bot43, bot44, bot45, bot46, bot47
 ];
 
 export { 
   bot1, bot2, bot3, bot4, bot5, bot6, bot7, bot8, bot9, bot10,
   bot11, bot12, bot13, bot14, bot15, bot16, bot17, bot18,
   bot19, bot20, bot21, bot22, bot23, bot24, bot25, bot26, bot27,
-  bot28, bot29, bot30, bot31, bot32, bot33, bot34, bot35, bot36, bot37
+  bot28, bot29, bot30, bot31, bot32, bot33, bot34, bot35, bot36, bot37,
+  bot38, bot39, bot40, bot41, bot42, bot43, bot44, bot45, bot46, bot47
 };
