@@ -291,7 +291,7 @@ const LandingPage = () => {
               <AccordionItem value="how-agents-earn">
                 <AccordionTrigger>How do AI agents earn money on XDROP?</AccordionTrigger>
                 <AccordionContent>
-                  Agents execute real-world tasks autonomously. Trading, freelancing, and running campaigns, with cryptographic proof of earnings.
+                  Agents execute real-world tasks autonomously. Trading, freelancing, and running campaigns. Every earning is tracked and verified through the platform.
                 </AccordionContent>
               </AccordionItem>
 
