@@ -46,25 +46,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ===== DEPLOY (save agent + manifest) =====
+    // ===== DEPLOY =====
     if (action === "deploy") {
-      const { config, agentId } = body;
-      // No RunPod needed — agent is saved and ready for cloud runs
+      const { agentId } = body;
       return new Response(
-        JSON.stringify({
-          success: true,
-          agentId,
-          message: "Agent deployed to Lovable Cloud",
-        }),
+        JSON.stringify({ success: true, agentId, message: "Agent deployed to Lovable Cloud" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // ===== RUN AGENT =====
+    // ===== RUN AGENT (streaming) =====
     if (action === "run") {
       const { agentId, prompt, agentConfig } = body;
 
-      // Deduct credits (5 base + run)
+      // Deduct credits
       const { data: deductResult } = await adminClient.rpc("deduct_credits", {
         p_user_id: user.id,
         p_amount: 5,
@@ -80,7 +75,7 @@ serve(async (req) => {
         );
       }
 
-      // Build system prompt from agent config
+      // Build system prompt
       const skills = (agentConfig?.skills || [])
         .filter((s: { enabled: boolean }) => s.enabled)
         .map((s: { name: string; description: string }) => `- ${s.name}: ${s.description}`)
@@ -105,7 +100,6 @@ Guardrails:
 
 Execute the user's task efficiently. Provide clear, actionable results.`;
 
-      // Call Anthropic API
       const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
       if (!anthropicKey) {
         return new Response(
@@ -114,6 +108,7 @@ Execute the user's task efficiently. Provide clear, actionable results.`;
         );
       }
 
+      // Stream from Anthropic
       const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
@@ -125,9 +120,8 @@ Execute the user's task efficiently. Provide clear, actionable results.`;
           model: "claude-sonnet-4-20250514",
           max_tokens: 2048,
           system: systemPrompt,
-          messages: [
-            { role: "user", content: prompt || "Hello, what can you do?" },
-          ],
+          stream: true,
+          messages: [{ role: "user", content: prompt || "Hello, what can you do?" }],
         }),
       });
 
@@ -140,24 +134,56 @@ Execute the user's task efficiently. Provide clear, actionable results.`;
         );
       }
 
-      const aiData = await aiResp.json();
-      const output = aiData.content?.[0]?.text || "No response generated.";
+      // Collect full output while streaming to client
+      let fullOutput = "";
+      const userId = user.id;
 
-      // Record the run
-      await adminClient.from("agent_runs").insert({
-        agent_id: agentId,
-        user_id: user.id,
-        status: "completed",
-        inputs: { prompt } as unknown as import("https://esm.sh/@supabase/supabase-js@2").Json,
-        outputs: { response: output } as unknown as import("https://esm.sh/@supabase/supabase-js@2").Json,
-        started_at: new Date().toISOString(),
-        completed_at: new Date().toISOString(),
+      const transformStream = new TransformStream({
+        transform(chunk, controller) {
+          const text = new TextDecoder().decode(chunk);
+          const lines = text.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const jsonStr = line.slice(6).trim();
+            if (!jsonStr || jsonStr === "[DONE]") continue;
+            try {
+              const event = JSON.parse(jsonStr);
+              if (event.type === "content_block_delta" && event.delta?.text) {
+                fullOutput += event.delta.text;
+                // Forward as OpenAI-compatible SSE
+                const sseChunk = {
+                  choices: [{ delta: { content: event.delta.text } }],
+                };
+                controller.enqueue(
+                  new TextEncoder().encode(`data: ${JSON.stringify(sseChunk)}\n\n`)
+                );
+              } else if (event.type === "message_stop") {
+                controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+              }
+            } catch { /* skip malformed */ }
+          }
+        },
+        async flush() {
+          // Record the run after stream completes
+          try {
+            await adminClient.from("agent_runs").insert({
+              agent_id: agentId,
+              user_id: userId,
+              status: "completed",
+              inputs: { prompt },
+              outputs: { response: fullOutput },
+              started_at: new Date().toISOString(),
+              completed_at: new Date().toISOString(),
+            });
+          } catch (e) {
+            console.error("Failed to save run:", e);
+          }
+        },
       });
 
-      return new Response(
-        JSON.stringify({ success: true, output }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(aiResp.body!.pipeThrough(transformStream), {
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+      });
     }
 
     return new Response(
