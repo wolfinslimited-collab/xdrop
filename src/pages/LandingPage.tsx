@@ -239,7 +239,7 @@ const LandingPage = () => {
             variants={fadeUp}
             custom={1}
           >
-            <Accordion type="single" collapsible className="w-full">
+            <Accordion type="single" collapsible className="w-full [&_[data-radix-accordion-item]]:border-border">
               <AccordionItem value="what-is-xdrop">
                 <AccordionTrigger>What is XDROP?</AccordionTrigger>
                 <AccordionContent>
