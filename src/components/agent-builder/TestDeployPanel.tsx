@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { AI_MODEL, type AgentConfig } from '@/types/agentBuilder';
 import AgentRunPanel from './AgentRunPanel';
 
+
 export interface DeployLog {
   timestamp: Date;
   message: string;
@@ -30,7 +31,7 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
   const enabledSkills = config.skills.filter(s => s.enabled);
   const connectedIntegrations = config.integrations.filter(i => i.connected);
   const isConfigValid = config.name.trim() && enabledSkills.length > 0;
-  const isRunPodReady = config.runpodConfig.apiKeyConfigured;
+  const isRunPodReady = true; // Cloud-based, always ready
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,7 +78,7 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">Test & Deploy</h3>
-        <p className="text-xs text-muted-foreground">Validate and deploy to RunPod serverless</p>
+        <p className="text-xs text-muted-foreground">Validate and deploy to Lovable Cloud</p>
       </div>
 
       {/* Summary */}
@@ -91,8 +92,8 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
             <span className="text-foreground">{AI_MODEL.name}</span>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-            <span>Endpoint:</span>
-            <span className="text-foreground font-mono">{config.runpodConfig.endpointId || '—'}</span>
+            <span>Runtime:</span>
+            <span className="text-foreground font-mono">Lovable Cloud</span>
           </div>
         </div>
         <div className="flex flex-wrap gap-1 pt-1">
@@ -145,29 +146,18 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
         </div>
       )}
 
-      {/* RunPod connection warning */}
-      {!isRunPodReady && (
-        <button
-          onClick={() => onNavigateTab?.('runpod')}
-          className="w-full p-3 rounded-lg border border-destructive/30 bg-destructive/5 flex items-start gap-2 text-left hover:bg-destructive/10 transition-colors cursor-pointer"
-        >
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0 mt-0.5" />
-          <p className="text-[11px] text-destructive">
-            RunPod API key not connected. <strong className="underline underline-offset-2">Click here</strong> to go to the RunPod tab and add your API key.
-          </p>
-        </button>
-      )}
+      {/* Cloud ready indicator */}
 
       {/* Deploy */}
       <Button
         onClick={onDeploy}
-        disabled={!isConfigValid || !isRunPodReady || isDeploying}
+        disabled={!isConfigValid || isDeploying}
         className="w-full gap-2"
       >
         {isDeploying ? (
-          <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Deploying to RunPod...</>
+          <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Deploying...</>
         ) : (
-          <><Rocket className="w-3.5 h-3.5" /> Deploy to RunPod</>
+          <><Rocket className="w-3.5 h-3.5" /> Deploy to Cloud</>
         )}
       </Button>
 
@@ -178,11 +168,10 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
       )}
 
       {/* Run Agent (after deployment) */}
-      {config.runpodConfig.endpointId && (
+      {config.deployedAgentId && (
         <AgentRunPanel
-          endpointId={config.runpodConfig.endpointId}
-          usePlatformKey={config.runpodConfig.usePlatformKey}
-          agentName={config.name}
+          agentId={config.deployedAgentId}
+          agentConfig={config}
         />
       )}
 
@@ -226,9 +215,6 @@ const TestDeployPanel = ({ config, onDeploy, isDeploying, onNavigateTab, deployL
       <div className="flex items-center justify-center gap-3 pt-1">
         <a href="https://github.com/openclaw/openclaw" target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
           OpenClaw Docs <ExternalLink className="w-2.5 h-2.5" />
-        </a>
-        <a href="https://www.runpod.io" target="_blank" rel="noopener noreferrer" className="text-[10px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-          RunPod Console <ExternalLink className="w-2.5 h-2.5" />
         </a>
       </div>
     </div>

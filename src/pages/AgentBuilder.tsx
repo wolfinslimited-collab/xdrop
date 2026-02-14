@@ -154,7 +154,7 @@ const AgentBuilder = () => {
 
   // Auto-deploy when chat AI triggers it
   useEffect(() => {
-    if (shouldAutodeploy && !isStreaming && !isDeploying && config.runpodConfig.apiKeyConfigured && config.name.trim()) {
+    if (shouldAutodeploy && !isStreaming && !isDeploying && config.name.trim()) {
       setShouldAutodeploy(false);
       handleDeploy();
     }
@@ -205,16 +205,8 @@ const AgentBuilder = () => {
       }),
     }));
 
-    // Auto-enable platform credits when AI mentions platform billing/credits
-    if (/platform\s*(credits?|key|billing)/i.test(content) || /billing[:\s]*platform/i.test(content)) {
-      setConfig(prev => ({
-        ...prev,
-        runpodConfig: { ...prev.runpodConfig, apiKeyConfigured: true, usePlatformKey: true },
-      }));
-    }
-
     // Auto-trigger deploy when AI says it's deploying now
-    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*runpod)/i.test(content)) {
+    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*(runpod|cloud))/i.test(content)) {
       setShouldAutodeploy(true);
     }
   };
@@ -304,7 +296,7 @@ const AgentBuilder = () => {
 
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
-    if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and connect RunPod or use platform credits.', variant: 'destructive' }); return; }
+    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { setShowCreditsPurchase(true); return; }
     if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { setShowCreditsPurchase(true); return; }
 
     // Deduct credits for agent creation
@@ -313,17 +305,14 @@ const AgentBuilder = () => {
 
     setIsDeploying(true);
     setDeployLogs([]);
-    addLog('Starting OpenClaw deployment...');
+    addLog('Starting deployment...');
     try {
       const enabledSkills = config.skills.filter(s => s.enabled);
       const connectedIntegrations = config.integrations.filter(i => i.connected);
 
       addLog(`Agent: ${config.name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
-      addLog(`Docker image: ${config.runpodConfig.dockerImage || 'openclaw/openclaw:latest'}`);
-      addLog(`RunPod mode: ${config.runpodConfig.usePlatformKey ? 'Platform credits' : 'Own account'}`);
       addLog('Generating OpenClaw config...');
 
-      // Generate OpenClaw config
       const openclawConfig = generateOpenClawConfig(config);
       addLog('OpenClaw config generated ✓', 'success');
 
@@ -340,43 +329,17 @@ const AgentBuilder = () => {
       if (manifestErr) throw manifestErr;
 
       addLog('Manifest saved', 'success');
-      addLog('Deploying OpenClaw container to RunPod...');
+      addLog('Deploying to Lovable Cloud...', 'info');
 
-      // Deploy to RunPod with OpenClaw config
-      const session = await supabase.auth.getSession();
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify({
-          action: 'deploy',
-          config,
-          agentId: agent.id,
-          usePlatformKey: config.runpodConfig.usePlatformKey,
-          openclawConfig,
-        }),
-      });
+      // Set the deployed agent ID so the Run panel appears
+      setConfig(prev => ({ ...prev, deployedAgentId: agent.id }));
 
-      const result = await resp.json();
-      if (!resp.ok) {
-        addLog(`RunPod error: ${result.error || 'Unknown error'}`, 'error');
-        throw new Error(result.error || 'RunPod deployment failed');
-      }
+      addLog('Agent deployed to Lovable Cloud ✓', 'success');
+      addLog('Billing: Platform credits (5 credits/run)', 'info');
+      addLog('Deployment complete! 🚀', 'success');
 
-      const endpointInfo = result.endpoint;
-      if (endpointInfo?.id && !config.runpodConfig.endpointId) {
-        setConfig(prev => ({ ...prev, runpodConfig: { ...prev.runpodConfig, endpointId: endpointInfo.id } }));
-      }
-
-      addLog(`Deployed to RunPod endpoint: ${endpointInfo?.id || 'created'}`, 'success');
-      addLog(`Workers: ${endpointInfo?.workersMin ?? 0}–${endpointInfo?.workersMax ?? 3}`, 'info');
-      addLog(`Billing: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}`, 'info');
-      addLog('OpenClaw deployment complete! 🚀', 'success');
-
-      toast({ title: 'Agent deployed to RunPod', description: `Endpoint: ${endpointInfo?.id || 'created'}` });
-      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod as a container! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nDocker Image: \`${config.runpodConfig.dockerImage || 'openclaw/openclaw:latest'}\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\nBilling: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}\n\nYour agent is now live and ready to accept jobs. You can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
+      toast({ title: 'Agent deployed', description: `${config.name} is live on Lovable Cloud` });
+      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to Lovable Cloud! 🚀\n\nAgent ID: \`${agent.id}\`\nSkills: ${enabledSkills.map(s => s.name).join(', ')}\nBilling: Platform credits (5 credits/run)\n\nYour agent is now live and ready to accept tasks. Use the **Run Agent** panel in the Deploy tab to test it!` }]);
     } catch (err: any) {
       console.error('Deploy error:', err);
       addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');
