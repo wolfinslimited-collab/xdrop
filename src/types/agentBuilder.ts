@@ -35,6 +35,7 @@ export interface RunPodConfig {
   endpointId: string;
   apiKeyConfigured: boolean;
   usePlatformKey: boolean;
+  dockerImage: string; // Custom Docker image (default: openclaw/openclaw:latest)
 }
 
 export interface AgentConfig {
@@ -192,6 +193,7 @@ export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
   idleTimeout: 60,
   volumeSize: 20,
   endpointId: '',
+  dockerImage: 'openclaw/openclaw:latest',
   apiKeyConfigured: false,
   usePlatformKey: false,
 };

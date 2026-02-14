@@ -7,8 +7,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// OpenClaw Docker image for RunPod serverless
-const OPENCLAW_DOCKER_IMAGE = "openclaw/openclaw:latest";
+// Default OpenClaw Docker image for RunPod serverless
+const DEFAULT_DOCKER_IMAGE = "openclaw/openclaw:latest";
 
 // Credit cost per RunPod compute minute
 const CREDITS_PER_COMPUTE_MINUTE = 2;
@@ -136,6 +136,7 @@ serve(async (req) => {
       const minWorkers = config.runpodConfig?.minWorkers || 0;
       const maxWorkers = config.runpodConfig?.maxWorkers || 3;
       const idleTimeout = config.runpodConfig?.idleTimeout || 60;
+      const dockerImage = config.runpodConfig?.dockerImage || DEFAULT_DOCKER_IMAGE;
 
       // Step 1: Create or reuse a RunPod template for the Docker image
       let templateId = config?.runpodConfig?.templateId;
@@ -149,7 +150,7 @@ serve(async (req) => {
               query: `mutation {
                 saveTemplate(input: {
                   name: "OpenClaw - ${agentName}"
-                  imageName: "${OPENCLAW_DOCKER_IMAGE}"
+                  imageName: "${dockerImage}"
                   dockerArgs: ""
                   containerDiskInGb: 20
                   volumeInGb: 0

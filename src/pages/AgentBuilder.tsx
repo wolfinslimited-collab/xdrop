@@ -294,7 +294,7 @@ const AgentBuilder = () => {
       const connectedIntegrations = config.integrations.filter(i => i.connected);
 
       addLog(`Agent: ${config.name} | Skills: ${enabledSkills.length} | Integrations: ${connectedIntegrations.length}`);
-      addLog(`Docker image: openclaw/openclaw:latest`);
+      addLog(`Docker image: ${config.runpodConfig.dockerImage || 'openclaw/openclaw:latest'}`);
       addLog(`RunPod mode: ${config.runpodConfig.usePlatformKey ? 'Platform credits' : 'Own account'}`);
       addLog('Generating OpenClaw config...');
 
@@ -351,7 +351,7 @@ const AgentBuilder = () => {
       addLog('OpenClaw deployment complete! 🚀', 'success');
 
       toast({ title: 'Agent deployed to RunPod', description: `Endpoint: ${endpointInfo?.id || 'created'}` });
-      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod as an OpenClaw container! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nDocker Image: \`openclaw/openclaw:latest\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\nBilling: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}\n\nYour agent is now live and ready to accept jobs. You can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `**${config.name}** has been deployed to RunPod as a container! 🚀\n\nEndpoint ID: \`${endpointInfo?.id}\`\nDocker Image: \`${config.runpodConfig.dockerImage || 'openclaw/openclaw:latest'}\`\nWorkers: ${endpointInfo?.workersMin}–${endpointInfo?.workersMax}\nBilling: ${result.usedPlatformKey ? 'Platform credits (2 credits/min)' : 'Your RunPod account'}\n\nYour agent is now live and ready to accept jobs. You can monitor it from the [RunPod Console](https://www.runpod.io/console/serverless).` }]);
     } catch (err: any) {
       console.error('Deploy error:', err);
       addLog(`Deploy failed: ${err.message || 'Something went wrong'}`, 'error');
