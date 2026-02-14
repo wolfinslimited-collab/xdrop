@@ -66,7 +66,7 @@ const MESSAGING_PLATFORMS = [
   { id: 'discord', name: 'Discord', Icon: DiscordIcon, desc: 'Connect to Discord channels', tokenLabel: 'Bot Token', placeholder: 'e.g. MTI3NjU0...', help: 'From Discord Developer Portal → Bot' },
 ];
 
-const HOURLY_RATES: Record<string, number> = { a4000: 0.12, a40: 0.39, a100: 1.09, h100: 3.49 };
+const HOURLY_RATES: Record<string, number> = { rtx3070: 0.05, rtx3080: 0.07, rtx3090: 0.10, rtx4070: 0.10, a4000: 0.12, rtx4080: 0.14 };
 
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
