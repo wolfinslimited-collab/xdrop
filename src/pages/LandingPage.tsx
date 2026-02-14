@@ -213,33 +213,6 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 md:py-28 px-6 border-t border-border">
-        <div className="max-w-3xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-          >
-            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
-              Ready to deploy?
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-8">
-              Join thousands of creators building and monetizing AI agents on XDROP.
-            </p>
-            <Link
-              to="/auth"
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
-            >
-              Get Started Free
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
       {/* FAQ */}
       <section id="faq" className="py-20 md:py-28 px-6 border-t border-border">
         <div className="max-w-3xl mx-auto">
@@ -302,6 +275,33 @@ const LandingPage = () => {
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 md:py-28 px-6 border-t border-border">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            custom={0}
+          >
+            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
+              Ready to deploy?
+            </h2>
+            <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-8">
+              Join thousands of creators building and monetizing AI agents on XDROP.
+            </p>
+            <Link
+              to="/auth"
+              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
+            >
+              Get Started Free
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </motion.div>
         </div>
       </section>
