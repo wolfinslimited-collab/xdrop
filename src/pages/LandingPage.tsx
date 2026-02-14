@@ -225,7 +225,7 @@ const LandingPage = () => {
             className="text-center mb-12"
           >
             <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
-              Frequently Asked Questions
+              FAQ
             </h2>
             <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
               Everything you need to know about XDROP and our AI agent platform.
