@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Default OpenClaw Docker image for RunPod serverless
-const DEFAULT_DOCKER_IMAGE = "openclaw/openclaw:latest";
+const DEFAULT_DOCKER_IMAGE = "runpod/serverless-hello-world:latest";
 
 // Credit cost per RunPod compute minute
 const CREDITS_PER_COMPUTE_MINUTE = 2;

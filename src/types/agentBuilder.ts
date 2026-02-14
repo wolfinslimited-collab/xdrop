@@ -193,7 +193,7 @@ export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
   idleTimeout: 300,
   volumeSize: 5,
   endpointId: '',
-  dockerImage: 'openclaw/openclaw:latest',
+  dockerImage: 'runpod/serverless-hello-world:latest',
   apiKeyConfigured: false,
   usePlatformKey: false,
 };
