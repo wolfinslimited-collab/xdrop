@@ -106,12 +106,13 @@ const NavSidebar = () => {
         </div>
 
         {/* Auth */}
-        <div className="mt-6 w-full border-t border-border pt-4">
+        <div className="mt-6 w-full border-t border-border pt-4 px-1">
           {user ? (
             <Button
               variant="ghost"
               onClick={() => signOut()}
               className="w-full justify-start gap-4"
+              size="lg"
             >
               <LogOut className="w-4 h-4" strokeWidth={1.5} />
               Sign Out
