@@ -76,6 +76,8 @@ const AgentBuilder = () => {
 
   const [step, setStep] = useState<WizardStep>('start');
   const [direction, setDirection] = useState(1);
+  const [myAgents, setMyAgents] = useState<any[]>([]);
+  const [agentsLoading, setAgentsLoading] = useState(false);
 
   // Identity
   const [name, setName] = useState('');
@@ -123,6 +125,14 @@ const AgentBuilder = () => {
   const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
 
   const [copied, setCopied] = useState<string | null>(null);
+
+  // Fetch user's agents
+  useEffect(() => {
+    if (!user) return;
+    setAgentsLoading(true);
+    supabase.from('agents').select('*').eq('creator_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => { setMyAgents(data || []); setAgentsLoading(false); });
+  }, [user]);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -353,6 +363,42 @@ const AgentBuilder = () => {
                       <p className="text-xs text-muted-foreground">Link an existing bot to the XDROP network</p>
                     </button>
                   </div>
+
+                  {/* ─── My Agents ─── */}
+                  {myAgents.length > 0 && (
+                    <div className="w-full pt-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Your Agents</p>
+                      <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+                        {myAgents.map(a => (
+                          <button
+                            key={a.id}
+                            onClick={() => navigate(`/agent/${a.id}/edit`)}
+                            className="w-full p-3 rounded-xl border border-border bg-secondary/30 hover:bg-secondary hover:border-muted-foreground/30 transition-all text-left flex items-center gap-3"
+                          >
+                            {a.avatar ? (
+                              <img src={a.avatar} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-lg">🤖</div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{a.name}</p>
+                              <p className="text-[10px] text-muted-foreground truncate">{a.short_description || a.description || 'No description'}</p>
+                            </div>
+                            <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
+                              a.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' :
+                              a.status === 'draft' ? 'bg-muted text-muted-foreground' :
+                              'bg-primary/10 text-primary'
+                            }`}>{a.status}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {agentsLoading && (
+                    <div className="flex justify-center py-4">
+                      <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
               )}
 
