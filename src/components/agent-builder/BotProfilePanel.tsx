@@ -114,13 +114,13 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Cost / hour</span>
             <span className="text-foreground font-medium">
-              ${config.runpodConfig?.gpuTier === 'cpu' ? '0.01' : config.runpodConfig?.gpuTier === 'a40' ? '0.69' : config.runpodConfig?.gpuTier === 'a100' ? '1.64' : '4.49'}/hr
+              ${config.runpodConfig?.gpuTier === 'a4000' ? '0.12' : config.runpodConfig?.gpuTier === 'a40' ? '0.39' : config.runpodConfig?.gpuTier === 'a100' ? '1.09' : '3.49'}/hr
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Est. monthly</span>
             <span className="text-foreground font-semibold">
-              ~${config.runpodConfig?.gpuTier === 'cpu' ? '7' : config.runpodConfig?.gpuTier === 'a40' ? '497' : config.runpodConfig?.gpuTier === 'a100' ? '1,181' : '3,233'}
+              ~${config.runpodConfig?.gpuTier === 'a4000' ? '86' : config.runpodConfig?.gpuTier === 'a40' ? '281' : config.runpodConfig?.gpuTier === 'a100' ? '785' : '2,513'}
             </span>
           </div>
         </div>

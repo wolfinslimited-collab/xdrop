@@ -27,7 +27,7 @@ export interface AgentTrigger {
 }
 
 export interface RunPodConfig {
-  gpuTier: 'cpu' | 'a40' | 'a100' | 'h100';
+  gpuTier: 'a4000' | 'a40' | 'a100' | 'h100';
   maxWorkers: number;
   minWorkers: number;
   idleTimeout: number; // seconds
@@ -60,9 +60,9 @@ export interface AgentConfig {
 export const AI_MODEL = { id: 'claude-sonnet-4' as const, name: 'Claude Sonnet 4', provider: 'Anthropic' };
 
 export const GPU_TIERS = [
-  { id: 'cpu' as const, name: 'CPU Only', price: '$0.003/sec', description: 'Lightweight tasks, no inference', vram: '—', runpodId: 'CPU' },
-  { id: 'a40' as const, name: 'A40 / Ada 48GB', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB', runpodId: 'AMPERE_48,ADA_48_PRO' },
-  { id: 'a100' as const, name: 'A100 80GB', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB', runpodId: 'AMPERE_80,ADA_80_PRO' },
+  { id: 'a4000' as const, name: 'RTX A4000 16GB', price: '$0.12/hr', description: 'Budget GPU, light tasks', vram: '16 GB', runpodId: 'AMPERE_16' },
+  { id: 'a40' as const, name: 'A40 / Ada 48GB', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB', runpodId: 'AMPERE_48,ADA_48_PRO,AMPERE_24,ADA_24' },
+  { id: 'a100' as const, name: 'A100 80GB', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB', runpodId: 'AMPERE_80,ADA_80_PRO,AMPERE_48' },
   { id: 'h100' as const, name: 'H100 80GB', price: '$3.49/hr', description: 'Maximum performance', vram: '80 GB', runpodId: 'ADA_80_PRO,AMPERE_80' },
 ];
 
@@ -187,7 +187,7 @@ export const DEFAULT_INTEGRATIONS: AgentIntegration[] = [
 ];
 
 export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
-  gpuTier: 'cpu',
+  gpuTier: 'a4000',
   maxWorkers: 1,
   minWorkers: 0,
   idleTimeout: 300,
