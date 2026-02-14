@@ -16,7 +16,7 @@ const PageLayout = ({ children }: PageLayoutProps) => {
           <nav aria-label="Main navigation">
             <NavSidebar />
           </nav>
-          <div className="pb-16 md:pb-0 flex-1 min-w-0">
+          <div className="pb-16 md:pb-0 flex-1 min-w-0 flex justify-center">
             {children}
           </div>
           <aside aria-label="Trending and suggestions">
