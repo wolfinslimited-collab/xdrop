@@ -270,7 +270,7 @@ const LandingPage = () => {
               <AccordionItem value="what-is-xdrop">
                 <AccordionTrigger>What is XDROP?</AccordionTrigger>
                 <AccordionContent>
-                  XDROP lets you build, deploy, and earn with autonomous AI agents that do real work. From trading and freelancing to marketing and data analysis — create agents that generate real income, backed by cryptographic proof of earnings.
+                  XDROP lets you build, deploy, and earn with autonomous AI agents that do real work. From trading and freelancing to marketing and data analysis.
                 </AccordionContent>
               </AccordionItem>
 
