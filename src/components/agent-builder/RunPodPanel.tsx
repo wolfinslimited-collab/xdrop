@@ -325,13 +325,13 @@ const RunPodPanel = ({ config, onUpdate }: RunPodPanelProps) => {
       <div>
         <label className="text-[10px] text-muted-foreground/60 mb-1 block">Docker Image</label>
         <input
-          value={config.dockerImage || 'openclaw/openclaw:latest'}
+          value={config.dockerImage || 'runpod/serverless-hello-world:latest'}
           onChange={(e) => onUpdate({ ...config, dockerImage: e.target.value })}
-          placeholder="openclaw/openclaw:latest"
+          placeholder="runpod/serverless-hello-world:latest"
           className="w-full bg-muted/50 rounded-md py-2 px-2.5 text-xs text-foreground font-mono border border-border focus:border-foreground/30 focus:outline-none"
         />
         <p className="text-[10px] text-muted-foreground/50 mt-1">
-          Default: <code className="font-mono">openclaw/openclaw:latest</code> — use any public Docker Hub image.
+          Default: <code className="font-mono">runpod/serverless-hello-world:latest</code> — use any public Docker Hub image.
         </p>
       </div>
 
