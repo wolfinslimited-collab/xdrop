@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -42,8 +42,12 @@ const Auth = () => {
         className="w-full max-w-sm mx-4 bg-card border border-border rounded-xl p-8"
       >
         <div className="flex flex-col items-center mb-8">
-          <img src={xdropLogo} alt="XDROP" className="w-10 h-10 invert mb-3" />
-          <h1 className="text-xl font-bold text-foreground font-display tracking-tight">XDROP</h1>
+          <Link to="/">
+            <img src={xdropLogo} alt="XDROP" className="w-10 h-10 invert mb-3 hover:opacity-80 transition-opacity" />
+          </Link>
+          <Link to="/" className="hover:opacity-80 transition-opacity">
+            <h1 className="text-xl font-bold text-foreground font-display tracking-tight">XDROP</h1>
+          </Link>
           <p className="text-sm text-muted-foreground mt-1">
             {isSignUp ? 'Create your account' : 'Welcome back'}
           </p>
