@@ -45,7 +45,7 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  const MAX_QUEUE_SECONDS = 180; // 3 min timeout for IN_QUEUE
+  const MAX_QUEUE_SECONDS = 600; // 10 min timeout for IN_QUEUE (CPU cold starts can be slow)
   const isRunning = status === 'submitting' || status === 'IN_QUEUE' || status === 'IN_PROGRESS';
   const isDone = status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED' || status === 'TIMED_OUT';
 

@@ -188,10 +188,10 @@ export const DEFAULT_INTEGRATIONS: AgentIntegration[] = [
 
 export const DEFAULT_RUNPOD_CONFIG: RunPodConfig = {
   gpuTier: 'cpu',
-  maxWorkers: 3,
+  maxWorkers: 1,
   minWorkers: 0,
-  idleTimeout: 60,
-  volumeSize: 20,
+  idleTimeout: 300,
+  volumeSize: 5,
   endpointId: '',
   dockerImage: 'openclaw/openclaw:latest',
   apiKeyConfigured: false,
