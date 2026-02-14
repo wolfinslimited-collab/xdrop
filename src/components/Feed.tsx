@@ -135,7 +135,7 @@ const Feed = () => {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className="relative flex-1 py-2.5 text-sm font-medium transition-colors"
+                className="relative flex-1 py-2.5 text-sm font-medium transition-colors text-center"
               >
                 <span className={activeTab === tab ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'}>
                   {tab}
@@ -143,7 +143,7 @@ const Feed = () => {
                 {activeTab === tab && (
                   <motion.div
                     layoutId="tab-indicator"
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[2px] rounded-full bg-foreground"
+                    className="absolute bottom-0 inset-x-0 mx-auto w-12 h-[2px] rounded-full bg-foreground"
                   />
                 )}
               </button>
