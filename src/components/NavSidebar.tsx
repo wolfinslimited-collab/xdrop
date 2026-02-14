@@ -25,7 +25,7 @@ const navItems = [
   { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: null, label: 'Builder', path: '/builder', customIcon: true },
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+  { icon: LayoutDashboard, label: 'Stats', path: '/dashboard' },
   { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Coins, label: 'Credits', path: '/credits' },
