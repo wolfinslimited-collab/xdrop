@@ -71,6 +71,7 @@ const AgentBuilder = () => {
   const [deployLogs, setDeployLogs] = useState<DeployLog[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showCreditsPurchase, setShowCreditsPurchase] = useState(false);
+  const [shouldAutodeploy, setShouldAutodeploy] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -151,6 +152,14 @@ const AgentBuilder = () => {
     }
   }, [searchParams, user]);
 
+  // Auto-deploy when chat AI triggers it
+  useEffect(() => {
+    if (shouldAutodeploy && !isStreaming && !isDeploying && config.runpodConfig.apiKeyConfigured && config.name.trim()) {
+      setShouldAutodeploy(false);
+      handleDeploy();
+    }
+  }, [shouldAutodeploy, isStreaming, isDeploying, config]);
+
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
@@ -195,6 +204,19 @@ const AgentBuilder = () => {
         return shouldConnect ? { ...integ, connected: true } : integ;
       }),
     }));
+
+    // Auto-enable platform credits when AI mentions platform billing/credits
+    if (/platform\s*(credits?|key|billing)/i.test(content) || /billing[:\s]*platform/i.test(content)) {
+      setConfig(prev => ({
+        ...prev,
+        runpodConfig: { ...prev.runpodConfig, apiKeyConfigured: true, usePlatformKey: true },
+      }));
+    }
+
+    // Auto-trigger deploy when AI says it's deploying now
+    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*runpod)/i.test(content)) {
+      setShouldAutodeploy(true);
+    }
   };
 
   const handleSend = async (overrideInput?: string) => {
