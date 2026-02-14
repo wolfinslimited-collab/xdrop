@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { ArrowUp, Plus, Settings2, X, ArrowLeft, Clock, Coins, AlertTriangle } from 'lucide-react';
 import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -68,6 +70,7 @@ const AgentBuilder = () => {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployLogs, setDeployLogs] = useState<DeployLog[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showCreditsPurchase, setShowCreditsPurchase] = useState(false);
   const [sessionLoaded, setSessionLoaded] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -280,7 +283,7 @@ const AgentBuilder = () => {
   const handleDeploy = async () => {
     if (!config.name.trim()) { toast({ title: 'Name required', description: 'Give your agent a name before deploying.', variant: 'destructive' }); return; }
     if (!config.runpodConfig.apiKeyConfigured) { toast({ title: 'RunPod not connected', description: 'Go to the RunPod tab and connect RunPod or use platform credits.', variant: 'destructive' }); return; }
-    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { toast({ title: 'Insufficient credits', description: `Agent creation requires ${CREDIT_COSTS.AGENT_CREATION} credits.`, variant: 'destructive' }); return; }
+    if (credits !== null && credits < CREDIT_COSTS.AGENT_CREATION) { setShowCreditsPurchase(true); return; }
 
     // Deduct credits for agent creation
     const deductResult = await deductCredits(CREDIT_COSTS.AGENT_CREATION, 'agent_creation', `Deploy agent: ${config.name}`);
@@ -612,6 +615,27 @@ const AgentBuilder = () => {
         )}
       </div>
       <MobileBottomNav />
+
+      {/* Insufficient credits purchase modal */}
+      <Dialog open={showCreditsPurchase} onOpenChange={setShowCreditsPurchase}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Coins className="w-5 h-5 text-primary" />
+              Insufficient Credits
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Agent deployment requires <span className="font-semibold text-foreground">{CREDIT_COSTS.AGENT_CREATION} credits</span>. Your current balance is <span className="font-semibold text-foreground">{credits ?? 0} credits</span>.
+          </p>
+          <CreditsPurchaseDialog credits={credits}>
+            <Button className="w-full gap-2 mt-2">
+              <Coins className="w-4 h-4" />
+              Buy Credits
+            </Button>
+          </CreditsPurchaseDialog>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
