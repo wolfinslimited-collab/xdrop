@@ -13,10 +13,12 @@ interface RunPodPanelProps {
 }
 
 const HOURLY_RATES: Record<string, number> = {
+  rtx3070: 0.05,
+  rtx3080: 0.07,
+  rtx3090: 0.10,
+  rtx4070: 0.10,
   a4000: 0.12,
-  a40: 0.39,
-  a100: 1.09,
-  h100: 3.49,
+  rtx4080: 0.14,
 };
 
 const CostCalculator = ({ gpuTier, isUsingPlatform }: { gpuTier: string; isUsingPlatform: boolean }) => {
@@ -260,7 +262,7 @@ const RunPodPanel = ({ config, onUpdate }: RunPodPanelProps) => {
       {/* GPU Tier Selection */}
       <div>
         <label className="text-[10px] text-muted-foreground/60 mb-1.5 block">GPU Tier</label>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-3 gap-1.5">
           {GPU_TIERS.map(tier => (
             <button
               key={tier.id}

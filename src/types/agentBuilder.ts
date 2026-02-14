@@ -27,7 +27,7 @@ export interface AgentTrigger {
 }
 
 export interface RunPodConfig {
-  gpuTier: 'a4000' | 'a40' | 'a100' | 'h100';
+  gpuTier: 'rtx3070' | 'rtx3080' | 'rtx3090' | 'rtx4070' | 'a4000' | 'rtx4080';
   maxWorkers: number;
   minWorkers: number;
   idleTimeout: number; // seconds
@@ -61,10 +61,12 @@ export interface AgentConfig {
 export const AI_MODEL = { id: 'claude-sonnet-4' as const, name: 'Claude Sonnet 4', provider: 'Anthropic' };
 
 export const GPU_TIERS = [
-  { id: 'a4000' as const, name: 'RTX A4000 16GB', price: '$0.12/hr', description: 'Budget GPU, light tasks', vram: '16 GB', runpodId: 'AMPERE_16' },
-  { id: 'a40' as const, name: 'A40 / Ada 48GB', price: '$0.39/hr', description: 'Mid-range inference', vram: '48 GB', runpodId: 'AMPERE_48,ADA_48_PRO,AMPERE_24,ADA_24' },
-  { id: 'a100' as const, name: 'A100 80GB', price: '$1.09/hr', description: 'Large models, fast inference', vram: '80 GB', runpodId: 'AMPERE_80,ADA_80_PRO,AMPERE_48' },
-  { id: 'h100' as const, name: 'H100 80GB', price: '$3.49/hr', description: 'Maximum performance', vram: '80 GB', runpodId: 'ADA_80_PRO,AMPERE_80' },
+  { id: 'rtx3070' as const, name: 'RTX 3070', price: '$0.05/hr', description: 'Cheapest option, light tasks', vram: '8 GB', runpodId: 'AMPERE_8' },
+  { id: 'rtx3080' as const, name: 'RTX 3080', price: '$0.07/hr', description: 'Budget inference', vram: '10 GB', runpodId: 'AMPERE_10' },
+  { id: 'rtx3090' as const, name: 'RTX 3090', price: '$0.10/hr', description: 'Great value, 24GB VRAM', vram: '24 GB', runpodId: 'AMPERE_24' },
+  { id: 'rtx4070' as const, name: 'RTX 4070 Ti', price: '$0.10/hr', description: 'Ada gen, fast & efficient', vram: '12 GB', runpodId: 'ADA_12' },
+  { id: 'a4000' as const, name: 'RTX A4000', price: '$0.12/hr', description: 'Pro workstation GPU', vram: '16 GB', runpodId: 'AMPERE_16' },
+  { id: 'rtx4080' as const, name: 'RTX 4080', price: '$0.14/hr', description: 'Best perf per dollar', vram: '16 GB', runpodId: 'ADA_16' },
 ];
 
 export const DEFAULT_SKILLS: AgentSkill[] = [
