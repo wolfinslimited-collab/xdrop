@@ -381,8 +381,37 @@ serve(async (req) => {
       );
     }
 
+    // ===== CANCEL JOB =====
+    if (action === "cancel") {
+      const { endpointId, jobId, usePlatformKey = false } = body;
+      if (!endpointId || !jobId) {
+        return new Response(
+          JSON.stringify({ error: "Endpoint ID and Job ID required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const runpodApiKey = getRunPodKey(usePlatformKey);
+      if (!runpodApiKey) {
+        return new Response(
+          JSON.stringify({ error: "No RunPod API key available" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const resp = await fetch(`https://api.runpod.ai/v2/${endpointId}/cancel/${jobId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${runpodApiKey}` },
+      });
+
+      return new Response(
+        JSON.stringify({ success: true, cancelled: resp.ok }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: "Unknown action. Supported: validate-key, check-platform-key, deploy, run, job-status, check-usage" }),
+      JSON.stringify({ error: "Unknown action. Supported: validate-key, check-platform-key, deploy, run, job-status, cancel, check-usage" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
