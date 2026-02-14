@@ -108,13 +108,14 @@ const NavSidebar = () => {
         {/* Auth */}
         <div className="mt-6 w-full border-t border-border pt-4">
           {user ? (
-            <button
+            <Button
+              variant="outline"
               onClick={() => signOut()}
-              className="flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all hover:bg-secondary group w-full"
+              className="w-full justify-start gap-4"
             >
-              <LogOut className="w-5 h-5 text-muted-foreground group-hover:text-foreground" strokeWidth={1.5} />
-              <span className="text-sm text-muted-foreground group-hover:text-foreground">Sign Out</span>
-            </button>
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
+              Sign Out
+            </Button>
           ) : (
             <Link
               to="/auth"
