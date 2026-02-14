@@ -31,9 +31,9 @@ interface ChatMessage {
 }
 
 const STARTER_SUGGESTIONS = [
-  'Build an OpenClaw crypto DCA bot with stop-loss on RunPod',
+  'Build an OpenClaw crypto DCA bot with automated stop-loss',
   'Create a lead gen agent using ClawhHub skills + Telegram',
-  'Deploy a customer support bot on RunPod serverless',
+  'Deploy a customer support bot on Lovable Cloud',
   'Build a social media agent that auto-posts via OpenClaw',
 ];
 
@@ -206,7 +206,7 @@ const AgentBuilder = () => {
     }));
 
     // Auto-trigger deploy when AI says it's deploying now
-    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*(runpod|cloud))/i.test(content)) {
+    if (/deploying\s*now/i.test(content) || /deploy(ing|ed)\s*(as\s*configured|to\s*(lovable\s*cloud|cloud))/i.test(content)) {
       setShouldAutodeploy(true);
     }
   };
@@ -472,8 +472,8 @@ const AgentBuilder = () => {
                     <OpenClawMascot size="lg" />
                   </div>
                   <h2 className="text-xl font-semibold text-foreground font-display mb-1">Build your OpenClaw agent</h2>
-                  <p className="text-sm text-muted-foreground mb-1">Describe what you need — I'll configure skills, model, and RunPod deployment.</p>
-                  <p className="text-[10px] text-muted-foreground/50 mb-8">Powered by OpenClaw · Deployed on RunPod</p>
+                  <p className="text-sm text-muted-foreground mb-1">Describe what you need — I'll configure skills, model, and cloud deployment.</p>
+                  <p className="text-[10px] text-muted-foreground/50 mb-8">Powered by OpenClaw · Deployed on Lovable Cloud</p>
                   <div className="flex flex-col gap-2 max-w-sm mx-auto">
                     {STARTER_SUGGESTIONS.map((s, i) => (
                       <button

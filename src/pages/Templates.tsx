@@ -57,7 +57,7 @@ const Templates = () => {
   const handleDeploy = (template: AgentTemplate) => {
     toast({
       title: `🚀 Deploying ${template.name}`,
-      description: 'Setting up your RunPod server and agent. This may take a few minutes.',
+      description: 'Deploying your agent to Lovable Cloud. This may take a few moments.',
     });
   };
 
@@ -68,7 +68,7 @@ const Templates = () => {
 
   return (
     <PageLayout>
-      <SEOHead title="Agent Templates — XDROP" description="Deploy pre-built AI agents with RunPod GPU servers. Lifetime access with 15-30% estimated monthly returns." canonicalPath="/templates" />
+      <SEOHead title="Agent Templates — XDROP" description="Deploy pre-built AI agents on Lovable Cloud. Lifetime access with 15-30% estimated monthly returns." canonicalPath="/templates" />
       <main className="flex-1 border-x border-border min-h-screen w-full max-w-[900px]">
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-4">
@@ -76,7 +76,7 @@ const Templates = () => {
             <Zap className="w-5 h-5 text-accent" />
             <h1 className="text-lg font-bold text-foreground font-display">Agent Templates</h1>
           </div>
-          <p className="text-xs text-muted-foreground mb-4">Pre-built agents + RunPod GPU server · Lifetime access · Est. 15–30% monthly return</p>
+          <p className="text-xs text-muted-foreground mb-4">Pre-built agents on Lovable Cloud · Lifetime access · Est. 15–30% monthly return</p>
 
           {/* Search */}
           <div className="relative mb-3">
@@ -156,7 +156,7 @@ const Templates = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Server className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-[10px] text-muted-foreground">RunPod GPU</span>
+                      <span className="text-[10px] text-muted-foreground">Lovable Cloud</span>
                     </div>
                   </div>
                 </CardContent>
