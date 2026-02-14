@@ -116,7 +116,7 @@ const AgentBuilder = () => {
   
 
   // Deploy
-  const [gpuTier, setGpuTier] = useState<'a4000' | 'a40' | 'a100' | 'h100'>('a4000');
+  const [gpuTier, setGpuTier] = useState<'rtx3070' | 'rtx3080' | 'rtx3090' | 'rtx4070' | 'a4000' | 'rtx4080'>('rtx3070');
   const [usePlatformKey, setUsePlatformKey] = useState(true);
   const [deployLogs, setDeployLogs] = useState<string[]>([]);
   const [deployedAgentId, setDeployedAgentId] = useState<string | null>(null);
@@ -784,7 +784,7 @@ const AgentBuilder = () => {
                   {/* GPU tier */}
                   <div>
                     <label className="text-xs font-medium text-muted-foreground mb-2 block">GPU Tier</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       {GPU_TIERS.map(tier => (
                         <button
                           key={tier.id}
