@@ -203,7 +203,7 @@ const AgentBuilder = () => {
 
     // Check credits before sending
     if (credits !== null && credits < CREDIT_COSTS.CHAT_MESSAGE) {
-      toast({ title: 'No credits remaining', description: 'Purchase more credits to continue chatting.', variant: 'destructive' });
+      setShowCreditsPurchase(true);
       return;
     }
 
