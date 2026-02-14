@@ -154,7 +154,7 @@ serve(async (req) => {
                   name: "${templateName}"
                   imageName: "${dockerImage}"
                   dockerArgs: ""
-                  containerDiskInGb: 20
+                  containerDiskInGb: 5
                   volumeInGb: 0
                   isServerless: true
                   env: [
