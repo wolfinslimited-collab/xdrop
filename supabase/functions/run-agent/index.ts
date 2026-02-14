@@ -105,28 +105,29 @@ Guardrails:
 
 Execute the user's task efficiently. Provide clear, actionable results.`;
 
-      // Call Lovable AI
-      const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-      if (!lovableApiKey) {
+      // Call Anthropic API
+      const anthropicKey = Deno.env.get("ANTHROPIC_API_KEY");
+      if (!anthropicKey) {
         return new Response(
           JSON.stringify({ error: "AI service not configured" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const aiResp = await fetch("https://ai.lovable.dev/api/v1/chat/completions", {
+      const aiResp = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
+          "x-api-key": anthropicKey,
+          "anthropic-version": "2023-06-01",
           "Content-Type": "application/json",
-          Authorization: `Bearer ${lovableApiKey}`,
         },
         body: JSON.stringify({
-          model: "openai/gpt-5-mini",
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2048,
+          system: systemPrompt,
           messages: [
-            { role: "system", content: systemPrompt },
             { role: "user", content: prompt || "Hello, what can you do?" },
           ],
-          max_tokens: 2048,
         }),
       });
 
@@ -140,7 +141,7 @@ Execute the user's task efficiently. Provide clear, actionable results.`;
       }
 
       const aiData = await aiResp.json();
-      const output = aiData.choices?.[0]?.message?.content || "No response generated.";
+      const output = aiData.content?.[0]?.text || "No response generated.";
 
       // Record the run
       await adminClient.from("agent_runs").insert({
