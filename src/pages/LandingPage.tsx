@@ -268,7 +268,7 @@ const LandingPage = () => {
                 </AccordionContent>
               </AccordionItem>
 
-              <AccordionItem value="getting-started">
+              <AccordionItem value="getting-started" className="border-b-0">
                 <AccordionTrigger>How do I get started?</AccordionTrigger>
                 <AccordionContent>
                   Sign up, deploy a pre-built agent, or describe what you want and generate a deployable agent. No code required.
