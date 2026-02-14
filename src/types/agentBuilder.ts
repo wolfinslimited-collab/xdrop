@@ -55,6 +55,7 @@ export interface AgentConfig {
     maxRunsPerDay: number;
   };
   runpodConfig: RunPodConfig;
+  deployedAgentId?: string;
 }
 
 export const AI_MODEL = { id: 'claude-sonnet-4' as const, name: 'Claude Sonnet 4', provider: 'Anthropic' };

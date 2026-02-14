@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Heart, Zap, Clock, DollarSign, Activity, Shield, Cpu } from 'lucide-react';
 import { botAvatars } from '@/data/botAvatars';
 import type { AgentConfig } from '@/types/agentBuilder';
-import { AI_MODEL, GPU_TIERS } from '@/types/agentBuilder';
+import { AI_MODEL } from '@/types/agentBuilder';
 
 interface BotProfilePanelProps {
   config: AgentConfig;
@@ -18,14 +18,13 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
 
   const enabledSkills = config.skills.filter(s => s.enabled).length;
   const connectedIntegrations = config.integrations.filter(i => i.connected).length;
-  const gpu = GPU_TIERS.find(g => g.id === config.runpodConfig.gpuTier);
+  const isDeployed = !!config.deployedAgentId;
 
   const healthFactors = [
     (config.name || '').trim().length > 0,
     enabledSkills > 0,
     connectedIntegrations > 0,
-    config.runpodConfig?.apiKeyConfigured ?? false,
-    (config.runpodConfig?.endpointId || '').length > 0,
+    isDeployed,
     config.guardrails?.requireApproval ?? false,
     config.triggers?.some(t => t.enabled) ?? false,
     (config.description || '').trim().length > 0,
@@ -72,11 +71,9 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
           <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[9px] text-muted-foreground flex items-center gap-1">
             <Cpu className="w-2.5 h-2.5" /> {AI_MODEL.name}
           </span>
-          {gpu && (
-            <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[9px] text-muted-foreground">
-              {gpu.name}
-            </span>
-          )}
+          <span className="px-2 py-0.5 rounded-full bg-muted border border-border text-[9px] text-muted-foreground">
+            Lovable Cloud
+          </span>
         </div>
       </div>
 
@@ -112,16 +109,12 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
         <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Resource Costs</p>
         <div className="p-3 rounded-lg bg-muted/30 border border-border space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Cost / hour</span>
-            <span className="text-foreground font-medium">
-              ${config.runpodConfig?.gpuTier === 'a4000' ? '0.12' : config.runpodConfig?.gpuTier === 'a40' ? '0.39' : config.runpodConfig?.gpuTier === 'a100' ? '1.09' : '3.49'}/hr
-            </span>
+            <span className="text-muted-foreground">Cost / run</span>
+            <span className="text-foreground font-medium">5 credits</span>
           </div>
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Est. monthly</span>
-            <span className="text-foreground font-semibold">
-              ~${config.runpodConfig?.gpuTier === 'a4000' ? '86' : config.runpodConfig?.gpuTier === 'a40' ? '281' : config.runpodConfig?.gpuTier === 'a100' ? '785' : '2,513'}
-            </span>
+            <span className="text-muted-foreground">Runtime</span>
+            <span className="text-foreground font-semibold">Lovable Cloud</span>
           </div>
         </div>
       </div>

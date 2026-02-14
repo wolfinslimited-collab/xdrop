@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.deploy-to-runpod]
 verify_jwt = false
 
+[functions.run-agent]
+verify_jwt = false
+
 [functions.stripe-webhook]
 verify_jwt = false
 

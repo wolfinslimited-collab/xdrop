@@ -1,59 +1,52 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCw, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import type { AgentConfig } from '@/types/agentBuilder';
 
 interface AgentRunPanelProps {
-  endpointId: string;
-  usePlatformKey: boolean;
-  agentName: string;
+  agentId: string;
+  agentConfig: AgentConfig;
 }
 
-type JobStatus = 'idle' | 'submitting' | 'IN_QUEUE' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED' | 'TIMED_OUT';
+type JobStatus = 'idle' | 'submitting' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
 
 const STATUS_LABELS: Record<string, string> = {
   idle: 'Ready',
   submitting: 'Submitting…',
-  IN_QUEUE: 'In Queue',
-  IN_PROGRESS: 'Running',
+  RUNNING: 'Running',
   COMPLETED: 'Completed',
   FAILED: 'Failed',
   CANCELLED: 'Cancelled',
-  TIMED_OUT: 'Timed Out',
 };
 
 const STATUS_COLORS: Record<string, string> = {
   idle: 'text-muted-foreground',
   submitting: 'text-muted-foreground',
-  IN_QUEUE: 'text-amber-400',
-  IN_PROGRESS: 'text-blue-400',
+  RUNNING: 'text-blue-400',
   COMPLETED: 'text-emerald-400',
   FAILED: 'text-red-400',
   CANCELLED: 'text-muted-foreground',
-  TIMED_OUT: 'text-red-400',
 };
 
-const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelProps) => {
+const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<JobStatus>('idle');
-  const [jobId, setJobId] = useState<string | null>(null);
-  const [output, setOutput] = useState<unknown>(null);
+  const [output, setOutput] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const MAX_QUEUE_SECONDS = 600; // 10 min timeout for IN_QUEUE (CPU cold starts can be slow)
-  const isRunning = status === 'submitting' || status === 'IN_QUEUE' || status === 'IN_PROGRESS';
-  const isDone = status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED' || status === 'TIMED_OUT';
+  const isRunning = status === 'submitting' || status === 'RUNNING';
+  const isDone = status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED';
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
       if (timerRef.current) clearInterval(timerRef.current);
+      abortRef.current?.abort();
     };
   }, []);
 
@@ -66,105 +59,30 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
   };
 
   const stopTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
-  const pollJobStatus = async (eid: string, jid: string) => {
-    // Check for queue timeout
-    const elapsedSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    if (status === 'IN_QUEUE' && elapsedSec > MAX_QUEUE_SECONDS) {
-      setStatus('TIMED_OUT');
-      setError('Job timed out waiting in queue. The RunPod endpoint may not have available workers or the Docker image may be unavailable. Check your RunPod console.');
-      stopTimer();
-      if (pollRef.current) clearInterval(pollRef.current);
-      return;
-    }
-
-    const session = await supabase.auth.getSession();
-    try {
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify({
-          action: 'job-status',
-          endpointId: eid,
-          jobId: jid,
-          usePlatformKey,
-        }),
-      });
-      const data = await resp.json();
-      const jobStatus = data.status?.status;
-
-      if (jobStatus === 'COMPLETED') {
-        setStatus('COMPLETED');
-        setOutput(data.status?.output);
-        stopTimer();
-        if (pollRef.current) clearInterval(pollRef.current);
-      } else if (jobStatus === 'FAILED') {
-        setStatus('FAILED');
-        setError(data.status?.error || 'Job failed');
-        stopTimer();
-        if (pollRef.current) clearInterval(pollRef.current);
-      } else if (jobStatus === 'CANCELLED' || jobStatus === 'TIMED_OUT') {
-        setStatus(jobStatus);
-        stopTimer();
-        if (pollRef.current) clearInterval(pollRef.current);
-      } else if (jobStatus) {
-        setStatus(jobStatus);
-      }
-    } catch {
-      // Keep polling
-    }
-  };
-
-  const handleCancel = async () => {
-    if (pollRef.current) clearInterval(pollRef.current);
+  const handleCancel = () => {
+    abortRef.current?.abort();
     stopTimer();
-
-    // Try to cancel on RunPod
-    if (jobId) {
-      try {
-        const session = await supabase.auth.getSession();
-        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.data.session?.access_token}`,
-          },
-          body: JSON.stringify({
-            action: 'cancel',
-            endpointId,
-            jobId,
-            usePlatformKey,
-          }),
-        });
-      } catch {
-        // Best effort
-      }
-    }
-
     setStatus('CANCELLED');
-    setError('Job cancelled by user');
+    setError('Run cancelled by user');
   };
 
   const handleRun = async () => {
     setStatus('submitting');
     setOutput(null);
     setError(null);
-    setJobId(null);
     startTimer();
+
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
       const session = await supabase.auth.getSession();
-      const inputPayload = input.trim() ? { prompt: input.trim() } : {};
+      setStatus('RUNNING');
 
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
+      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/run-agent`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -172,42 +90,37 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
         },
         body: JSON.stringify({
           action: 'run',
-          endpointId,
-          input: inputPayload,
-          usePlatformKey,
+          agentId,
+          prompt: input.trim() || undefined,
+          agentConfig,
         }),
+        signal: controller.signal,
       });
 
       const data = await resp.json();
+
       if (!resp.ok) {
         setStatus('FAILED');
-        setError(data.error || 'Failed to submit job');
-        stopTimer();
-        return;
+        setError(data.error || 'Run failed');
+      } else {
+        setStatus('COMPLETED');
+        setOutput(data.output);
       }
-
-      const jid = data.job?.id;
-      setJobId(jid);
-      setStatus('IN_QUEUE');
-
-      // Start polling every 2 seconds
-      pollRef.current = setInterval(() => {
-        pollJobStatus(endpointId, jid);
-      }, 2000);
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       setStatus('FAILED');
-      setError(err.message || 'Failed to submit job');
+      setError(err.message || 'Run failed');
+    } finally {
       stopTimer();
     }
   };
 
   const handleReset = () => {
-    if (pollRef.current) clearInterval(pollRef.current);
+    abortRef.current?.abort();
     stopTimer();
     setStatus('idle');
     setOutput(null);
     setError(null);
-    setJobId(null);
     setElapsed(0);
   };
 
@@ -228,7 +141,6 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
         )}
       </div>
 
-      {/* Input */}
       {!isRunning && !isDone && (
         <>
           <textarea
@@ -238,21 +150,19 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
             rows={2}
             className="w-full bg-background rounded-lg py-2 px-3 text-xs text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/30 focus:outline-none resize-none"
           />
-          <Button onClick={handleRun} disabled={!endpointId} className="w-full gap-2" size="sm">
-            <Play className="w-3.5 h-3.5" /> Run {agentName || 'Agent'}
+          <Button onClick={handleRun} className="w-full gap-2" size="sm">
+            <Play className="w-3.5 h-3.5" /> Run {agentConfig.name || 'Agent'}
           </Button>
         </>
       )}
 
-      {/* Live Status */}
       {(isRunning || isDone) && (
         <div className="space-y-3">
-          {/* Status indicator */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {isRunning && <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />}
               {status === 'COMPLETED' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-              {(status === 'FAILED' || status === 'TIMED_OUT') && <XCircle className="w-3.5 h-3.5 text-red-400" />}
+              {status === 'FAILED' && <XCircle className="w-3.5 h-3.5 text-red-400" />}
               <span className={`text-xs font-medium ${STATUS_COLORS[status] || 'text-muted-foreground'}`}>
                 {STATUS_LABELS[status] || status}
               </span>
@@ -263,39 +173,23 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
             </div>
           </div>
 
-          {/* Cancel button while running */}
           {isRunning && (
             <Button variant="outline" size="sm" className="w-full gap-2 text-xs" onClick={handleCancel}>
               <StopCircle className="w-3.5 h-3.5" /> Cancel Run
             </Button>
           )}
 
-          {/* Progress bar */}
-          {isRunning && (
-            <Progress
-              value={status === 'IN_PROGRESS' ? 60 : status === 'IN_QUEUE' ? 20 : 10}
-              className="h-1.5"
-            />
-          )}
+          {isRunning && <Progress value={50} className="h-1.5" />}
           {isDone && <Progress value={100} className="h-1.5" />}
 
-          {/* Job ID */}
-          {jobId && (
-            <p className="text-[10px] text-muted-foreground font-mono truncate">
-              Job: {jobId}
-            </p>
-          )}
-
-          {/* Output */}
           {status === 'COMPLETED' && output && (
-            <div className="p-3 rounded-lg border border-foreground/20 bg-background text-xs font-mono whitespace-pre-wrap max-h-48 overflow-y-auto text-foreground">
-              {typeof output === 'string' ? output : JSON.stringify(output, null, 2)}
+            <div className="p-3 rounded-lg border border-foreground/20 bg-background text-xs whitespace-pre-wrap max-h-48 overflow-y-auto text-foreground">
+              {output}
             </div>
           )}
 
-          {/* Error */}
           {error && (
-            <div className="p-3 rounded-lg border border-red-500/30 bg-red-500/5 text-xs text-red-400 font-mono whitespace-pre-wrap">
+            <div className="p-3 rounded-lg border border-red-500/30 bg-red-500/5 text-xs text-red-400 whitespace-pre-wrap">
               {error}
             </div>
           )}

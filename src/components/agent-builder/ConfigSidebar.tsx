@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import type { DeployLog } from './TestDeployPanel';
-import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, Cpu, ScrollText, DollarSign, Bot, Volume2 } from 'lucide-react';
+import { Wrench, Link2, Clock, Shield, Rocket, GitBranch, ScrollText, DollarSign, Bot, Volume2 } from 'lucide-react';
 import SkillsPicker from './SkillsPicker';
 import IntegrationsPanel from './IntegrationsPanel';
 import TriggersPanel from './TriggersPanel';
 import GuardrailsPanel from './GuardrailsPanel';
 import TestDeployPanel from './TestDeployPanel';
 import WorkflowGraph from './WorkflowGraph';
-import RunPodPanel from './RunPodPanel';
 import LogsPanel from './LogsPanel';
 import MonetizePanel from './MonetizePanel';
 import BotProfilePanel from './BotProfilePanel';
@@ -25,7 +24,7 @@ interface ConfigSidebarProps {
   userCredits?: number;
 }
 
-type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'runpod' | 'deploy' | 'logs' | 'monetize' | 'voice';
+type Tab = 'profile' | 'workflow' | 'skills' | 'integrations' | 'triggers' | 'guardrails' | 'deploy' | 'logs' | 'monetize' | 'voice';
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'profile', label: 'Profile', icon: <Bot className="w-3.5 h-3.5" /> },
@@ -35,7 +34,6 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'integrations', label: 'Connect', icon: <Link2 className="w-3.5 h-3.5" /> },
   { id: 'triggers', label: 'Triggers', icon: <Clock className="w-3.5 h-3.5" /> },
   { id: 'guardrails', label: 'Safety', icon: <Shield className="w-3.5 h-3.5" /> },
-  { id: 'runpod', label: 'RunPod', icon: <Cpu className="w-3.5 h-3.5" /> },
   { id: 'deploy', label: 'Deploy', icon: <Rocket className="w-3.5 h-3.5" /> },
   { id: 'logs', label: 'Logs', icon: <ScrollText className="w-3.5 h-3.5" /> },
   { id: 'monetize', label: 'Monetize', icon: <DollarSign className="w-3.5 h-3.5" /> },
@@ -90,7 +88,7 @@ const [activeTab, setActiveTab] = useState<Tab>('profile');
         <div className="flex items-center gap-2 mt-2">
           <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">OpenClaw</span>
           <span className="text-[9px] text-muted-foreground/30">·</span>
-          <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">RunPod</span>
+          <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">Cloud</span>
           <span className="text-[9px] text-muted-foreground/30">·</span>
           <span className="text-[9px] text-muted-foreground/50 uppercase tracking-wider">Claude Sonnet 4</span>
         </div>
@@ -138,7 +136,6 @@ const [activeTab, setActiveTab] = useState<Tab>('profile');
         {activeTab === 'integrations' && <IntegrationsPanel integrations={config.integrations} onToggle={toggleIntegration} />}
         {activeTab === 'triggers' && <TriggersPanel triggers={config.triggers} onUpdate={(triggers) => onConfigChange({ ...config, triggers })} />}
         {activeTab === 'guardrails' && <GuardrailsPanel guardrails={config.guardrails} onUpdate={(guardrails) => onConfigChange({ ...config, guardrails })} />}
-        {activeTab === 'runpod' && <RunPodPanel config={config.runpodConfig} onUpdate={(runpodConfig) => onConfigChange({ ...config, runpodConfig })} />}
         {activeTab === 'deploy' && <TestDeployPanel config={config} onDeploy={onDeploy} isDeploying={isDeploying} onNavigateTab={handleNavigateTab} deployLogs={deployLogs} onTryFix={onTryFix} />}
         {activeTab === 'logs' && <LogsPanel logs={deployLogs} onClear={onClearLogs} />}
         {activeTab === 'monetize' && <MonetizePanel config={config} onConfigChange={onConfigChange} userCredits={userCredits} />}
