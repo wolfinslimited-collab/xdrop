@@ -3,6 +3,7 @@ import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCw, StopCircle } fr
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
+import ReactMarkdown from 'react-markdown';
 import type { AgentConfig } from '@/types/agentBuilder';
 
 interface AgentRunPanelProps {
@@ -33,12 +34,13 @@ const STATUS_COLORS: Record<string, string> = {
 const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<JobStatus>('idle');
-  const [output, setOutput] = useState<string | null>(null);
+  const [output, setOutput] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
   const abortRef = useRef<AbortController | null>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
 
   const isRunning = status === 'submitting' || status === 'RUNNING';
   const isDone = status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED';
@@ -49,6 +51,13 @@ const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
       abortRef.current?.abort();
     };
   }, []);
+
+  // Auto-scroll output as tokens stream in
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [output]);
 
   const startTimer = () => {
     startTimeRef.current = Date.now();
@@ -71,7 +80,7 @@ const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
 
   const handleRun = async () => {
     setStatus('submitting');
-    setOutput(null);
+    setOutput('');
     setError(null);
     startTimer();
 
@@ -97,15 +106,61 @@ const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
         signal: controller.signal,
       });
 
-      const data = await resp.json();
-
-      if (!resp.ok) {
+      // Check for non-stream error responses
+      const contentType = resp.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        const data = await resp.json();
         setStatus('FAILED');
         setError(data.error || 'Run failed');
-      } else {
-        setStatus('COMPLETED');
-        setOutput(data.output);
+        stopTimer();
+        return;
       }
+
+      if (!resp.body) {
+        setStatus('FAILED');
+        setError('No response stream');
+        stopTimer();
+        return;
+      }
+
+      // Stream SSE tokens
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = '';
+      let accumulated = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf('\n')) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith('\r')) line = line.slice(0, -1);
+          if (line.startsWith(':') || line.trim() === '') continue;
+          if (!line.startsWith('data: ')) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === '[DONE]') break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              accumulated += content;
+              setOutput(accumulated);
+            }
+          } catch {
+            textBuffer = line + '\n' + textBuffer;
+            break;
+          }
+        }
+      }
+
+      setStatus('COMPLETED');
     } catch (err: any) {
       if (err.name === 'AbortError') return;
       setStatus('FAILED');
@@ -119,7 +174,7 @@ const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
     abortRef.current?.abort();
     stopTimer();
     setStatus('idle');
-    setOutput(null);
+    setOutput('');
     setError(null);
     setElapsed(0);
   };
@@ -182,9 +237,15 @@ const AgentRunPanel = ({ agentId, agentConfig }: AgentRunPanelProps) => {
           {isRunning && <Progress value={50} className="h-1.5" />}
           {isDone && <Progress value={100} className="h-1.5" />}
 
-          {status === 'COMPLETED' && output && (
-            <div className="p-3 rounded-lg border border-foreground/20 bg-background text-xs whitespace-pre-wrap max-h-48 overflow-y-auto text-foreground">
-              {output}
+          {output && (
+            <div
+              ref={outputRef}
+              className="p-3 rounded-lg border border-foreground/20 bg-background text-xs max-h-48 overflow-y-auto text-foreground prose prose-sm prose-invert max-w-none"
+            >
+              <ReactMarkdown>{output}</ReactMarkdown>
+              {isRunning && (
+                <span className="inline-block w-1.5 h-3.5 bg-foreground/60 animate-pulse ml-0.5 align-text-bottom" />
+              )}
             </div>
           )}
 
