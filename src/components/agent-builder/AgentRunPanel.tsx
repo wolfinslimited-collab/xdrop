@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Play, Loader2, CheckCircle2, XCircle, Clock, RefreshCw, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,6 +45,7 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
 
+  const MAX_QUEUE_SECONDS = 180; // 3 min timeout for IN_QUEUE
   const isRunning = status === 'submitting' || status === 'IN_QUEUE' || status === 'IN_PROGRESS';
   const isDone = status === 'COMPLETED' || status === 'FAILED' || status === 'CANCELLED' || status === 'TIMED_OUT';
 
@@ -72,6 +73,16 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
   };
 
   const pollJobStatus = async (eid: string, jid: string) => {
+    // Check for queue timeout
+    const elapsedSec = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    if (status === 'IN_QUEUE' && elapsedSec > MAX_QUEUE_SECONDS) {
+      setStatus('TIMED_OUT');
+      setError('Job timed out waiting in queue. The RunPod endpoint may not have available workers or the Docker image may be unavailable. Check your RunPod console.');
+      stopTimer();
+      if (pollRef.current) clearInterval(pollRef.current);
+      return;
+    }
+
     const session = await supabase.auth.getSession();
     try {
       const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
@@ -110,6 +121,36 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
     } catch {
       // Keep polling
     }
+  };
+
+  const handleCancel = async () => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    stopTimer();
+
+    // Try to cancel on RunPod
+    if (jobId) {
+      try {
+        const session = await supabase.auth.getSession();
+        await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-to-runpod`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.data.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            action: 'cancel',
+            endpointId,
+            jobId,
+            usePlatformKey,
+          }),
+        });
+      } catch {
+        // Best effort
+      }
+    }
+
+    setStatus('CANCELLED');
+    setError('Job cancelled by user');
   };
 
   const handleRun = async () => {
@@ -221,6 +262,13 @@ const AgentRunPanel = ({ endpointId, usePlatformKey, agentName }: AgentRunPanelP
               {formatTime(elapsed)}
             </div>
           </div>
+
+          {/* Cancel button while running */}
+          {isRunning && (
+            <Button variant="outline" size="sm" className="w-full gap-2 text-xs" onClick={handleCancel}>
+              <StopCircle className="w-3.5 h-3.5" /> Cancel Run
+            </Button>
+          )}
 
           {/* Progress bar */}
           {isRunning && (
