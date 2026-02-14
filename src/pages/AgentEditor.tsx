@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import {
   ArrowLeft, Send, Terminal, Settings2, Activity, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Bot, User, Trash2,
+  Square, RotateCcw,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,7 +65,7 @@ const AgentEditor = () => {
 
   // Runs state
   const [runs, setRuns] = useState<any[]>([]);
-
+  const [agentStatus, setAgentStatus] = useState<'running' | 'stopped'>('running');
   useEffect(() => {
     if (!agentId) return;
     const fetchAgent = async () => {
@@ -223,9 +224,38 @@ const AgentEditor = () => {
           <div className="min-w-0">
             <h1 className="text-sm font-bold text-foreground truncate">{agent.name}</h1>
             <p className="text-[10px] text-muted-foreground">
-              {agent.status === 'published' ? '🟢 Online' : '⚪ Offline'}
+              {agentStatus === 'running' ? '🟢 Online' : '⚪ Offline'}
             </p>
           </div>
+        </div>
+        <div className="flex items-center gap-1.5">
+          {agentStatus === 'running' ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAgentStatus('stopped');
+                setLogs(prev => [...prev, { type: 'warning', message: 'Agent stopped by user', timestamp: new Date() }]);
+              }}
+              className="gap-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            >
+              <Square className="w-3.5 h-3.5" />
+              Stop
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAgentStatus('running');
+                setLogs(prev => [...prev, { type: 'success', message: 'Agent restarted by user', timestamp: new Date() }]);
+              }}
+              className="gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Restart
+            </Button>
+          )}
         </div>
       </header>
 
