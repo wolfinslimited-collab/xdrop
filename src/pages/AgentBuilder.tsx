@@ -291,7 +291,7 @@ const AgentBuilder = () => {
           {stepIndex > 1 && stepIndex < STEPS_ORDER.length - 1 && (
             <div className="flex flex-col items-center mb-4">
               <p className="text-sm font-semibold text-foreground mb-2">{name || 'My Agent'}</p>
-              <img src={avatarForDisplay} alt="Bot" className="w-20 h-20 rounded-full border-2 border-border shadow-lg shadow-primary/10" />
+              <img src={avatarForDisplay} alt="Bot" className="w-20 h-20 rounded-full border-2 border-border shadow-lg shadow-primary/10 object-cover" />
             </div>
           )}
 
