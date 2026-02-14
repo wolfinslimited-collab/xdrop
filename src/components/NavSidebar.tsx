@@ -72,11 +72,11 @@ const NavSidebar = () => {
                 }`}
               >
                 {item.customIcon ? (
-                  <img src={openclawMascot} alt="" className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-30 group-hover:opacity-70'}`} />
+                  <img src={openclawMascot} alt="" className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-90'}`} />
                 ) : item.icon ? (
                   <item.icon
                     className={`w-5 h-5 ${
-                      isActive ? 'text-foreground' : 'text-foreground/30 group-hover:text-foreground'
+                      isActive ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
                     }`}
                     strokeWidth={isActive ? 2.5 : 1.5}
                   />
@@ -85,7 +85,7 @@ const NavSidebar = () => {
                   className={`text-sm ${
                     isActive
                       ? 'text-foreground font-extrabold'
-                      : 'text-foreground/30 font-semibold group-hover:text-foreground'
+                      : 'text-foreground/70 font-semibold group-hover:text-foreground'
                   }`}
                 >
                   {item.label}
