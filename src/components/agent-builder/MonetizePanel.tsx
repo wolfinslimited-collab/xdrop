@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Users, Coins, Wallet, Copy, CheckCircle2, Loader2, AlertTriangle, Eye, EyeOff, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import type { AgentConfig } from '@/types/agentBuilder';
-
 interface MonetizePanelProps {
   config: AgentConfig;
   onConfigChange: (config: AgentConfig) => void;
@@ -24,16 +23,8 @@ interface AgentWalletData {
   warning?: string;
 }
 
-// Mock revenue data for chart
-const MOCK_REVENUE = [
-  { day: 'Mon', earnings: 0 },
-  { day: 'Tue', earnings: 0 },
-  { day: 'Wed', earnings: 0 },
-  { day: 'Thu', earnings: 0 },
-  { day: 'Fri', earnings: 0 },
-  { day: 'Sat', earnings: 0 },
-  { day: 'Sun', earnings: 0 },
-];
+// Helper to get day label
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePanelProps) => {
   const isListed = (config as any).listOnMarketplace ?? false;
@@ -43,7 +34,57 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
   const [walletLoading, setWalletLoading] = useState(false);
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [revenueData, setRevenueData] = useState<{ day: string; earnings: number }[]>([]);
+  const [totalEarnings, setTotalEarnings] = useState(0);
 
+  // Fetch real earnings from agent_runs for the last 7 days
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
+
+      const { data: runs } = await supabase
+        .from('agent_runs')
+        .select('earnings, completed_at')
+        .eq('user_id', user.id)
+        .eq('status', 'completed')
+        .gte('completed_at', sevenDaysAgo.toISOString())
+        .not('earnings', 'is', null);
+
+      // Build 7-day buckets
+      const buckets: Record<string, number> = {};
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - 6 + i);
+        const key = d.toISOString().split('T')[0];
+        buckets[key] = 0;
+      }
+
+      let total = 0;
+      (runs || []).forEach((run) => {
+        const earned = Number(run.earnings) || 0;
+        total += earned;
+        if (run.completed_at) {
+          const key = run.completed_at.split('T')[0];
+          if (buckets[key] !== undefined) buckets[key] += earned;
+        }
+      });
+
+      const chartData = Object.entries(buckets).map(([date, earnings]) => ({
+        day: DAY_LABELS[new Date(date).getUTCDay()],
+        earnings: Math.round(earnings * 100) / 100,
+      }));
+
+      setRevenueData(chartData);
+      setTotalEarnings(total);
+    };
+
+    fetchEarnings();
+  }, []);
   const updateField = (field: string, value: any) => {
     onConfigChange({ ...config, [field]: value } as any);
   };
@@ -232,13 +273,13 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Earnings</p>
-              <p className="text-lg font-bold text-foreground">${walletData ? walletData.usdc_balance.toFixed(2) : '0.00'}</p>
+              <p className="text-lg font-bold text-foreground">${totalEarnings.toFixed(2)}</p>
             </div>
             <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted border border-border">7d</span>
           </div>
           <div className="h-24">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_REVENUE} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <AreaChart data={revenueData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="earningsGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
