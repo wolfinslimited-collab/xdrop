@@ -44,3 +44,6 @@ verify_jwt = false
 
 [functions.admin-api]
 verify_jwt = false
+
+[functions.daily-profit-email]
+verify_jwt = false
