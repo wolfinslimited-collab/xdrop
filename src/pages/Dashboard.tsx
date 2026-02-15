@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, TrendingUp, DollarSign, Zap, Play, Pause, CheckCircle, XCircle, Clock, Bot, Plus, Hexagon } from 'lucide-react';
+import BotAvatar from '@/components/BotAvatar';
 import { Navigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
@@ -242,7 +243,7 @@ const Dashboard = () => {
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2.5">
-                            <span className="text-2xl">{agent.avatar || '🤖'}</span>
+                            <BotAvatar emoji={agent.avatar || '🤖'} size="sm" animated={false} />
                             <div>
                               <h3 className="text-sm font-semibold text-foreground">{agent.name}</h3>
                               <p className="text-[10px] text-muted-foreground">Active for {daysActive} days</p>
@@ -327,7 +328,7 @@ const Dashboard = () => {
                       className="bg-card rounded-xl border border-border p-3 hover:border-primary/50 transition-colors"
                     >
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-xl">{agent.avatar || '🤖'}</span>
+                        <BotAvatar emoji={agent.avatar || '🤖'} size="sm" animated={false} />
                         <span className="text-sm font-semibold text-foreground truncate">{agent.name}</span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -376,9 +377,7 @@ const Dashboard = () => {
                       className="px-4 py-3 hover:bg-secondary/50 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center text-xl shrink-0">
-                          {run.agents?.avatar || '🤖'}
-                        </div>
+                        <BotAvatar emoji={run.agents?.avatar || '🤖'} size="md" animated={false} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-foreground truncate">
