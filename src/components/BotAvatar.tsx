@@ -16,11 +16,16 @@ const sizeClasses = {
 
 const sizePx = { sm: 32, md: 40, lg: 56 };
 
+const getBotNumberFromPath = (str: string): number | null => {
+  const match = str.match(/bot-(\d+)/);
+  return match ? parseInt(match[1], 10) : null;
+};
+
 const isValidImageUrl = (str: string) =>
-  str && (str.startsWith('http') || str.startsWith('data:') || str.startsWith('/assets/') || str.includes('/assets/'));
+  str && (str.startsWith('http') || str.startsWith('data:'));
 
 const isDefaultOrMissing = (str: string) =>
-  !str || str === '🤖' || str.length <= 2 || (str.startsWith('/') && !str.startsWith('/assets/') && !str.includes('/assets/'));
+  !str || str === '🤖' || str.length <= 2;
 
 const getFallbackAvatar = (seed: string) => {
   const hash = Array.from(seed || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
@@ -31,6 +36,12 @@ const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
   const fallback = useMemo(() => getFallbackAvatar(emoji), [emoji]);
 
   const resolvedSrc = useMemo(() => {
+    if (!emoji) return fallback;
+    // Map stored paths like /assets/bot-1-xxx.png or /src/assets/avatars/bot-2.png to bundled avatars
+    const botNum = getBotNumberFromPath(emoji);
+    if (botNum !== null && botNum >= 1 && botNum <= botAvatars.length) {
+      return botAvatars[botNum - 1];
+    }
     if (isValidImageUrl(emoji)) return emoji;
     if (isDefaultOrMissing(emoji)) return fallback;
     return null;
