@@ -325,16 +325,16 @@ const AgentBuilder = () => {
       <SEOHead title="Build Agent — XDROP" description="Create and deploy your AI agent." canonicalPath="/builder" />
       <MobileHeader />
 
-      {/* Back / Home button */}
-      <div className="w-full px-4 py-3 flex items-center">
-        <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
-        </Link>
-      </div>
-
       <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8">
         <div className="w-full max-w-lg">
+
+          {/* Back button */}
+          <div className="mb-6">
+            <Link to="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </Link>
+          </div>
 
           {/* Agent name + avatar header (shown after identity step) */}
           {stepIndex > 1 && stepIndex < STEPS_ORDER.length - 1 && (
