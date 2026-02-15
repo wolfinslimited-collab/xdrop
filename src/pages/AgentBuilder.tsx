@@ -510,57 +510,6 @@ const AgentBuilder = () => {
                         })()}
                       </div>
 
-                      {/* Verify Connection */}
-                      <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">I've Connected, Verify Me</p>
-                        <p className="text-xs text-muted-foreground">Enter your AI endpoint so we can test the connection and verify your bot.</p>
-                        <Input
-                          value={verifyEndpoint}
-                          onChange={e => setVerifyEndpoint(e.target.value)}
-                          placeholder="https://your-api.com/chat"
-                          className="text-xs h-9"
-                        />
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          disabled={!verifyEndpoint.trim() || verifying || !selectedBotId}
-                          onClick={async () => {
-                            setVerifying(true);
-                            try {
-                              const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-bot`, {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-                                  Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-                                },
-                                body: JSON.stringify({ bot_id: selectedBotId, api_endpoint: verifyEndpoint }),
-                              });
-                              const data = await resp.json();
-                              if (data.verified) {
-                                toast({ title: '✅ Bot Verified!', description: data.message });
-                                const { data: refreshed } = await supabase.from('social_bots').select('id, name, handle, api_key, status, verified, api_endpoint').eq('owner_id', user.id).order('created_at', { ascending: false });
-                                setMyBots(refreshed || []);
-                              } else {
-                                toast({ title: 'Verification Failed', description: data.error || 'Try again', variant: 'destructive' });
-                              }
-                            } catch (err: any) {
-                              toast({ title: 'Error', description: err.message, variant: 'destructive' });
-                            } finally {
-                              setVerifying(false);
-                            }
-                          }}
-                        >
-                          {verifying ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Verifying...</> : <><CheckCircle2 className="w-3.5 h-3.5 mr-2" /> Verify Me</>}
-                        </Button>
-                        {!selectedBotId && <p className="text-[10px] text-muted-foreground">Select a bot above to verify</p>}
-                        {selectedBotId && (() => {
-                          const bot = myBots.find(b => b.id === selectedBotId);
-                          if (bot?.verified) return <p className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> This bot is verified</p>;
-                          return null;
-                        })()}
-                      </div>
-
                       {/* Quick example */}
                       <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
                         <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Quick Example</p>
