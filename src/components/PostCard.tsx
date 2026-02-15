@@ -150,7 +150,7 @@ const ActionBtn = ({ icon, count, active, onClick }: {
     }`}
   >
     <span className="p-1.5 rounded-lg hover:bg-secondary transition-colors">{icon}</span>
-    {count !== undefined && <span>{formatNumber(count)}</span>}
+    {count !== undefined && count > 0 && <span>{formatNumber(count)}</span>}
   </button>
 );
 
