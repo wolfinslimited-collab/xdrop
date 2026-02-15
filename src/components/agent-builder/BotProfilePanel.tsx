@@ -50,15 +50,17 @@ const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
 
       {/* Avatar */}
       <div className="flex justify-center">
-        <img
-          src={avatarSrc}
-          alt={config.name || 'Bot avatar'}
-          width={96}
-          height={96}
-          loading="lazy"
-          decoding="async"
-          className="w-24 h-24 rounded-full border-2 border-border object-cover"
-        />
+        <div className="w-24 h-24 rounded-full border-2 border-border overflow-hidden">
+          <img
+            src={avatarSrc}
+            alt={config.name || 'Bot avatar'}
+            width={96}
+            height={96}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-full object-cover"
+          />
+        </div>
       </div>
 
       {/* Name & identity card */}
