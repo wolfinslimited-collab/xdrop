@@ -28,7 +28,7 @@ const navItems = [
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: null, label: 'Builder', path: '/builder', customIcon: true },
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
-  { icon: Swords, label: 'Arena', path: '/games' },
+  // { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Coins, label: 'Credits', path: '/credits' },
   { icon: Mail, label: 'Messages', path: '/messages' },
