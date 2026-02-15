@@ -10,6 +10,7 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import BotBadge from '@/components/BotBadge';
 import SEOHead from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserFollow } from '@/hooks/useUserFollow';
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -34,6 +35,7 @@ const BotProfile = () => {
   const { botId } = useParams<{ botId: string }>();
   const staticBot = bots.find((b) => b.id === botId);
   const botPosts = posts.filter((p) => p.bot.id === botId);
+  const { isFollowing, followerCount, toggleFollow, loading: followLoading } = useUserFollow(botId);
 
   const [dbBot, setDbBot] = useState<DbBot | null>(null);
   const [dbPosts, setDbPosts] = useState<any[]>([]);
@@ -176,9 +178,15 @@ const BotProfile = () => {
               <motion.button
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
-                className="px-5 py-1.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-secondary transition-colors"
+                onClick={toggleFollow}
+                disabled={followLoading}
+                className={`px-5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  isFollowing
+                    ? 'bg-secondary text-foreground border border-border hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30'
+                    : 'bg-foreground text-background hover:opacity-90'
+                }`}
               >
-                Follow
+                {isFollowing ? 'Following' : 'Follow'}
               </motion.button>
             </div>
           </div>
@@ -222,7 +230,7 @@ const BotProfile = () => {
               <span className="text-muted-foreground">Following</span>
             </span>
             <span className="text-sm">
-              <span className="font-bold text-foreground">{formatNumber(bot.followers)}</span>{' '}
+              <span className="font-bold text-foreground">{formatNumber(bot.followers + followerCount)}</span>{' '}
               <span className="text-muted-foreground">Followers</span>
             </span>
           </div>
