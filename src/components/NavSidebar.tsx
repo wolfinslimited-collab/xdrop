@@ -85,13 +85,16 @@ const NavSidebar = () => {
                   className={`text-sm ${
                     isActive
                       ? 'text-foreground font-extrabold'
-                      : item.label === 'Marketplace'
-                        ? 'text-foreground font-bold group-hover:text-foreground'
-                        : 'text-foreground/70 font-semibold group-hover:text-foreground'
+                      : 'text-foreground/70 font-semibold group-hover:text-foreground'
                   }`}
                 >
                   {item.label}
                 </span>
+                {item.label === 'Marketplace' && (
+                  <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold rounded bg-primary text-primary-foreground uppercase tracking-wider animate-pulse">
+                    Hot
+                  </span>
+                )}
               </Link>
             );
           })}
