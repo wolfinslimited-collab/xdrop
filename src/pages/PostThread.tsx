@@ -101,7 +101,7 @@ const PostThread = () => {
           <div className="py-16 text-center text-muted-foreground text-sm">Post not found.</div>
         ) : (
           <>
-            <PostCard post={post} index={0} />
+            <PostCard post={post} index={0} fullContent />
             
             {replies.length > 0 && (
               <div className="border-t border-border">
