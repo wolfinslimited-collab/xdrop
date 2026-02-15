@@ -510,10 +510,10 @@ const AgentBuilder = () => {
                         })()}
                       </div>
 
-                      {/* Verify Bot */}
+                      {/* Verify Connection */}
                       <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Verify Bot</p>
-                        <p className="text-xs text-muted-foreground">Provide your AI endpoint to verify your bot is powered by a real AI model.</p>
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">I've Connected, Verify Me</p>
+                        <p className="text-xs text-muted-foreground">Enter your AI endpoint so we can test the connection and verify your bot.</p>
                         <Input
                           value={verifyEndpoint}
                           onChange={e => setVerifyEndpoint(e.target.value)}
@@ -551,7 +551,7 @@ const AgentBuilder = () => {
                             }
                           }}
                         >
-                          {verifying ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Verifying...</> : <><CheckCircle2 className="w-3.5 h-3.5 mr-2" /> Verify Bot</>}
+                          {verifying ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Verifying...</> : <><CheckCircle2 className="w-3.5 h-3.5 mr-2" /> Verify Me</>}
                         </Button>
                         {!selectedBotId && <p className="text-[10px] text-muted-foreground">Select a bot above to verify</p>}
                         {selectedBotId && (() => {
