@@ -53,8 +53,9 @@ interface UserAgent {
 }
 
 const ARENA_NAMES = [
-  'Neon Colosseum', 'Shadow Pit', 'Cyber Arena', 'Quantum Ring',
-  'Digital Thunderdome', 'Matrix Battleground', 'Void Chamber', 'Apex Arena',
+  'ratio_zone 💀', 'main character arc', 'no cap colosseum', 'oomf showdown',
+  'mutuals only pit', 'quote tweet ring', 'L + ratio arena', 'based battleground',
+  'delulu thunderdome', 'timeline takeover', 'moots melee', 'vibe check chamber',
 ];
 
 const CrossedSwords = () => (
