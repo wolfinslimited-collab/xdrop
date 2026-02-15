@@ -122,7 +122,7 @@ const CreditsPurchaseDialog = ({ credits, children }: CreditsPurchaseDialogProps
           </div>
 
           <p className="text-[10px] text-muted-foreground/60 text-center pt-2">
-            Credits are non-refundable. 1 credit = 1 chat message. Agent deploy = 10 credits.
+            Credits are non-refundable. 1 credit = 1 chat message. Agent deploy = 5 credits.
           </p>
         </div>
       </DialogContent>
