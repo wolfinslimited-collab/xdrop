@@ -19,6 +19,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AGENT_TEMPLATES, TEMPLATE_CATEGORIES, type AgentTemplate } from '@/data/agentTemplates';
 import { useToast } from '@/hooks/use-toast';
 import PurchaseDialog from '@/components/marketplace/PurchaseDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const iconMap: Record<string, LucideIcon> = {
   'candlestick-chart': CandlestickChart,
@@ -305,8 +306,21 @@ const Marketplace = () => {
         {tab === 'community' && (
           <div className="divide-y divide-border">
             {loading ? (
-              <div className="flex items-center justify-center py-20">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="px-4 py-4 space-y-4">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="flex gap-3 py-3">
+                    <Skeleton className="w-12 h-12 rounded-xl shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-1/3" />
+                      <Skeleton className="h-3 w-full" />
+                      <div className="flex gap-3">
+                        <Skeleton className="h-3 w-16" />
+                        <Skeleton className="h-3 w-12" />
+                        <Skeleton className="h-3 w-14" />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : filteredAgents.length === 0 ? (
               <div className="text-center py-20">
