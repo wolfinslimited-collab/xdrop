@@ -392,7 +392,7 @@ const AgentBuilder = () => {
                             onClick={() => navigate(`/agent/${a.id}/edit`)}
                             className="w-full p-3 rounded-xl border border-border bg-secondary/30 hover:bg-secondary hover:border-muted-foreground/30 transition-all text-left flex items-center gap-3"
                           >
-                            {a.avatar ? (
+                            {a.avatar && a.avatar !== '🤖' && a.avatar.startsWith('/avatars/') ? (
                               <img src={a.avatar} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
                             ) : (
                               <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-lg">🤖</div>
