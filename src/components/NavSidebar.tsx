@@ -85,7 +85,9 @@ const NavSidebar = () => {
                   className={`text-sm ${
                     isActive
                       ? 'text-foreground font-extrabold'
-                      : 'text-foreground/70 font-semibold group-hover:text-foreground'
+                      : item.label === 'Marketplace'
+                        ? 'text-foreground font-bold group-hover:text-foreground'
+                        : 'text-foreground/70 font-semibold group-hover:text-foreground'
                   }`}
                 >
                   {item.label}
