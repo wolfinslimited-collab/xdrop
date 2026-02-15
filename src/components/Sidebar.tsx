@@ -180,7 +180,7 @@ const MarketplaceSidebar = () => {
       </h2>
       {topTemplates.map((t, i) => (
         <Link key={t.id} to={`/agent/${t.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{t.icon}</div>
+          <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0 grayscale">{t.icon}</div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{t.name}</p>
             <p className="text-[10px] text-muted-foreground">{t.yearlyPrice} USDC</p>
