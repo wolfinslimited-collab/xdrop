@@ -91,138 +91,130 @@ Deno.serve(async (req) => {
       // Build email HTML
       const emailHtml = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0A0A0A; font-family: 'Inter', -apple-system, sans-serif; color: #fafafa; -webkit-text-size-adjust: 100%; }
-    .wrapper { max-width: 520px; margin: 0 auto; padding: 40px 24px; }
-
-    /* Header */
-    .header { padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 32px; }
-    .brand { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }
-    .brand span { color: #22c55e; }
-    .subtitle { font-size: 13px; color: #525252; margin-top: 6px; letter-spacing: 0.2px; }
-    .date-pill { display: inline-block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 5px 14px; font-size: 11px; color: #737373; margin-top: 12px; font-weight: 500; }
-
-    /* Greeting */
-    .greeting { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 500; color: #e5e5e5; margin-bottom: 28px; }
-    .greeting strong { color: #ffffff; }
-
-    /* Section */
-    .section-label { font-size: 10px; font-weight: 600; color: #525252; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
-
-    /* Hero stat */
-    .hero-stat { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.12); border-radius: 16px; padding: 28px 24px; text-align: center; margin-bottom: 16px; }
-    .hero-value { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 700; color: #22c55e; letter-spacing: -1px; }
-    .hero-label { font-size: 11px; color: #525252; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-weight: 500; }
-    .hero-sub { font-size: 12px; color: #404040; margin-top: 4px; }
-
-    /* Metric row */
-    .metrics { display: flex; gap: 10px; margin-bottom: 28px; }
-    .metric { flex: 1; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px 12px; text-align: center; }
-    .metric-value { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: #ffffff; }
-    .metric-label { font-size: 10px; color: #525252; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; font-weight: 500; }
-
-    /* Portfolio section */
-    .portfolio { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 28px; }
-    .portfolio-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
-    .portfolio-row + .portfolio-row { border-top: 1px solid rgba(255,255,255,0.04); }
-    .portfolio-key { font-size: 13px; color: #737373; }
-    .portfolio-val { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; }
-    .portfolio-val.green { color: #22c55e; }
-
-    /* Top performer */
-    .top-performer { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 28px; }
-    .top-badge { display: inline-block; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); color: #22c55e; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.8px; }
-    .top-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 10px; }
-    .top-earnings { font-size: 14px; color: #22c55e; font-weight: 600; margin-top: 2px; }
-
-    /* CTA */
-    .cta-wrap { text-align: center; margin-bottom: 32px; }
-    .cta { display: inline-block; background: #ffffff; color: #0A0A0A; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; padding: 12px 32px; border-radius: 100px; text-decoration: none; letter-spacing: -0.2px; }
-
-    /* Divider */
-    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 0 24px 0; }
-
-    /* Footer */
-    .footer { text-align: center; }
-    .footer-text { font-size: 11px; color: #404040; line-height: 1.6; }
-    .footer-text a { color: #525252; text-decoration: none; }
-  </style>
+  <title>Your Daily Agent Report</title>
+  <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
 </head>
-<body>
-  <div class="wrapper">
-    <div class="header">
-      <div class="brand">x<span>Drop</span></div>
-      <div class="subtitle">Daily Portfolio Report</div>
-      <div class="date-pill">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</div>
-    </div>
+<body style="margin:0;padding:0;background-color:#0a0a0a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#e5e5e5;-webkit-text-size-adjust:100%;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0a0a0a;">
+    <tr><td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;">
 
-    <div class="greeting">Hey <strong>${displayName}</strong>,<br/>here's how your agents performed.</div>
+        <!-- Logo -->
+        <tr><td style="padding-bottom:32px;">
+          <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.5px;">x</span><span style="font-size:20px;font-weight:700;color:#a3a3a3;letter-spacing:-0.5px;">Drop</span>
+        </td></tr>
 
-    <div class="section-label">Today's Earnings</div>
-    <div class="hero-stat">
-      <div class="hero-value">$${dailyEarnings.toFixed(2)}</div>
-      <div class="hero-label">USDC Earned Today</div>
-      <div class="hero-sub">${dailyRuns} run${dailyRuns !== 1 ? 's' : ''} executed</div>
-    </div>
+        <!-- Greeting -->
+        <tr><td style="padding-bottom:28px;font-size:15px;line-height:1.5;color:#a3a3a3;">
+          Hi <span style="color:#ffffff;font-weight:600;">${displayName}</span> — here's your daily summary.
+        </td></tr>
 
-    <div class="metrics">
-      <div class="metric">
-        <div class="metric-value">${successfulRuns}</div>
-        <div class="metric-label">Successful</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">${dailyRuns - successfulRuns}</div>
-        <div class="metric-label">Failed</div>
-      </div>
-      <div class="metric">
-        <div class="metric-value">${agents.length}</div>
-        <div class="metric-label">Agents</div>
-      </div>
-    </div>
+        <!-- Daily Earnings Card -->
+        <tr><td style="padding-bottom:16px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
+            <tr><td style="padding:24px;text-align:center;">
+              <div style="font-size:11px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;">Today's Earnings</div>
+              <div style="font-size:36px;font-weight:700;color:#ffffff;letter-spacing:-1.5px;line-height:1;">$${dailyEarnings.toFixed(2)}</div>
+              <div style="font-size:12px;color:#525252;margin-top:6px;">${dailyRuns} run${dailyRuns !== 1 ? 's' : ''} completed</div>
+            </td></tr>
+          </table>
+        </td></tr>
 
-    <div class="section-label">Portfolio Overview</div>
-    <div class="portfolio">
-      <div class="portfolio-row">
-        <span class="portfolio-key">All-Time Earnings</span>
-        <span class="portfolio-val green">$${totalPortfolioEarnings.toFixed(2)}</span>
-      </div>
-      <div class="portfolio-row">
-        <span class="portfolio-key">Total Runs</span>
-        <span class="portfolio-val">${totalPortfolioRuns.toLocaleString()}</span>
-      </div>
-      <div class="portfolio-row">
-        <span class="portfolio-key">Active Agents</span>
-        <span class="portfolio-val">${agents.length}</span>
-      </div>
-    </div>
+        <!-- Metrics Row -->
+        <tr><td style="padding-bottom:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="33%" style="padding-right:5px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:10px;">
+                  <tr><td style="padding:14px 8px;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:#ffffff;">${successfulRuns}</div>
+                    <div style="font-size:9px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:0.8px;margin-top:2px;">Success</div>
+                  </td></tr>
+                </table>
+              </td>
+              <td width="33%" style="padding:0 3px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:10px;">
+                  <tr><td style="padding:14px 8px;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:#ffffff;">${dailyRuns - successfulRuns}</div>
+                    <div style="font-size:9px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:0.8px;margin-top:2px;">Failed</div>
+                  </td></tr>
+                </table>
+              </td>
+              <td width="33%" style="padding-left:5px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:10px;">
+                  <tr><td style="padding:14px 8px;text-align:center;">
+                    <div style="font-size:18px;font-weight:700;color:#ffffff;">${agents.length}</div>
+                    <div style="font-size:9px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:0.8px;margin-top:2px;">Agents</div>
+                  </td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
 
-    ${topAgent ? `
-    <div class="section-label">Top Performer</div>
-    <div class="top-performer">
-      <div class="top-badge">🏆 Best Today</div>
-      <div class="top-name">${topAgent.name}</div>
-      <div class="top-earnings">+$${(agentDailyEarnings[topAgentId!] || 0).toFixed(2)} USDC</div>
-    </div>
-    ` : ''}
+        <!-- Portfolio -->
+        <tr><td style="padding-bottom:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
+            <tr><td style="padding:16px 20px;border-bottom:1px solid #1a1a1a;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size:13px;color:#737373;">All-Time Earnings</td>
+                  <td align="right" style="font-size:14px;font-weight:600;color:#ffffff;">$${totalPortfolioEarnings.toFixed(2)}</td>
+                </tr>
+              </table>
+            </td></tr>
+            <tr><td style="padding:16px 20px;border-bottom:1px solid #1a1a1a;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size:13px;color:#737373;">Total Runs</td>
+                  <td align="right" style="font-size:14px;font-weight:600;color:#ffffff;">${totalPortfolioRuns.toLocaleString()}</td>
+                </tr>
+              </table>
+            </td></tr>
+            <tr><td style="padding:16px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size:13px;color:#737373;">Active Agents</td>
+                  <td align="right" style="font-size:14px;font-weight:600;color:#ffffff;">${agents.length}</td>
+                </tr>
+              </table>
+            </td></tr>
+          </table>
+        </td></tr>
 
-    <div class="cta-wrap">
-      <a href="https://xdrop.lovable.app/dashboard" class="cta">View Dashboard →</a>
-    </div>
+        ${topAgent ? `
+        <!-- Top Performer -->
+        <tr><td style="padding-bottom:20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
+            <tr><td style="padding:20px;">
+              <div style="display:inline-block;background-color:#1f1f1f;border-radius:100px;padding:4px 12px;font-size:10px;font-weight:700;color:#a3a3a3;text-transform:uppercase;letter-spacing:0.8px;">Top Performer</div>
+              <div style="font-size:15px;font-weight:600;color:#ffffff;margin-top:10px;">${topAgent.name}</div>
+              <div style="font-size:13px;color:#737373;margin-top:2px;">+$${(agentDailyEarnings[topAgentId!] || 0).toFixed(2)} earned today</div>
+            </td></tr>
+          </table>
+        </td></tr>
+        ` : ''}
 
-    <div class="divider"></div>
-    <div class="footer">
-      <div class="footer-text">
-        You're receiving this because you own agents on xDrop.<br/>
-        © ${new Date().getFullYear()} xDrop · <a href="https://xdrop.lovable.app">xdrop.lovable.app</a>
-      </div>
-    </div>
-  </div>
+        <!-- CTA -->
+        <tr><td align="center" style="padding:8px 0 32px;">
+          <a href="https://xdrop.lovable.app/dashboard" style="display:inline-block;background-color:#ffffff;color:#0a0a0a;font-size:13px;font-weight:600;padding:11px 28px;border-radius:8px;text-decoration:none;letter-spacing:-0.2px;">View Dashboard</a>
+        </td></tr>
+
+        <!-- Divider -->
+        <tr><td style="border-top:1px solid #1a1a1a;padding-top:24px;text-align:center;">
+          <div style="font-size:11px;color:#404040;line-height:1.7;">
+            You're receiving this because you own agents on xDrop.<br>
+            &copy; ${new Date().getFullYear()} xDrop
+          </div>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`
 
@@ -234,9 +226,9 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: 'xDrop <summery@xdrop.one>',
+          from: 'xDrop <summary@xdrop.one>',
           to: [user.email],
-          subject: `📊 Daily Report: $${dailyEarnings.toFixed(2)} earned today`,
+          subject: `Your xDrop Agent Report for ${new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
           html: emailHtml,
         }),
       })
