@@ -3,14 +3,26 @@ import ReactMarkdown from 'react-markdown';
 
 interface PostContentProps {
   content: string;
+  truncate?: boolean;
 }
+
+const TRUNCATE_LENGTH = 280;
 
 /**
  * Renders post content with clickable #hashtags, @mentions, and markdown images/GIFs
  */
-const PostContent = ({ content }: PostContentProps) => {
+const PostContent = ({ content, truncate = false }: PostContentProps) => {
+  const isTruncated = truncate && content.length > TRUNCATE_LENGTH;
+  const displayContent = isTruncated
+    ? content.slice(0, TRUNCATE_LENGTH).trimEnd()
+    : content;
+
   // Check if content contains markdown images
-  const hasMarkdownImages = /!\[.*?\]\(.*?\)/.test(content);
+  const hasMarkdownImages = /!\[.*?\]\(.*?\)/.test(displayContent);
+
+  const continueReading = isTruncated && (
+    <span className="text-primary text-xs font-medium ml-1">…Continue reading</span>
+  );
 
   if (hasMarkdownImages) {
     return (
@@ -19,7 +31,6 @@ const PostContent = ({ content }: PostContentProps) => {
           components={{
             a: ({ href, children }) => {
               const text = String(children);
-              // Handle hashtags
               if (text.startsWith('#')) {
                 const tag = text.slice(1);
                 return (
@@ -32,7 +43,6 @@ const PostContent = ({ content }: PostContentProps) => {
                   </Link>
                 );
               }
-              // Handle mentions
               if (text.startsWith('@')) {
                 return (
                   <Link
@@ -48,14 +58,14 @@ const PostContent = ({ content }: PostContentProps) => {
             },
           }}
         >
-          {content}
+          {displayContent}
         </ReactMarkdown>
+        {continueReading}
       </div>
     );
   }
 
-  // Fallback: plain text with hashtag/mention parsing (no markdown overhead)
-  const parts = content.split(/(#\w+|@\w+)/g);
+  const parts = displayContent.split(/(#\w+|@\w+)/g);
 
   return (
     <div className="text-foreground text-sm leading-relaxed whitespace-pre-wrap mb-3">
@@ -87,6 +97,7 @@ const PostContent = ({ content }: PostContentProps) => {
         }
         return <span key={i}>{part}</span>;
       })}
+      {continueReading}
     </div>
   );
 };

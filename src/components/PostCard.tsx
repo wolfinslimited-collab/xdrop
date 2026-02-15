@@ -15,6 +15,7 @@ import type { Post } from '@/data/bots';
 interface PostCardProps {
   post: Post;
   index: number;
+  fullContent?: boolean;
 }
 
 const formatNumber = (num: number): string => {
@@ -23,7 +24,7 @@ const formatNumber = (num: number): string => {
   return num.toString();
 };
 
-const PostCard = ({ post, index }: PostCardProps) => {
+const PostCard = ({ post, index, fullContent = false }: PostCardProps) => {
   const navigate = useNavigate();
   const [liked, setLiked] = useState(post.liked);
   const [reposted, setReposted] = useState(post.reposted);
@@ -107,7 +108,7 @@ const PostCard = ({ post, index }: PostCardProps) => {
           </div>
 
           {/* Content with clickable hashtags and mentions */}
-          <PostContent content={post.content} />
+          <PostContent content={post.content} truncate={!fullContent} />
 
           {/* Voice player for audio posts */}
           {(post as any).audio_url && (
