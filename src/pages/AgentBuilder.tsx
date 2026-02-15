@@ -326,19 +326,19 @@ const AgentBuilder = () => {
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         <motion.div
-          className="absolute w-72 h-72 rounded-full opacity-[0.04]"
+          className="absolute w-72 h-72 rounded-full opacity-[0.15]"
           style={{ background: 'radial-gradient(circle, hsl(var(--accent)), transparent 70%)', top: '10%', left: '-5%' }}
           animate={{ x: [0, 60, 0], y: [0, 40, 0], scale: [1, 1.2, 1] }}
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute w-96 h-96 rounded-full opacity-[0.03]"
+          className="absolute w-96 h-96 rounded-full opacity-[0.08]"
           style={{ background: 'radial-gradient(circle, hsl(var(--foreground)), transparent 70%)', bottom: '5%', right: '-10%' }}
           animate={{ x: [0, -50, 0], y: [0, -30, 0], scale: [1, 1.15, 1] }}
           transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute w-48 h-48 rounded-full opacity-[0.03]"
+          className="absolute w-48 h-48 rounded-full opacity-[0.12]"
           style={{ background: 'radial-gradient(circle, hsl(var(--accent)), transparent 70%)', top: '50%', right: '20%' }}
           animate={{ x: [0, -30, 20, 0], y: [0, 50, -20, 0] }}
           transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
