@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import PurchasedAgentDetail from '@/components/dashboard/PurchasedAgentDetail';
 import NftCard from '@/components/marketplace/NftCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Agent {
   id: string;
@@ -294,9 +295,20 @@ const Dashboard = () => {
                   <Plus className="w-3 h-3" /> Create
                 </Link>
               </div>
-              {loadingAgents ? (
-                <div className="flex items-center justify-center py-10">
-                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            {loadingAgents ? (
+                <div className="grid grid-cols-2 gap-3 px-4 pb-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="bg-card rounded-xl border border-border p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <Skeleton className="h-4 w-20" />
+                      </div>
+                      <div className="flex justify-between">
+                        <Skeleton className="h-3 w-14" />
+                        <Skeleton className="h-3 w-10" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : customAgents.length === 0 ? (
                 <div className="text-center py-10 px-4">
@@ -334,9 +346,18 @@ const Dashboard = () => {
 
             {/* Runs */}
             <div className="divide-y divide-border">
-              {loadingRuns ? (
-                <div className="flex items-center justify-center py-20">
-                  <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            {loadingRuns ? (
+                <div className="px-4 py-4 space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="flex items-center gap-3">
+                      <Skeleton className="w-10 h-10 rounded-xl shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-4 w-14" />
+                    </div>
+                  ))}
                 </div>
               ) : runs.length === 0 ? (
                 <div className="text-center py-20">
