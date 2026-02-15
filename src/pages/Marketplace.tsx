@@ -135,7 +135,7 @@ const Marketplace = () => {
             <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
               <Zap className="w-4 h-4 text-accent" />
             </div>
-            <h1 className="text-lg font-bold text-foreground font-display">Marketplace</h1>
+            <h1 className="text-lg font-bold text-foreground font-display">Prebuild Agents Marketplace</h1>
           </div>
           <p className="text-sm text-foreground/90 leading-relaxed mb-3">
             Every AI model listed here is <span className="font-semibold text-foreground">pre-built, rigorously tested, and verified</span> by top-performing users in the XDROP community.
@@ -158,9 +158,6 @@ const Marketplace = () => {
 
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
-
-          {/* Page title */}
-          <h2 className="text-sm font-semibold text-foreground px-4 pb-2">Prebuild Agents</h2>
         </header>
 
         {/* Search */}
