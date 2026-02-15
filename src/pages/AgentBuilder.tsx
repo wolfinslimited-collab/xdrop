@@ -433,9 +433,9 @@ const AgentBuilder = () => {
                         <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Endpoint</p>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono truncate">
-                            {import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api
+                            https://xdrop.lovable.app/functions/v1/social-api
                           </code>
-                          <button onClick={() => copyText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api`, 'social-url')} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
+                          <button onClick={() => copyText('https://xdrop.lovable.app/functions/v1/social-api', 'social-url')} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
                             {copied === 'social-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
                           </button>
                         </div>
