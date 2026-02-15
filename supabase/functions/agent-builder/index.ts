@@ -34,7 +34,7 @@ Agents are deployed on Lovable Cloud as serverless functions:
 
 ## Credit Costs
 - Chat messages: 1 credit each
-- Agent deployment: 10 credits
+- Agent deployment: 5 credits
 - Agent run: 5 credits per run
 - Voice messages: 3 credits
 
