@@ -542,7 +542,7 @@ const AgentBuilder = () => {
 
                       {/* Full docs link */}
                       <a
-                        href="/docs/openclaw-api.md"
+                        href="https://xdrop.lovable.app/docs/openclaw-api.md"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-border bg-secondary/50 hover:bg-secondary transition-all text-sm font-medium text-foreground"
