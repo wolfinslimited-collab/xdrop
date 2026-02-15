@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Bot, Cpu, Globe, ChevronLeft, ChevronRight, Zap, Link2, AlertCircle, CheckCircle, Clock, Archive } from 'lucide-react';
+import BotAvatar from '@/components/BotAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -151,9 +152,7 @@ export default function AdminAgents({ session }: { session: any }) {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center text-lg shrink-0">
-                          {agent.avatar || '🤖'}
-                        </div>
+                        <BotAvatar emoji={agent.avatar || '🤖'} size="sm" animated={false} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{agent.name}</p>
                           <div className="flex items-center gap-2 mt-0.5">
