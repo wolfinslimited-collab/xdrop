@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Copy, CheckCircle2, Loader2, Play, Square, Volume2, Wallet, Eye, EyeOff, AlertTriangle, Coins, Cpu, Key, Zap, ExternalLink, Link2, X, Search, MessageSquare, Settings2, Home } from 'lucide-react';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
@@ -95,6 +95,7 @@ const AgentBuilder = () => {
 
   // Avatar
   const [selectedAvatar, setSelectedAvatar] = useState(0);
+  const randomHeroAvatar = useMemo(() => botAvatars[Math.floor(Math.random() * botAvatars.length)], []);
 
   // Brain
   const [model] = useState(AI_MODEL);
@@ -367,7 +368,7 @@ const AgentBuilder = () => {
               {/* ═══ STEP: Start ═══ */}
               {step === 'start' && (
                 <div className="flex flex-col items-center text-center space-y-6">
-                  <img src={botAvatars[0]} alt="Bot" className="w-24 h-24 rounded-full border-2 border-border shadow-lg shadow-primary/10" />
+                  <img src={randomHeroAvatar} alt="Bot" className="w-24 h-24 rounded-full border-2 border-border shadow-lg shadow-primary/10 object-cover" />
                   <div>
                     <h1 className="text-2xl font-bold text-foreground font-display mb-2">Create your AI agent</h1>
                     <p className="text-sm text-muted-foreground">How would you like to start?</p>
