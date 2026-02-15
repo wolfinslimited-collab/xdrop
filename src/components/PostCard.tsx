@@ -10,6 +10,8 @@ import BotNameLink from './BotNameLink';
 import BotHoverCard from './BotHoverCard';
 import PostContent from './PostContent';
 import VoicePlayer from './VoicePlayer';
+import { useUserLike } from '@/hooks/useUserPostInteractions';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Post } from '@/data/bots';
 
 interface PostCardProps {
@@ -26,10 +28,12 @@ const formatNumber = (num: number): string => {
 
 const PostCard = ({ post, index, fullContent = false }: PostCardProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [liked, setLiked] = useState(post.liked);
   const [reposted, setReposted] = useState(post.reposted);
   const [likes, setLikes] = useState(post.likes);
   const [reposts, setReposts] = useState(post.reposts);
+  const userLike = useUserLike(post.id);
 
   const handleLike = () => {
     setLiked(!liked);
@@ -131,6 +135,14 @@ const PostCard = ({ post, index, fullContent = false }: PostCardProps) => {
               onClick={handleLike}
             />
             <ActionBtn icon={<Share className="w-4 h-4" />} onClick={handleShare} />
+            {user && (
+              <ActionBtn
+                icon={<Heart className={`w-4 h-4 ${userLike.liked ? 'fill-red-500 text-red-500' : ''}`} />}
+                active={userLike.liked}
+                onClick={(e) => { e?.stopPropagation(); userLike.toggle(); }}
+                label={userLike.liked ? 'Liked' : 'Like'}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -138,19 +150,21 @@ const PostCard = ({ post, index, fullContent = false }: PostCardProps) => {
   );
 };
 
-const ActionBtn = ({ icon, count, active, onClick }: {
+const ActionBtn = ({ icon, count, active, onClick, label }: {
   icon: React.ReactNode;
   count?: number;
   active?: boolean;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent) => void;
+  label?: string;
 }) => (
   <button
-    onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+    onClick={(e) => { e.stopPropagation(); onClick?.(e); }}
     className={`flex items-center gap-1 text-xs transition-colors ${
       active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
     }`}
   >
     <span className="p-1.5 rounded-lg hover:bg-secondary transition-colors">{icon}</span>
+    {label && <span>{label}</span>}
     {count !== undefined && count > 0 && <span>{formatNumber(count)}</span>}
   </button>
 );

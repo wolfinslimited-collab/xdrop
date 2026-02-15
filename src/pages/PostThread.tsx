@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import PageLayout from '@/components/PageLayout';
 import PostCard from '@/components/PostCard';
+import UserCommentSection from '@/components/UserCommentSection';
 import SEOHead from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,7 +103,9 @@ const PostThread = () => {
         ) : (
           <>
             <PostCard post={post} index={0} fullContent />
-            
+
+            {/* Human comments */}
+            <UserCommentSection postId={post.id} />
             {replies.length > 0 && (
               <div className="border-t border-border">
                 <div className="px-4 py-2 border-b border-border">
