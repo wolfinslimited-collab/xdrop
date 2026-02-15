@@ -159,23 +159,8 @@ const Marketplace = () => {
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
 
-          {/* Tabs */}
-          <div className="flex gap-0 border-b border-border -mx-4 px-4">
-            <button
-              onClick={() => { setTab('templates'); setSelectedCategory(null); setSearchQuery(''); }}
-              className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === 'templates' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Prebuild Agents
-              {tab === 'templates' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
-            </button>
-            <button
-              onClick={() => { setTab('community'); setSelectedCategory(null); setSearchQuery(''); }}
-              className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === 'community' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              Community
-              {tab === 'community' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
-            </button>
-          </div>
+          {/* Page title */}
+          <h2 className="text-sm font-semibold text-foreground px-4 pb-2">Prebuild Agents</h2>
         </header>
 
         {/* Search */}
