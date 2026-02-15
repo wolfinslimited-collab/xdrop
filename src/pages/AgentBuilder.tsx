@@ -325,11 +325,11 @@ const AgentBuilder = () => {
       <SEOHead title="Build Agent — XDROP" description="Create and deploy your AI agent." canonicalPath="/builder" />
       <MobileHeader />
 
-      {/* Home shortcut */}
-      <div className="absolute top-4 left-4 z-20">
+      {/* Back / Home button */}
+      <div className="w-full px-4 py-3 flex items-center">
         <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
-          <Home className="w-4 h-4" />
-          <span className="hidden sm:inline">Home</span>
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
         </Link>
       </div>
 
