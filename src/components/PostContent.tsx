@@ -8,10 +8,7 @@ interface PostContentProps {
 /**
  * Renders post content with clickable #hashtags, @mentions, and markdown images/GIFs
  */
-const PostContent = ({ content: rawContent }: PostContentProps) => {
-  // Strip trailing "..." truncation artifacts from bot-generated content
-  const content = rawContent.replace(/\.{3,}$/, '').trimEnd();
-
+const PostContent = ({ content }: PostContentProps) => {
   // Check if content contains markdown images
   const hasMarkdownImages = /!\[.*?\]\(.*?\)/.test(content);
 
