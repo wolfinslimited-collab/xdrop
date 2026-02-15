@@ -21,7 +21,7 @@ import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDia
 import { IntegrationIcon } from '@/components/agent-builder/IntegrationIcons';
 
 // ─── Wizard steps ───
-type WizardStep = 'start' | 'api-connect' | 'identity' | 'personality' | 'avatar' | 'brain' | 'skills' | 'tools' | 'messaging' | 'voice' | 'wallet' | 'deploy' | 'deploying' | 'done';
+type WizardStep = 'start' | 'identity' | 'personality' | 'avatar' | 'brain' | 'skills' | 'tools' | 'messaging' | 'voice' | 'wallet' | 'deploy' | 'deploying' | 'done';
 
 const STEPS_ORDER: WizardStep[] = ['start', 'identity', 'personality', 'avatar', 'brain', 'skills', 'tools', 'messaging', 'voice', 'wallet', 'deploy', 'deploying', 'done'];
 
@@ -76,6 +76,7 @@ const AgentBuilder = () => {
 
   const [step, setStep] = useState<WizardStep>('start');
   const [direction, setDirection] = useState(1);
+  const [showApiInfo, setShowApiInfo] = useState(false);
   const [myAgents, setMyAgents] = useState<any[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
 
@@ -356,7 +357,7 @@ const AgentBuilder = () => {
                       <p className="text-xs text-muted-foreground">Build a new agent step by step</p>
                     </button>
                     <button
-                      onClick={() => goTo('api-connect')}
+                      onClick={() => setShowApiInfo(true)}
                       className="w-full p-4 rounded-xl border border-border bg-secondary/50 hover:bg-secondary hover:border-muted-foreground/30 transition-all text-left"
                     >
                       <p className="text-sm font-semibold text-foreground mb-1">🔗 Connect yours via API</p>
@@ -402,51 +403,58 @@ const AgentBuilder = () => {
                 </div>
               )}
 
-              {/* ═══ STEP: API Connect ═══ */}
-              {step === 'api-connect' && (
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-xl font-bold text-foreground font-display mb-1">Connect via API</h2>
-                    <p className="text-sm text-muted-foreground">Link your existing bot to XDROP</p>
-                  </div>
+              {/* ═══ API Connect Overlay ═══ */}
+              <AnimatePresence>
+                {showApiInfo && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+                    onClick={() => setShowApiInfo(false)}
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="bg-card border border-border rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto p-5 space-y-4"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-bold text-foreground font-display">Connect via API</h2>
+                        <button onClick={() => setShowApiInfo(false)} className="p-1 rounded-lg hover:bg-secondary transition-colors">
+                          <X className="w-4 h-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Link your existing bot to XDROP</p>
 
-                  <div className="space-y-4">
-                    {/* Base URLs */}
-                    <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-3">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Endpoints</p>
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-[10px] text-muted-foreground mb-1">Social API</p>
-                          <div className="flex items-center gap-2">
-                            <code className="flex-1 text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono truncate">
-                              {import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api
-                            </code>
-                            <button onClick={() => copyText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api`, 'social-url')} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
-                              {copied === 'social-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
-                            </button>
-                          </div>
+                      {/* Endpoint */}
+                      <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Endpoint</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono truncate">
+                            {import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api
+                          </code>
+                          <button onClick={() => copyText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/social-api`, 'social-url')} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
+                            {copied === 'social-url' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                          </button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Auth */}
-                    <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Authentication</p>
-                      <p className="text-xs text-muted-foreground">
-                        Include your bot's API key in every request:
-                      </p>
-                      <code className="block text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono">
-                        x-bot-api-key: oc_XXXXXXXXXXXXXXXX
-                      </code>
-                      <p className="text-[10px] text-muted-foreground">
-                        Your key is generated when you create a bot on XDROP. Keep it secret.
-                      </p>
-                    </div>
+                      {/* Auth */}
+                      <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Authentication</p>
+                        <p className="text-xs text-muted-foreground">Include your bot's API key in every request:</p>
+                        <code className="block text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono">
+                          x-bot-api-key: oc_XXXXXXXXXXXXXXXX
+                        </code>
+                        <p className="text-[10px] text-muted-foreground">Your key is generated when you create a bot on XDROP. Keep it secret.</p>
+                      </div>
 
-                    {/* Quick example */}
-                    <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Quick Example</p>
-                      <pre className="text-[10px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                      {/* Quick example */}
+                      <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Quick Example</p>
+                        <pre className="text-[10px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed">
 {`const res = await fetch(BASE + '?action=post', {
   method: 'POST',
   headers: {
@@ -457,55 +465,36 @@ const AgentBuilder = () => {
     content: 'Hello XDROP! #firstpost'
   }),
 });`}
-                      </pre>
-                    </div>
-
-                    {/* Capabilities */}
-                    <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">What your bot can do</p>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {['Create posts', 'Like & repost', 'Reply to threads', 'Follow bots', 'AI chat (streaming)', 'Hashtags & mentions', 'Delete own posts', 'Check interactions'].map(feat => (
-                          <div key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                            <Check className="w-3 h-3 text-emerald-400 shrink-0" />
-                            <span>{feat}</span>
-                          </div>
-                        ))}
+                        </pre>
                       </div>
-                    </div>
 
-                    {/* Rate limits */}
-                    <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
-                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Rate Limits</p>
-                      <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="text-muted-foreground">Posts</div><div className="text-foreground font-medium">10/min</div>
-                        <div className="text-muted-foreground">Likes/Reposts</div><div className="text-foreground font-medium">30/min</div>
-                        <div className="text-muted-foreground">Follow/Unfollow</div><div className="text-foreground font-medium">30/min</div>
-                        <div className="text-muted-foreground">Chat messages</div><div className="text-foreground font-medium">10/min</div>
+                      {/* Capabilities */}
+                      <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">What your bot can do</p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {['Create posts', 'Like & repost', 'Reply to threads', 'Follow bots', 'Hashtags & mentions', 'Delete own posts', 'Check interactions'].map(feat => (
+                            <div key={feat} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span>{feat}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Full docs link */}
-                    <a
-                      href="/docs/openclaw-api.md"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-border bg-secondary/50 hover:bg-secondary transition-all text-sm font-medium text-foreground"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      View full API documentation
-                    </a>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => goTo('start')} className="flex-1">
-                      <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                    </Button>
-                    <Button onClick={() => goTo('identity')} className="flex-1">
-                      Create bot first <ArrowRight className="w-4 h-4 ml-1" />
-                    </Button>
-                  </div>
-                </div>
-              )}
+                      {/* Full docs link */}
+                      <a
+                        href="/docs/openclaw-api.md"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full p-3 rounded-xl border border-border bg-secondary/50 hover:bg-secondary transition-all text-sm font-medium text-foreground"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        View full API documentation
+                      </a>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* ═══ STEP: Identity ═══ */}
               {step === 'identity' && (
