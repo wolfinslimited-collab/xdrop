@@ -79,6 +79,11 @@ const AgentBuilder = () => {
   const [showApiInfo, setShowApiInfo] = useState(false);
   const [myAgents, setMyAgents] = useState<any[]>([]);
   const [agentsLoading, setAgentsLoading] = useState(false);
+  const [myBots, setMyBots] = useState<any[]>([]);
+  const [selectedBotId, setSelectedBotId] = useState<string | null>(null);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [verifyEndpoint, setVerifyEndpoint] = useState('');
+  const [verifying, setVerifying] = useState(false);
 
   // Identity
   const [name, setName] = useState('');
@@ -133,6 +138,17 @@ const AgentBuilder = () => {
     setAgentsLoading(true);
     supabase.from('agents').select('*').eq('creator_id', user.id).order('created_at', { ascending: false })
       .then(({ data }) => { setMyAgents(data || []); setAgentsLoading(false); });
+  }, [user]);
+
+  // Fetch user's social bots (for API key reveal)
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('social_bots').select('id, name, handle, api_key, status, verified, api_endpoint')
+      .eq('owner_id', user.id).order('created_at', { ascending: false })
+      .then(({ data }) => {
+        setMyBots(data || []);
+        if (data && data.length > 0 && !selectedBotId) setSelectedBotId(data[0].id);
+      });
   }, [user]);
 
   if (loading) return null;
@@ -428,6 +444,28 @@ const AgentBuilder = () => {
                       </div>
                       <p className="text-xs text-muted-foreground">Link your existing bot to XDROP</p>
 
+                      {/* Bot selector */}
+                      {myBots.length > 0 && (
+                        <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Your Bot</p>
+                          <select
+                            value={selectedBotId || ''}
+                            onChange={e => { setSelectedBotId(e.target.value); setShowApiKey(false); }}
+                            className="w-full text-xs bg-background border border-border rounded-lg px-3 py-2 text-foreground"
+                          >
+                            {myBots.map(b => (
+                              <option key={b.id} value={b.id}>{b.name} ({b.handle}) — {b.verified ? '✅ Verified' : '⏳ ' + b.status}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {myBots.length === 0 && (
+                        <div className="p-4 rounded-xl border border-border bg-secondary/30">
+                          <p className="text-xs text-muted-foreground">You don't have any bots yet. Create one first using "Create from zero".</p>
+                        </div>
+                      )}
+
                       {/* Endpoint */}
                       <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
                         <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Endpoint</p>
@@ -441,15 +479,89 @@ const AgentBuilder = () => {
                         </div>
                       </div>
 
-                      {/* Auth */}
+                      {/* Auth + API Key reveal */}
                       <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
                         <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Authentication</p>
                         <p className="text-xs text-muted-foreground">Include your bot's API key in every request:</p>
-                        <code className="block text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono">
-                          x-bot-api-key: oc_XXXXXXXXXXXXXXXX
-                        </code>
-                        <p className="text-[10px] text-muted-foreground">Your key is generated when you create a bot on XDROP. Keep it secret.</p>
+                        {(() => {
+                          const selectedBot = myBots.find(b => b.id === selectedBotId);
+                          const apiKey = selectedBot?.api_key;
+                          return (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <code className="flex-1 text-[11px] bg-background border border-border rounded-lg px-3 py-2 text-foreground font-mono truncate">
+                                  x-bot-api-key: {showApiKey && apiKey ? apiKey : 'oc_••••••••••••••••'}
+                                </code>
+                                {apiKey && (
+                                  <button onClick={() => setShowApiKey(!showApiKey)} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
+                                    {showApiKey ? <EyeOff className="w-3.5 h-3.5 text-muted-foreground" /> : <Eye className="w-3.5 h-3.5 text-muted-foreground" />}
+                                  </button>
+                                )}
+                                {apiKey && (
+                                  <button onClick={() => copyText(apiKey, 'api-key')} className="p-2 rounded-lg border border-border hover:bg-secondary transition-colors shrink-0">
+                                    {copied === 'api-key' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+                                  </button>
+                                )}
+                              </div>
+                              {!apiKey && <p className="text-[10px] text-muted-foreground">No API key found. Create a bot first to get your key.</p>}
+                              {apiKey && <p className="text-[10px] text-muted-foreground">Keep this key secret. Never expose it in client-side code.</p>}
+                            </>
+                          );
+                        })()}
                       </div>
+
+                      {/* Verify Bot */}
+                      {selectedBotId && (
+                        <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
+                          <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Verify Bot</p>
+                          <p className="text-xs text-muted-foreground">Provide your AI endpoint to verify your bot is powered by a real AI model.</p>
+                          <Input
+                            value={verifyEndpoint}
+                            onChange={e => setVerifyEndpoint(e.target.value)}
+                            placeholder="https://your-api.com/chat"
+                            className="text-xs h-9"
+                          />
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            disabled={!verifyEndpoint.trim() || verifying}
+                            onClick={async () => {
+                              setVerifying(true);
+                              try {
+                                const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-bot`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                    apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                                    Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+                                  },
+                                  body: JSON.stringify({ bot_id: selectedBotId, api_endpoint: verifyEndpoint }),
+                                });
+                                const data = await resp.json();
+                                if (data.verified) {
+                                  toast({ title: '✅ Bot Verified!', description: data.message });
+                                  // Refresh bots
+                                  const { data: refreshed } = await supabase.from('social_bots').select('id, name, handle, api_key, status, verified, api_endpoint').eq('owner_id', user.id).order('created_at', { ascending: false });
+                                  setMyBots(refreshed || []);
+                                } else {
+                                  toast({ title: 'Verification Failed', description: data.error || 'Try again', variant: 'destructive' });
+                                }
+                              } catch (err: any) {
+                                toast({ title: 'Error', description: err.message, variant: 'destructive' });
+                              } finally {
+                                setVerifying(false);
+                              }
+                            }}
+                          >
+                            {verifying ? <><Loader2 className="w-3.5 h-3.5 animate-spin mr-2" /> Verifying...</> : <><CheckCircle2 className="w-3.5 h-3.5 mr-2" /> Verify Bot</>}
+                          </Button>
+                          {(() => {
+                            const bot = myBots.find(b => b.id === selectedBotId);
+                            if (bot?.verified) return <p className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> This bot is verified</p>;
+                            return null;
+                          })()}
+                        </div>
+                      )}
 
                       {/* Quick example */}
                       <div className="p-4 rounded-xl border border-border bg-secondary/30 space-y-2">
