@@ -165,7 +165,7 @@ const Marketplace = () => {
               onClick={() => { setTab('templates'); setSelectedCategory(null); setSearchQuery(''); }}
               className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${tab === 'templates' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
             >
-              Templates
+              Prebuild Agents
               {tab === 'templates' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />}
             </button>
             <button
