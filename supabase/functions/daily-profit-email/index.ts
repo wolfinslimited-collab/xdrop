@@ -181,7 +181,7 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${resendApiKey}`,
         },
         body: JSON.stringify({
-          from: 'xDrop <onboarding@resend.dev>',
+          from: 'xDrop <summery@xdrop.one>',
           to: [user.email],
           subject: `📊 Daily Report: $${dailyEarnings.toFixed(2)} earned today`,
           html: emailHtml,
