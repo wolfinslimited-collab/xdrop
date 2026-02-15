@@ -95,79 +95,132 @@ Deno.serve(async (req) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    body { margin: 0; padding: 0; background: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #e5e5e5; }
-    .container { max-width: 560px; margin: 0 auto; padding: 32px 20px; }
-    .header { text-align: center; padding-bottom: 24px; border-bottom: 1px solid #1a1a1a; margin-bottom: 24px; }
-    .logo { font-size: 20px; font-weight: 700; color: #00e5ff; letter-spacing: -0.5px; }
-    .greeting { font-size: 15px; color: #a3a3a3; margin-top: 8px; }
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-    .stat-card { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 16px; text-align: center; }
-    .stat-card.highlight { border-color: #00e5ff33; background: #00e5ff08; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
-    .stat-value.green { color: #22c55e; }
-    .stat-label { font-size: 11px; color: #737373; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .section-title { font-size: 12px; font-weight: 600; color: #737373; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-    .top-performer { background: #111; border: 1px solid #1a1a1a; border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-    .top-badge { background: #00e5ff15; color: #00e5ff; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-    .agent-name { font-size: 14px; font-weight: 600; color: #fff; }
-    .agent-earnings { font-size: 13px; color: #22c55e; }
-    .footer { text-align: center; padding-top: 24px; border-top: 1px solid #1a1a1a; }
-    .footer-text { font-size: 11px; color: #525252; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0A0A0A; font-family: 'Inter', -apple-system, sans-serif; color: #fafafa; -webkit-text-size-adjust: 100%; }
+    .wrapper { max-width: 520px; margin: 0 auto; padding: 40px 24px; }
+
+    /* Header */
+    .header { padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 32px; }
+    .brand { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.5px; }
+    .brand span { color: #22c55e; }
+    .subtitle { font-size: 13px; color: #525252; margin-top: 6px; letter-spacing: 0.2px; }
+    .date-pill { display: inline-block; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 5px 14px; font-size: 11px; color: #737373; margin-top: 12px; font-weight: 500; }
+
+    /* Greeting */
+    .greeting { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 500; color: #e5e5e5; margin-bottom: 28px; }
+    .greeting strong { color: #ffffff; }
+
+    /* Section */
+    .section-label { font-size: 10px; font-weight: 600; color: #525252; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; }
+
+    /* Hero stat */
+    .hero-stat { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.12); border-radius: 16px; padding: 28px 24px; text-align: center; margin-bottom: 16px; }
+    .hero-value { font-family: 'Space Grotesk', sans-serif; font-size: 40px; font-weight: 700; color: #22c55e; letter-spacing: -1px; }
+    .hero-label { font-size: 11px; color: #525252; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; font-weight: 500; }
+    .hero-sub { font-size: 12px; color: #404040; margin-top: 4px; }
+
+    /* Metric row */
+    .metrics { display: flex; gap: 10px; margin-bottom: 28px; }
+    .metric { flex: 1; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px 12px; text-align: center; }
+    .metric-value { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: #ffffff; }
+    .metric-label { font-size: 10px; color: #525252; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; font-weight: 500; }
+
+    /* Portfolio section */
+    .portfolio { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 28px; }
+    .portfolio-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; }
+    .portfolio-row + .portfolio-row { border-top: 1px solid rgba(255,255,255,0.04); }
+    .portfolio-key { font-size: 13px; color: #737373; }
+    .portfolio-val { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; color: #ffffff; }
+    .portfolio-val.green { color: #22c55e; }
+
+    /* Top performer */
+    .top-performer { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; margin-bottom: 28px; }
+    .top-badge { display: inline-block; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.15); color: #22c55e; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 100px; text-transform: uppercase; letter-spacing: 0.8px; }
+    .top-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 10px; }
+    .top-earnings { font-size: 14px; color: #22c55e; font-weight: 600; margin-top: 2px; }
+
+    /* CTA */
+    .cta-wrap { text-align: center; margin-bottom: 32px; }
+    .cta { display: inline-block; background: #ffffff; color: #0A0A0A; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; padding: 12px 32px; border-radius: 100px; text-decoration: none; letter-spacing: -0.2px; }
+
+    /* Divider */
+    .divider { height: 1px; background: rgba(255,255,255,0.06); margin: 0 0 24px 0; }
+
+    /* Footer */
+    .footer { text-align: center; }
+    .footer-text { font-size: 11px; color: #404040; line-height: 1.6; }
+    .footer-text a { color: #525252; text-decoration: none; }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrapper">
     <div class="header">
-      <div class="logo">⚡ xDrop Daily Report</div>
-      <div class="greeting">Hey ${displayName}, here's your portfolio summary</div>
+      <div class="brand">x<span>Drop</span></div>
+      <div class="subtitle">Daily Portfolio Report</div>
+      <div class="date-pill">${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' })}</div>
     </div>
 
-    <div class="section-title">Today's Performance</div>
-    <div class="stat-grid">
-      <div class="stat-card highlight">
-        <div class="stat-value green">$${dailyEarnings.toFixed(2)}</div>
-        <div class="stat-label">Daily Profit</div>
+    <div class="greeting">Hey <strong>${displayName}</strong>,<br/>here's how your agents performed.</div>
+
+    <div class="section-label">Today's Earnings</div>
+    <div class="hero-stat">
+      <div class="hero-value">$${dailyEarnings.toFixed(2)}</div>
+      <div class="hero-label">USDC Earned Today</div>
+      <div class="hero-sub">${dailyRuns} run${dailyRuns !== 1 ? 's' : ''} executed</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-value">${successfulRuns}</div>
+        <div class="metric-label">Successful</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">${dailyRuns}</div>
-        <div class="stat-label">Runs Today</div>
+      <div class="metric">
+        <div class="metric-value">${dailyRuns - successfulRuns}</div>
+        <div class="metric-label">Failed</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">${successfulRuns}</div>
-        <div class="stat-label">Successful</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">${agents.length}</div>
-        <div class="stat-label">Active Agents</div>
+      <div class="metric">
+        <div class="metric-value">${agents.length}</div>
+        <div class="metric-label">Agents</div>
       </div>
     </div>
 
-    <div class="section-title">Portfolio Totals</div>
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-value green">$${totalPortfolioEarnings.toFixed(2)}</div>
-        <div class="stat-label">All-Time Earnings</div>
+    <div class="section-label">Portfolio Overview</div>
+    <div class="portfolio">
+      <div class="portfolio-row">
+        <span class="portfolio-key">All-Time Earnings</span>
+        <span class="portfolio-val green">$${totalPortfolioEarnings.toFixed(2)}</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-value">${totalPortfolioRuns.toLocaleString()}</div>
-        <div class="stat-label">Total Runs</div>
+      <div class="portfolio-row">
+        <span class="portfolio-key">Total Runs</span>
+        <span class="portfolio-val">${totalPortfolioRuns.toLocaleString()}</span>
+      </div>
+      <div class="portfolio-row">
+        <span class="portfolio-key">Active Agents</span>
+        <span class="portfolio-val">${agents.length}</span>
       </div>
     </div>
 
     ${topAgent ? `
-    <div class="section-title">Top Performer</div>
+    <div class="section-label">Top Performer</div>
     <div class="top-performer">
-      <div>
-        <div class="top-badge">🏆 Best Today</div>
-        <div class="agent-name" style="margin-top: 6px">${topAgent.name}</div>
-        <div class="agent-earnings">+$${(agentDailyEarnings[topAgentId!] || 0).toFixed(2)} USDC</div>
-      </div>
+      <div class="top-badge">🏆 Best Today</div>
+      <div class="top-name">${topAgent.name}</div>
+      <div class="top-earnings">+$${(agentDailyEarnings[topAgentId!] || 0).toFixed(2)} USDC</div>
     </div>
     ` : ''}
 
+    <div class="cta-wrap">
+      <a href="https://xdrop.lovable.app/dashboard" class="cta">View Dashboard →</a>
+    </div>
+
+    <div class="divider"></div>
     <div class="footer">
-      <div class="footer-text">You're receiving this because you own agents on xDrop.<br/>© ${new Date().getFullYear()} xDrop</div>
+      <div class="footer-text">
+        You're receiving this because you own agents on xDrop.<br/>
+        © ${new Date().getFullYear()} xDrop · <a href="https://xdrop.lovable.app">xdrop.lovable.app</a>
+      </div>
     </div>
   </div>
 </body>
