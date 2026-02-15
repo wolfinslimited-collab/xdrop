@@ -171,9 +171,7 @@ const DefaultSidebar = () => {
 
 const MarketplaceSidebar = () => {
   const [topAgents, setTopAgents] = useState<TopAgent[]>([]);
-  const [newAgents, setNewAgents] = useState<NewAgent[]>([]);
   const [loadingTop, setLoadingTop] = useState(true);
-  const [loadingNew, setLoadingNew] = useState(true);
 
   useEffect(() => {
     const fetchTopAgents = async () => {
@@ -201,131 +199,57 @@ const MarketplaceSidebar = () => {
       finally { setLoadingTop(false); }
     };
 
-    const fetchNewAgents = async () => {
-      try {
-        const { data } = await supabase
-          .from('agents')
-          .select('id, name, avatar, price, agent_categories:category_id(name)')
-          .eq('status', 'published')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        if (data) {
-          setNewAgents(data.map((a: any) => ({
-            id: a.id,
-            name: a.name,
-            avatar: a.avatar,
-            category: a.agent_categories?.name || 'General',
-            price: a.price,
-          })));
-        }
-      } catch (err) { console.error('Error fetching new agents:', err); }
-      finally { setLoadingNew(false); }
-    };
-
     fetchTopAgents();
-    fetchNewAgents();
   }, []);
 
   const showTemplatesFallback = !loadingTop && topAgents.length === 0;
   const topTemplates = AGENT_TEMPLATES.filter(t => t.popular).slice(0, 5);
-  const newTemplates = [...AGENT_TEMPLATES].reverse().slice(0, 5);
 
   return (
-    <>
-      {/* Top Prebuild Agents */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card rounded-xl border border-border mb-4 overflow-hidden">
-        <h2 className="px-4 pt-3 pb-2 text-sm font-semibold text-foreground flex items-center gap-2">
-          <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-          Top Prebuild Agents
-        </h2>
-        {loadingTop ? (
-          <div className="px-4 py-3 space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-card rounded-xl border border-border overflow-hidden">
+      <h2 className="px-4 pt-3 pb-2 text-sm font-semibold text-foreground flex items-center gap-2">
+        <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+        Top Prebuild Agents
+      </h2>
+      {loadingTop ? (
+        <div className="px-4 py-3 space-y-3">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="flex items-center gap-3">
+              <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
               </div>
-            ))}
-          </div>
-        ) : showTemplatesFallback ? (
-          topTemplates.map((t, i) => (
-            <Link key={t.id} to={`/agent/${t.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{t.icon}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{t.name}</p>
-                <p className="text-[10px] text-muted-foreground">{t.yearlyPrice} USDC</p>
+            </div>
+          ))}
+        </div>
+      ) : showTemplatesFallback ? (
+        topTemplates.map((t, i) => (
+          <Link key={t.id} to={`/agent/${t.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{t.icon}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{t.name}</p>
+              <p className="text-[10px] text-muted-foreground">{t.yearlyPrice} USDC</p>
+            </div>
+            <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">#{i + 1}</span>
+          </Link>
+        ))
+      ) : (
+        topAgents.map((agent, i) => (
+          <Link key={agent.id} to={`/agent/${agent.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
+            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{agent.avatar}</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{agent.name}</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">{agent.price} USDC</span>
+                <span className="text-[10px] font-semibold text-primary">{formatNumber(agent.sales)} sales</span>
               </div>
-              <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">#{i + 1}</span>
-            </Link>
-          ))
-        ) : (
-          topAgents.map((agent, i) => (
-            <Link key={agent.id} to={`/agent/${agent.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{agent.avatar}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{agent.name}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground">{agent.price} USDC</span>
-                  <span className="text-[10px] font-semibold text-primary">{formatNumber(agent.sales)} sales</span>
-                </div>
-              </div>
-              <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">#{i + 1}</span>
-            </Link>
-          ))
-        )}
-      </motion.div>
-
-      {/* New Agents */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="bg-card rounded-xl border border-border overflow-hidden">
-        <h2 className="px-4 pt-3 pb-2 text-sm font-semibold text-foreground flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-muted-foreground" />
-          New Agents
-        </h2>
-        {loadingNew ? (
-          <div className="px-4 py-3 space-y-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="w-8 h-8 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (!loadingNew && newAgents.length === 0) ? (
-          newTemplates.map((t) => (
-            <Link key={t.id} to={`/agent/${t.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{t.icon}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{t.name}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground">{t.category}</span>
-                  <span className="text-[10px] text-primary font-medium">{t.yearlyPrice} USDC</span>
-                </div>
-              </div>
-            </Link>
-          ))
-        ) : (
-          newAgents.map((agent) => (
-            <Link key={agent.id} to={`/agent/${agent.id}`} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-base shrink-0">{agent.avatar}</div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate group-hover:text-primary transition-colors">{agent.name}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-muted-foreground">{agent.category}</span>
-                  <span className="text-[10px] text-primary font-medium">{agent.price} USDC</span>
-                </div>
-              </div>
-            </Link>
-          ))
-        )}
-      </motion.div>
-    </>
+            </div>
+            <span className="text-[10px] text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">#{i + 1}</span>
+          </Link>
+        ))
+      )}
+    </motion.div>
   );
 };
 
