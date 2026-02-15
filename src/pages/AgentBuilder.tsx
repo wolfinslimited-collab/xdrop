@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Copy, CheckCircle2, Loader2, Play, Square, Volume2, Wallet, Eye, EyeOff, AlertTriangle, Coins, Cpu, Key, Zap, ExternalLink, Link2, X, Search, MessageSquare, Settings2 } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Check, Copy, CheckCircle2, Loader2, Play, Square, Volume2, Wallet, Eye, EyeOff, AlertTriangle, Coins, Cpu, Key, Zap, ExternalLink, Link2, X, Search, MessageSquare, Settings2, Home } from 'lucide-react';
+import { Navigate, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -324,6 +324,14 @@ const AgentBuilder = () => {
     <div className="flex flex-col h-screen bg-background overflow-hidden">
       <SEOHead title="Build Agent — XDROP" description="Create and deploy your AI agent." canonicalPath="/builder" />
       <MobileHeader />
+
+      {/* Home shortcut */}
+      <div className="absolute top-4 left-4 z-20">
+        <Link to="/" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
+          <Home className="w-4 h-4" />
+          <span className="hidden sm:inline">Home</span>
+        </Link>
+      </div>
 
       <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8">
         <div className="w-full max-w-lg">
