@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Swords, Shield, Crown, Users, Plus, RefreshCw, Eye } from 'lucide-react';
+import { Swords, Shield, Crown, Plus, RefreshCw, Eye, Users, Zap, ChevronDown, ChevronUp } from 'lucide-react';
 import { Navigate, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import BettingPanel from '@/components/arena/BettingPanel';
 
@@ -58,21 +59,6 @@ const ARENA_NAMES = [
   'delulu thunderdome', 'timeline takeover', 'moots melee', 'vibe check chamber',
 ];
 
-const CrossedSwords = () => (
-  <svg width="48" height="48" viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' }}>
-    <rect x="2" y="1" width="2" height="2" fill="#4ade80" />
-    <rect x="4" y="3" width="2" height="2" fill="#4ade80" />
-    <rect x="6" y="5" width="2" height="2" fill="#4ade80" />
-    <rect x="12" y="1" width="2" height="2" fill="#4ade80" />
-    <rect x="10" y="3" width="2" height="2" fill="#4ade80" />
-    <rect x="8" y="5" width="2" height="2" fill="#4ade80" />
-    <rect x="6" y="7" width="4" height="2" fill="#facc15" />
-    <rect x="5" y="8" width="6" height="1" fill="#facc15" />
-    <rect x="4" y="9" width="2" height="3" fill="#a16207" />
-    <rect x="10" y="9" width="2" height="3" fill="#a16207" />
-  </svg>
-);
-
 const Games = () => {
   const { user, loading } = useAuth();
   const [rooms, setRooms] = useState<GameRoom[]>([]);
@@ -83,6 +69,8 @@ const Games = () => {
   const [loadingRooms, setLoadingRooms] = useState(true);
   const [fighting, setFighting] = useState(false);
   const [showJoinMenu, setShowJoinMenu] = useState(false);
+  const [showBattleLog, setShowBattleLog] = useState(false);
+  const [roomParticipantCounts, setRoomParticipantCounts] = useState<Record<string, number>>({});
 
   const fetchRooms = useCallback(async () => {
     const { data } = await supabase
@@ -91,7 +79,22 @@ const Games = () => {
       .in('status', ['waiting', 'in_progress'])
       .order('created_at', { ascending: false })
       .limit(20);
-    if (data) setRooms(data);
+    if (data) {
+      setRooms(data);
+      // Fetch participant counts for all rooms
+      const ids = data.map(r => r.id);
+      if (ids.length > 0) {
+        const { data: pData } = await supabase
+          .from('game_participants')
+          .select('room_id')
+          .in('room_id', ids);
+        if (pData) {
+          const counts: Record<string, number> = {};
+          pData.forEach(p => { counts[p.room_id] = (counts[p.room_id] || 0) + 1; });
+          setRoomParticipantCounts(counts);
+        }
+      }
+    }
     setLoadingRooms(false);
   }, []);
 
@@ -183,6 +186,7 @@ const Games = () => {
       return;
     }
     setFighting(true);
+    setShowBattleLog(true);
 
     let combatants = participants.filter(p => p.status === 'alive').map(p => ({ ...p }));
     let round = selectedRoom.round_number;
@@ -242,6 +246,7 @@ const Games = () => {
 
   const openRoom = (room: GameRoom) => {
     setSelectedRoom(room);
+    setShowBattleLog(false);
     fetchParticipants(room.id);
     fetchBattleLogs(room.id);
   };
@@ -249,7 +254,6 @@ const Games = () => {
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
 
-  // Map participants for 3D arena
   const arenaParticipants = participants.map(p => ({
     id: p.id,
     name: p.agents?.name || 'Agent',
@@ -259,7 +263,6 @@ const Games = () => {
     color: '#f97316',
   }));
 
-  // Map for betting panel
   const betParticipants = participants.map(p => ({
     agent_id: p.agent_id,
     agent_name: p.agents?.name || 'Agent',
@@ -277,26 +280,48 @@ const Games = () => {
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CrossedSwords />
+              <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+                <Swords className="w-4.5 h-4.5 text-destructive" />
+              </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground font-display">
-                  Agent <span className="text-green-400">Wars</span>
+                <h1 className="text-base font-bold text-foreground font-display tracking-tight">
+                  Agent Wars
                 </h1>
-                <p className="text-[10px] text-muted-foreground">AI Battles, Human Bets</p>
+                <p className="text-[10px] text-muted-foreground">AI Battles · Human Bets</p>
               </div>
             </div>
-            <Button size="sm" onClick={createRoom} className="gap-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground">
-              <Plus className="w-4 h-4" /> New Arena
+            <Button size="sm" onClick={createRoom} className="gap-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs px-4">
+              <Plus className="w-3.5 h-3.5" /> New Arena
             </Button>
           </div>
         </header>
 
         {selectedRoom ? (
           <div className="flex flex-col">
+            {/* Room title bar */}
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-card/50">
+              <button
+                onClick={() => { setSelectedRoom(null); setParticipants([]); setBattleLogs([]); }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back
+              </button>
+              <span className="text-xs font-semibold text-foreground flex-1 truncate">{selectedRoom.name}</span>
+              {(selectedRoom.status === 'in_progress' || fighting) && (
+                <span className="flex items-center gap-1.5 text-[10px] font-bold text-destructive">
+                  <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                  LIVE
+                </span>
+              )}
+              <span className="text-[10px] text-muted-foreground">
+                R{selectedRoom.round_number}/{selectedRoom.total_rounds}
+              </span>
+            </div>
+
             {/* 3D Arena */}
             <Suspense fallback={
-              <div className="w-full aspect-[4/3] max-h-[420px] bg-background flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="w-full aspect-[16/9] max-h-[380px] bg-background flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
               </div>
             }>
               <Arena3D
@@ -306,28 +331,69 @@ const Games = () => {
               />
             </Suspense>
 
-            {/* LIVE Badge overlay */}
-            {(selectedRoom.status === 'in_progress' || fighting) && (
-              <div className="flex justify-center -mt-10 relative z-10 mb-2">
-                <div className="bg-destructive text-destructive-foreground text-[10px] font-bold px-4 py-1 rounded-full tracking-wider shadow-lg">
-                  🔴 LIVE
-                </div>
+            {/* Combatant Cards */}
+            <div className="px-3 py-3 border-b border-border">
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {participants.map((p) => {
+                  const hpPct = (p.health / 100) * 100;
+                  const isAlive = p.status === 'alive';
+                  return (
+                    <div
+                      key={p.id}
+                      className={`shrink-0 rounded-xl border p-2.5 min-w-[140px] transition-all ${
+                        !isAlive
+                          ? 'border-border/50 bg-secondary/20 opacity-50'
+                          : 'border-border bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-base">{p.agents?.avatar || '🤖'}</span>
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {p.agents?.name || 'Agent'}
+                        </span>
+                        {!isAlive && <span className="text-[10px] text-destructive font-bold ml-auto">KO</span>}
+                      </div>
+                      {/* HP Bar */}
+                      <div className="mb-1.5">
+                        <div className="flex justify-between mb-0.5">
+                          <span className="text-[9px] text-muted-foreground">HP</span>
+                          <span className={`text-[9px] font-mono font-bold ${
+                            hpPct > 60 ? 'text-success' : hpPct > 30 ? 'text-accent' : 'text-destructive'
+                          }`}>{p.health}/100</span>
+                        </div>
+                        <Progress
+                          value={hpPct}
+                          className="h-1.5 bg-secondary"
+                        />
+                      </div>
+                      {/* Stats */}
+                      <div className="flex gap-3 text-[10px] text-muted-foreground">
+                        <span className="flex items-center gap-0.5">
+                          <Zap className="w-2.5 h-2.5 text-destructive" />{p.attack_power}
+                        </span>
+                        <span className="flex items-center gap-0.5">
+                          <Shield className="w-2.5 h-2.5 text-primary" />{p.defense}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-center gap-3 px-4 py-4 border-b border-border">
+            <div className="flex items-center justify-center gap-2 px-4 py-3 border-b border-border">
               {participants.length >= 2 && selectedRoom.status !== 'completed' ? (
                 <Button
-                  size="lg"
+                  size="default"
                   onClick={simulateBattle}
                   disabled={fighting}
-                  className="gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full px-8"
+                  className="gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full px-8 font-display"
                 >
                   {fighting ? (
                     <><RefreshCw className="w-4 h-4 animate-spin" /> Fighting...</>
                   ) : (
-                    <><span className="w-2 h-2 rounded-full bg-destructive-foreground animate-pulse" /> Watch Battle Live</>
+                    <><Swords className="w-4 h-4" /> Battle</>
                   )}
                 </Button>
               ) : selectedRoom.status === 'completed' ? (
@@ -339,9 +405,9 @@ const Games = () => {
                   {userAgents.length > 0 ? (
                     <div className="relative">
                       <Button
-                        size="lg"
+                        size="default"
                         onClick={() => setShowJoinMenu(!showJoinMenu)}
-                        className="gap-2 bg-green-600 hover:bg-green-700 text-foreground rounded-full px-8"
+                        className="gap-2 bg-success hover:bg-success/90 text-success-foreground rounded-full px-6 font-display"
                       >
                         <Plus className="w-4 h-4" /> Enter Agent
                       </Button>
@@ -374,9 +440,6 @@ const Games = () => {
                       </Button>
                     </Link>
                   )}
-                  <Button variant="ghost" onClick={() => { setSelectedRoom(null); setParticipants([]); setBattleLogs([]); }} className="rounded-full">
-                    Back
-                  </Button>
                 </div>
               )}
             </div>
@@ -396,127 +459,155 @@ const Games = () => {
             <AnimatePresence>
               {selectedRoom.status === 'completed' && participants.find(p => p.status === 'alive') && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="mx-4 mt-3 p-4 rounded-xl bg-accent/10 border border-accent/30 flex items-center gap-3"
+                  className="mx-4 mt-3 p-4 rounded-xl bg-accent/5 border border-accent/20 flex items-center gap-3"
                 >
-                  <Crown className="w-8 h-8 text-accent" />
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-accent" />
+                  </div>
                   <div>
-                    <p className="text-lg font-bold text-accent font-display">Champion!</p>
-                    <p className="text-sm text-foreground">
-                      {participants.find(p => p.status === 'alive')?.agents?.name || 'Agent'} wins the arena!
+                    <p className="text-sm font-bold text-accent font-display">Champion!</p>
+                    <p className="text-xs text-muted-foreground">
+                      {participants.find(p => p.status === 'alive')?.agents?.name || 'Agent'} wins the arena
                     </p>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
 
-            {/* Stats Bar */}
-            <div className="grid grid-cols-3 gap-0 border-b border-border">
-              {participants.map((p, i) => (
-                <div key={p.id} className={`text-center py-2 px-2 ${i > 0 ? 'border-l border-border' : ''}`}>
-                  <span className="text-xs font-semibold text-foreground truncate block">{p.agents?.name || 'Agent'}</span>
-                  <div className="flex items-center justify-center gap-2 mt-0.5">
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                      <Swords className="w-3 h-3 text-destructive" />{p.attack_power}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                      <Shield className="w-3 h-3 text-primary" />{p.defense}
-                    </span>
-                    <span className={`text-[10px] font-bold ${p.health > 50 ? 'text-green-500' : p.health > 0 ? 'text-accent' : 'text-destructive'}`}>
-                      {p.health}HP
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Battle Log */}
-            <div className="px-4 py-3">
-              <h3 className="text-[10px] font-semibold text-muted-foreground tracking-wider mb-2">BATTLE LOG</h3>
-              <div className="space-y-1 max-h-[250px] overflow-y-auto">
-                {battleLogs.length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-6">
-                    Waiting for combatants...
-                  </p>
-                ) : (
-                  battleLogs.map((log, i) => (
-                    <motion.div
-                      key={log.id}
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.015 }}
-                      className="text-xs text-muted-foreground bg-secondary/40 rounded-lg px-3 py-1.5"
-                    >
-                      <span className="text-foreground/40 mr-1">R{log.round}</span> {log.message}
-                    </motion.div>
-                  ))
+            {/* Collapsible Battle Log */}
+            <div className="border-t border-border mt-2">
+              <button
+                onClick={() => setShowBattleLog(!showBattleLog)}
+                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-secondary/30 transition-colors"
+              >
+                <span className="text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
+                  Battle Log ({battleLogs.length})
+                </span>
+                {showBattleLog ? <ChevronUp className="w-3.5 h-3.5 text-muted-foreground" /> : <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+              </button>
+              <AnimatePresence>
+                {showBattleLog && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-4 pb-3 space-y-1 max-h-[200px] overflow-y-auto">
+                      {battleLogs.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-4">
+                          Waiting for combatants...
+                        </p>
+                      ) : (
+                        battleLogs.map((log, i) => (
+                          <motion.div
+                            key={log.id}
+                            initial={{ opacity: 0, x: -6 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.01 }}
+                            className="text-[11px] text-muted-foreground bg-secondary/30 rounded-lg px-3 py-1.5"
+                          >
+                            <span className="text-foreground/30 mr-1 font-mono text-[10px]">R{log.round}</span>{' '}
+                            {log.message}
+                          </motion.div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
             </div>
           </div>
         ) : (
-          /* Room List */
+          /* ──── Room List ──── */
           <div>
             {/* Hero */}
-            <div className="flex flex-col items-center py-8 px-4 border-b border-border"
-              style={{ background: 'radial-gradient(ellipse at center, hsl(0 0% 8%) 0%, hsl(0 0% 4%) 100%)' }}
+            <div
+              className="flex flex-col items-center py-10 px-4 border-b border-border relative overflow-hidden"
+              style={{ background: 'radial-gradient(ellipse at 50% 30%, hsl(0 72% 51% / 0.06) 0%, transparent 70%)' }}
             >
-              <CrossedSwords />
-              <h2 className="text-xl font-bold text-foreground font-display mt-3">
-                Agent <span className="text-green-400">Wars</span>
+              <div className="w-14 h-14 rounded-2xl bg-destructive/10 flex items-center justify-center mb-4">
+                <Swords className="w-7 h-7 text-destructive" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground font-display tracking-tight">
+                Agent Wars
               </h2>
-              <p className="text-xs text-muted-foreground mt-1">AI Battles, Human Bets</p>
+              <p className="text-xs text-muted-foreground mt-1 mb-4">Enter the arena. Bet on winners. Collect rewards.</p>
+              <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Users className="w-3 h-3" /> {rooms.length} Active
+                </span>
+                <span className="flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-destructive" /> {rooms.filter(r => r.status === 'in_progress').length} Live
+                </span>
+              </div>
             </div>
 
             {loadingRooms ? (
               <div className="flex items-center justify-center py-20">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
               </div>
             ) : rooms.length === 0 ? (
               <div className="text-center py-16 px-4">
-                <Swords className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground mb-4">No active arenas. Create one to start battling!</p>
-                <Button onClick={createRoom} className="gap-1.5 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-full px-6">
+                <div className="w-12 h-12 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
+                  <Swords className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">No active arenas yet</p>
+                <Button onClick={createRoom} className="gap-1.5 rounded-full bg-foreground text-background hover:bg-foreground/90 px-6">
                   <Plus className="w-4 h-4" /> Create Arena
                 </Button>
               </div>
             ) : (
-              <div className="divide-y divide-border">
-                {rooms.map((room, i) => (
-                  <motion.button
-                    key={room.id}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.04 }}
-                    onClick={() => openRoom(room)}
-                    className="w-full px-4 py-3.5 hover:bg-secondary/50 transition-colors text-left"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: 'radial-gradient(circle, hsl(0 0% 14%), hsl(0 0% 7%))' }}
-                      >
-                        <Swords className="w-5 h-5 text-green-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground">{room.name}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                            room.status === 'waiting' ? 'bg-green-500/10 text-green-400' :
-                            room.status === 'in_progress' ? 'bg-destructive/10 text-destructive' :
-                            'bg-muted text-muted-foreground'
-                          }`}>
-                            {room.status === 'waiting' ? 'Open' : room.status === 'in_progress' ? '🔴 Live' : 'Done'}
-                          </span>
+              <div className="p-3 space-y-2">
+                {rooms.map((room, i) => {
+                  const pCount = roomParticipantCounts[room.id] || 0;
+                  const isLive = room.status === 'in_progress';
+                  return (
+                    <motion.button
+                      key={room.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.03 }}
+                      onClick={() => openRoom(room)}
+                      className={`w-full rounded-xl border p-3.5 text-left transition-all hover:border-foreground/10 ${
+                        isLive
+                          ? 'border-destructive/20 bg-destructive/[0.03]'
+                          : 'border-border bg-card/50 hover:bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                          isLive ? 'bg-destructive/10' : 'bg-secondary'
+                        }`}>
+                          <Swords className={`w-4.5 h-4.5 ${isLive ? 'text-destructive' : 'text-muted-foreground'}`} />
                         </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                          Round {room.round_number}/{room.total_rounds}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-sm font-semibold text-foreground truncate">{room.name}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Users className="w-2.5 h-2.5" /> {pCount}/{room.max_participants}
+                            </span>
+                            <span>R{room.round_number}/{room.total_rounds}</span>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                            room.status === 'waiting'
+                              ? 'bg-success/10 text-success'
+                              : 'bg-destructive/10 text-destructive'
+                          }`}>
+                            {room.status === 'waiting' ? 'Open' : '● Live'}
+                          </span>
+                          <Eye className="w-3.5 h-3.5 text-muted-foreground/50" />
+                        </div>
                       </div>
-                      <Eye className="w-4 h-4 text-muted-foreground" />
-                    </div>
-                  </motion.button>
-                ))}
+                    </motion.button>
+                  );
+                })}
               </div>
             )}
           </div>
