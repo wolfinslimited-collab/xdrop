@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Navigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, Users, Eye, BarChart3, Settings, Cpu, ShoppingCart,
@@ -34,6 +34,15 @@ const AdminPanel = () => {
   const { isAdmin, checking } = useAdminCheck();
   const [tab, setTab] = useState<Tab>('analytics');
   const [collapsed, setCollapsed] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handlePopState = () => {
+      navigate('/home', { replace: true });
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [navigate]);
 
   if (authLoading || checking) return null;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
