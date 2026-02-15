@@ -56,7 +56,7 @@ const AgentEditor = () => {
   const { user } = useAuth();
   const [agent, setAgent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('chat');
+  const [rightTab, setRightTab] = useState('logs');
 
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -83,6 +83,7 @@ const AgentEditor = () => {
   const [newIntegration, setNewIntegration] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     if (!agentId) return;
     const fetchAgent = async () => {
@@ -94,7 +95,6 @@ const AgentEditor = () => {
       setAgent(data);
       setLoading(false);
 
-      // Fetch runs
       const { data: runsData } = await supabase
         .from('agent_runs')
         .select('*')
@@ -125,7 +125,6 @@ const AgentEditor = () => {
     setInput('');
     setIsStreaming(true);
 
-    // Add log
     setLogs(prev => [...prev, { type: 'info', message: `User message: "${text.slice(0, 50)}${text.length > 50 ? '...' : ''}"`, timestamp: new Date() }]);
 
     let assistantContent = '';
@@ -307,28 +306,10 @@ const AgentEditor = () => {
         </div>
       </header>
 
-      {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col">
-        <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0">
-          {[
-            { value: 'chat', label: 'Chat', icon: Bot },
-            { value: 'logs', label: 'Logs', icon: Terminal },
-            { value: 'runs', label: 'Runs', icon: Activity },
-            { value: 'config', label: 'Config', icon: Settings2 },
-          ].map(t => (
-            <TabsTrigger
-              key={t.value}
-              value={t.value}
-              className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-1.5 text-xs py-2.5"
-            >
-              <t.icon className="w-3.5 h-3.5" />
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {/* ─── Chat Tab ─── */}
-        <TabsContent value="chat" className="flex-1 flex flex-col m-0 overflow-hidden">
+      {/* Split Layout: Chat left, Tabs right */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ─── Left: Chat Panel ─── */}
+        <div className="flex-1 flex flex-col min-w-0 border-r border-border">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -399,9 +380,9 @@ const AgentEditor = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
+          {/* Chat Input */}
           <div className="border-t border-border p-3">
-            <div className="flex items-end gap-2 max-w-3xl mx-auto">
+            <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -422,200 +403,244 @@ const AgentEditor = () => {
               </Button>
             </div>
           </div>
-        </TabsContent>
+        </div>
 
-        {/* ─── Logs Tab ─── */}
-        <TabsContent value="logs" className="flex-1 m-0 overflow-y-auto p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Agent Logs</h3>
-            {logs.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => setLogs([])} className="gap-1.5 text-xs text-muted-foreground">
-                <Trash2 className="w-3 h-3" /> Clear
-              </Button>
-            )}
-          </div>
-
-          {logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Terminal className="w-8 h-8 mb-3 opacity-30" />
-              <p className="text-xs">No logs yet</p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-border bg-background/80 p-2 space-y-1">
-              {logs.map((log, i) => (
-                <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
-                  <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
-                  <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
-                  <span className="break-all">{log.message}</span>
-                </div>
+        {/* ─── Right: Logs / Runs / Config Sidebar ─── */}
+        <div className="hidden md:flex w-[380px] flex-shrink-0 flex-col">
+          <Tabs value={rightTab} onValueChange={setRightTab} className="flex-1 flex flex-col">
+            <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0">
+              {[
+                { value: 'logs', label: 'Logs', icon: Terminal },
+                { value: 'runs', label: 'Runs', icon: Activity },
+                { value: 'config', label: 'Config', icon: Settings2 },
+              ].map(t => (
+                <TabsTrigger
+                  key={t.value}
+                  value={t.value}
+                  className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-1.5 text-xs py-2.5"
+                >
+                  <t.icon className="w-3.5 h-3.5" />
+                  {t.label}
+                </TabsTrigger>
               ))}
-            </div>
-          )}
-        </TabsContent>
+            </TabsList>
 
-        {/* ─── Runs Tab ─── */}
-        <TabsContent value="runs" className="flex-1 m-0 overflow-y-auto p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Recent Runs</h3>
-          {runs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
-              <Activity className="w-8 h-8 mb-3 opacity-30" />
-              <p className="text-xs">No runs yet</p>
-              <p className="text-[10px] mt-1 opacity-60">Chat with your agent to trigger its first run</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {runs.map(run => (
-                <div key={run.id} className="p-3 rounded-lg border border-border bg-secondary/30">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                      run.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
-                      run.status === 'failed' ? 'bg-red-500/10 text-red-400' :
-                      'bg-primary/10 text-primary'
-                    }`}>{run.status}</span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {new Date(run.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                  {run.earnings != null && (
-                    <p className="text-xs text-muted-foreground mt-1">Earnings: {run.earnings} USDC</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        {/* ─── Config Tab ─── */}
-        <TabsContent value="config" className="flex-1 m-0 overflow-y-auto p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-foreground">Agent Configuration</h3>
-            {!isEditing ? (
-              <Button variant="ghost" size="sm" onClick={startEditing} className="gap-1.5 text-xs">
-                <Pencil className="w-3 h-3" /> Edit
-              </Button>
-            ) : (
-              <div className="flex gap-1.5">
-                <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="gap-1 text-xs text-muted-foreground">
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={saveConfig} disabled={isSaving} className="gap-1.5 text-xs">
-                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                  Save
-                </Button>
+            {/* ─── Logs ─── */}
+            <TabsContent value="logs" className="flex-1 m-0 overflow-y-auto p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground">Agent Logs</h3>
+                {logs.length > 0 && (
+                  <Button variant="ghost" size="sm" onClick={() => setLogs([])} className="gap-1.5 text-xs text-muted-foreground">
+                    <Trash2 className="w-3 h-3" /> Clear
+                  </Button>
+                )}
               </div>
-            )}
-          </div>
-          <div className="space-y-3">
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Name</p>
-              {isEditing ? (
-                <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-8 text-sm" placeholder="Agent name" />
+
+              {logs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <Terminal className="w-8 h-8 mb-3 opacity-30" />
+                  <p className="text-xs">No logs yet</p>
+                </div>
               ) : (
-                <p className="text-sm text-foreground font-medium">{agent.name}</p>
+                <div className="rounded-lg border border-border bg-background/80 p-2 space-y-1">
+                  {logs.map((log, i) => (
+                    <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
+                      <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
+                      <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
+                      <span className="break-all">{log.message}</span>
+                    </div>
+                  ))}
+                </div>
               )}
-            </div>
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Description</p>
-              {isEditing ? (
-                <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} className="text-sm min-h-[60px]" placeholder="Agent description" />
+            </TabsContent>
+
+            {/* ─── Runs ─── */}
+            <TabsContent value="runs" className="flex-1 m-0 overflow-y-auto p-4">
+              <h3 className="text-sm font-semibold text-foreground mb-3">Recent Runs</h3>
+              {runs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                  <Activity className="w-8 h-8 mb-3 opacity-30" />
+                  <p className="text-xs">No runs yet</p>
+                  <p className="text-[10px] mt-1 opacity-60">Chat with your agent to trigger its first run</p>
+                </div>
               ) : (
-                <p className="text-sm text-foreground">{agent.description || '—'}</p>
-              )}
-            </div>
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</p>
-              <p className="text-sm text-foreground">{agent.status}</p>
-            </div>
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Agent ID</p>
-              <p className="text-xs text-foreground font-mono">{agent.id}</p>
-            </div>
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Integrations</p>
-              {isEditing ? (
                 <div className="space-y-2">
-                  <div className="flex flex-wrap gap-1.5">
-                    {editIntegrations.map(i => (
-                      <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
-                        {i}
-                        <button onClick={() => setEditIntegrations(editIntegrations.filter(x => x !== i))} className="hover:text-destructive">
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                  {runs.map(run => (
+                    <div key={run.id} className="p-3 rounded-lg border border-border bg-secondary/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                          run.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
+                          run.status === 'failed' ? 'bg-red-500/10 text-red-400' :
+                          'bg-primary/10 text-primary'
+                        }`}>{run.status}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date(run.created_at).toLocaleString()}
+                        </span>
+                      </div>
+                      {run.earnings != null && (
+                        <p className="text-xs text-muted-foreground mt-1">Earnings: {run.earnings} USDC</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* ─── Config ─── */}
+            <TabsContent value="config" className="flex-1 m-0 overflow-y-auto p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground">Agent Configuration</h3>
+                {!isEditing ? (
+                  <Button variant="ghost" size="sm" onClick={startEditing} className="gap-1.5 text-xs">
+                    <Pencil className="w-3 h-3" /> Edit
+                  </Button>
+                ) : (
                   <div className="flex gap-1.5">
-                    <Input
-                      value={newIntegration}
-                      onChange={e => setNewIntegration(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addIntegration(); } }}
-                      placeholder="Add integration..."
-                      className="h-7 text-xs flex-1"
-                    />
-                    <Button variant="outline" size="sm" onClick={addIntegration} className="h-7 px-2">
-                      <Plus className="w-3 h-3" />
+                    <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="gap-1 text-xs text-muted-foreground">
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={saveConfig} disabled={isSaving} className="gap-1.5 text-xs">
+                      {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                      Save
                     </Button>
                   </div>
+                )}
+              </div>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Name</p>
+                  {isEditing ? (
+                    <Input value={editName} onChange={e => setEditName(e.target.value)} className="h-8 text-sm" placeholder="Agent name" />
+                  ) : (
+                    <p className="text-sm text-foreground font-medium">{agent.name}</p>
+                  )}
                 </div>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {(agent.required_integrations?.length > 0) ? agent.required_integrations.map((i: string) => (
-                    <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                      {i}
-                    </span>
-                  )) : <p className="text-xs text-muted-foreground">None</p>}
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Description</p>
+                  {isEditing ? (
+                    <Textarea value={editDescription} onChange={e => setEditDescription(e.target.value)} className="text-sm min-h-[60px]" placeholder="Agent description" />
+                  ) : (
+                    <p className="text-sm text-foreground">{agent.description || '—'}</p>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="p-3 rounded-lg border border-border bg-secondary/30">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Created</p>
-              <p className="text-sm text-foreground">{new Date(agent.created_at).toLocaleString()}</p>
-            </div>
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-sm text-foreground">{agent.status}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Agent ID</p>
+                  <p className="text-xs text-foreground font-mono">{agent.id}</p>
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5">Integrations</p>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {editIntegrations.map(i => (
+                          <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+                            {i}
+                            <button onClick={() => setEditIntegrations(editIntegrations.filter(x => x !== i))} className="hover:text-destructive">
+                              <X className="w-2.5 h-2.5" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Input
+                          value={newIntegration}
+                          onChange={e => setNewIntegration(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addIntegration(); } }}
+                          placeholder="Add integration..."
+                          className="h-7 text-xs flex-1"
+                        />
+                        <Button variant="outline" size="sm" onClick={addIntegration} className="h-7 px-2">
+                          <Plus className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {(agent.required_integrations?.length > 0) ? agent.required_integrations.map((i: string) => (
+                        <span key={i} className="text-[10px] px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {i}
+                        </span>
+                      )) : <p className="text-xs text-muted-foreground">None</p>}
+                    </div>
+                  )}
+                </div>
+                <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Created</p>
+                  <p className="text-sm text-foreground">{new Date(agent.created_at).toLocaleString()}</p>
+                </div>
 
-            {/* Delete Agent */}
-            <div className="pt-4 mt-4 border-t border-border">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="w-full gap-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Delete Agent
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="bg-background border-border">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-foreground">Delete "{agent.name}"?</AlertDialogTitle>
-                    <AlertDialogDescription className="text-muted-foreground">
-                      This will permanently delete this agent, all its runs, and configuration. This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel className="text-xs">Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      disabled={isDeleting}
-                      className="bg-red-600 hover:bg-red-700 text-white text-xs gap-1.5"
-                      onClick={async (e) => {
-                        e.preventDefault();
-                        setIsDeleting(true);
-                        const { error } = await supabase.from('agents').delete().eq('id', agent.id);
-                        if (error) {
-                          toast.error('Failed to delete agent');
-                          setIsDeleting(false);
-                        } else {
-                          toast.success('Agent deleted');
-                          navigate('/builder');
-                        }
-                      }}
-                    >
-                      {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
+                {/* Delete Agent */}
+                <div className="pt-4 mt-4 border-t border-border">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="w-full gap-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Delete Agent
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="bg-background border-border">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-foreground">Delete "{agent.name}"?</AlertDialogTitle>
+                        <AlertDialogDescription className="text-muted-foreground">
+                          This will permanently delete this agent, all its runs, and configuration. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel className="text-xs">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={isDeleting}
+                          className="bg-red-600 hover:bg-red-700 text-white text-xs gap-1.5"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            setIsDeleting(true);
+                            const { error } = await supabase.from('agents').delete().eq('id', agent.id);
+                            if (error) {
+                              toast.error('Failed to delete agent');
+                              setIsDeleting(false);
+                            } else {
+                              toast.success('Agent deleted');
+                              navigate('/builder');
+                            }
+                          }}
+                        >
+                          {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+
+      {/* Mobile: show tabs below for small screens */}
+      <div className="md:hidden border-t border-border">
+        <Tabs value={rightTab} onValueChange={setRightTab}>
+          <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0">
+            {[
+              { value: 'logs', label: 'Logs', icon: Terminal },
+              { value: 'runs', label: 'Runs', icon: Activity },
+              { value: 'config', label: 'Config', icon: Settings2 },
+            ].map(t => (
+              <TabsTrigger
+                key={t.value}
+                value={t.value}
+                className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-1.5 text-xs py-2.5"
+              >
+                <t.icon className="w-3.5 h-3.5" />
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
 
       <MobileBottomNav />
     </div>
