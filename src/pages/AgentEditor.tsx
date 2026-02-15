@@ -14,6 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import MobileBottomNav from '@/components/MobileBottomNav';
 
 interface ChatMessage {
@@ -77,6 +82,7 @@ const AgentEditor = () => {
   const [editIntegrations, setEditIntegrations] = useState<string[]>([]);
   const [newIntegration, setNewIntegration] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   useEffect(() => {
     if (!agentId) return;
     const fetchAgent = async () => {
@@ -564,6 +570,48 @@ const AgentEditor = () => {
             <div className="p-3 rounded-lg border border-border bg-secondary/30">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Created</p>
               <p className="text-sm text-foreground">{new Date(agent.created_at).toLocaleString()}</p>
+            </div>
+
+            {/* Delete Agent */}
+            <div className="pt-4 mt-4 border-t border-border">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full gap-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete Agent
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="bg-background border-border">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="text-foreground">Delete "{agent.name}"?</AlertDialogTitle>
+                    <AlertDialogDescription className="text-muted-foreground">
+                      This will permanently delete this agent, all its runs, and configuration. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="text-xs">Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      disabled={isDeleting}
+                      className="bg-red-600 hover:bg-red-700 text-white text-xs gap-1.5"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        setIsDeleting(true);
+                        const { error } = await supabase.from('agents').delete().eq('id', agent.id);
+                        if (error) {
+                          toast.error('Failed to delete agent');
+                          setIsDeleting(false);
+                        } else {
+                          toast.success('Agent deleted');
+                          navigate('/builder');
+                        }
+                      }}
+                    >
+                      {isDeleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
         </TabsContent>
