@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Send, Terminal, Settings2, Activity, Loader2,
   CheckCircle2, XCircle, AlertTriangle, Bot, User, Trash2,
-  Square, RotateCcw, Pencil, Save, Plus, X,
+  Square, RotateCcw, Pencil, Save, Plus, X, ChevronUp, ChevronDown,
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'sonner';
@@ -48,6 +48,180 @@ const logTypeIcons: Record<LogEntry['type'], React.ReactNode> = {
   success: <CheckCircle2 className="w-3 h-3" />,
   error: <XCircle className="w-3 h-3" />,
   warning: <AlertTriangle className="w-3 h-3" />,
+};
+
+/* ─── Mobile Bottom Drawer ─── */
+const MobileDrawer = ({
+  rightTab, setRightTab, logs, setLogs, runs, agent, formatTime,
+  isEditing, startEditing, setIsEditing,
+  editName, setEditName, editDescription, setEditDescription,
+  editIntegrations, setEditIntegrations, newIntegration, setNewIntegration,
+  addIntegration, saveConfig, isSaving, isDeleting, setIsDeleting, navigate,
+}: any) => {
+  const [open, setOpen] = useState(false);
+
+  const tabs = [
+    { value: 'logs', label: 'Logs', icon: Terminal },
+    { value: 'runs', label: 'Runs', icon: Activity },
+    { value: 'config', label: 'Config', icon: Settings2 },
+  ];
+
+  return (
+    <div className="md:hidden fixed bottom-0 left-0 right-0 z-30">
+      {/* Backdrop */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/40 z-20"
+            onClick={() => setOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Drawer */}
+      <motion.div
+        className="relative z-30 bg-background border-t border-border rounded-t-2xl"
+        animate={{ height: open ? '65vh' : 48 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+      >
+        {/* Handle bar + tab switcher */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center justify-center py-2"
+        >
+          <div className="w-10 h-1 rounded-full bg-muted-foreground/30 mb-1" />
+        </button>
+
+        <div className="flex items-center px-2 gap-1">
+          {tabs.map(t => (
+            <button
+              key={t.value}
+              onClick={() => { setRightTab(t.value); if (!open) setOpen(true); }}
+              className={`flex-1 flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-lg transition-colors ${
+                rightTab === t.value
+                  ? 'text-primary bg-primary/10'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <t.icon className="w-3.5 h-3.5" />
+              {t.label}
+            </button>
+          ))}
+          <button onClick={() => setOpen(!open)} className="p-1.5 text-muted-foreground">
+            {open ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* Content */}
+        {open && (
+          <div className="overflow-y-auto px-4 pt-2 pb-20" style={{ maxHeight: 'calc(65vh - 80px)' }}>
+            {rightTab === 'logs' && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Agent Logs</h3>
+                  {logs.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setLogs([])} className="gap-1.5 text-xs text-muted-foreground">
+                      <Trash2 className="w-3 h-3" /> Clear
+                    </Button>
+                  )}
+                </div>
+                {logs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Terminal className="w-8 h-8 mb-3 opacity-30" />
+                    <p className="text-xs">No logs yet</p>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-border bg-background/80 p-2 space-y-1">
+                    {logs.map((log: any, i: number) => (
+                      <div key={i} className={`flex items-start gap-1.5 text-[11px] font-mono ${logTypeStyles[log.type]}`}>
+                        <span className="flex-shrink-0 mt-px">{logTypeIcons[log.type]}</span>
+                        <span className="text-muted-foreground/50 flex-shrink-0">{formatTime(log.timestamp)}</span>
+                        <span className="break-all">{log.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {rightTab === 'runs' && (
+              <>
+                <h3 className="text-sm font-semibold text-foreground mb-3">Recent Runs</h3>
+                {runs.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <Activity className="w-8 h-8 mb-3 opacity-30" />
+                    <p className="text-xs">No runs yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {runs.map((run: any) => (
+                      <div key={run.id} className="p-3 rounded-lg border border-border bg-secondary/30">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                            run.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
+                            run.status === 'failed' ? 'bg-red-500/10 text-red-400' :
+                            'bg-primary/10 text-primary'
+                          }`}>{run.status}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(run.created_at).toLocaleString()}
+                          </span>
+                        </div>
+                        {run.earnings != null && (
+                          <p className="text-xs text-muted-foreground mt-1">Earnings: {run.earnings} USDC</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {rightTab === 'config' && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground">Configuration</h3>
+                  {!isEditing ? (
+                    <Button variant="ghost" size="sm" onClick={startEditing} className="gap-1.5 text-xs">
+                      <Pencil className="w-3 h-3" /> Edit
+                    </Button>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)} className="gap-1 text-xs text-muted-foreground">Cancel</Button>
+                      <Button size="sm" onClick={saveConfig} disabled={isSaving} className="gap-1.5 text-xs">
+                        {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
+                        Save
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Name</p>
+                    {isEditing ? (
+                      <Input value={editName} onChange={(e: any) => setEditName(e.target.value)} className="h-8 text-sm" />
+                    ) : (
+                      <p className="text-sm text-foreground font-medium">{agent.name}</p>
+                    )}
+                  </div>
+                  <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Status</p>
+                    <p className="text-sm text-foreground">{agent.status}</p>
+                  </div>
+                  <div className="p-3 rounded-lg border border-border bg-secondary/30">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Agent ID</p>
+                    <p className="text-xs text-foreground font-mono">{agent.id}</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </motion.div>
+    </div>
+  );
 };
 
 const AgentEditor = () => {
@@ -620,27 +794,33 @@ const AgentEditor = () => {
         </div>
       </div>
 
-      {/* Mobile: show tabs below for small screens */}
-      <div className="md:hidden border-t border-border">
-        <Tabs value={rightTab} onValueChange={setRightTab}>
-          <TabsList className="w-full rounded-none border-b border-border bg-transparent h-auto p-0">
-            {[
-              { value: 'logs', label: 'Logs', icon: Terminal },
-              { value: 'runs', label: 'Runs', icon: Activity },
-              { value: 'config', label: 'Config', icon: Settings2 },
-            ].map(t => (
-              <TabsTrigger
-                key={t.value}
-                value={t.value}
-                className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent gap-1.5 text-xs py-2.5"
-              >
-                <t.icon className="w-3.5 h-3.5" />
-                {t.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      </div>
+      {/* Mobile: collapsible bottom drawer */}
+      <MobileDrawer
+        rightTab={rightTab}
+        setRightTab={setRightTab}
+        logs={logs}
+        setLogs={setLogs}
+        runs={runs}
+        agent={agent}
+        formatTime={formatTime}
+        isEditing={isEditing}
+        startEditing={startEditing}
+        setIsEditing={setIsEditing}
+        editName={editName}
+        setEditName={setEditName}
+        editDescription={editDescription}
+        setEditDescription={setEditDescription}
+        editIntegrations={editIntegrations}
+        setEditIntegrations={setEditIntegrations}
+        newIntegration={newIntegration}
+        setNewIntegration={setNewIntegration}
+        addIntegration={addIntegration}
+        saveConfig={saveConfig}
+        isSaving={isSaving}
+        isDeleting={isDeleting}
+        setIsDeleting={setIsDeleting}
+        navigate={navigate}
+      />
 
       <MobileBottomNav />
     </div>
