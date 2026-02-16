@@ -75,7 +75,16 @@ const Auth = () => {
     } else {
       const { error } = await signIn(email, password);
       if (error) {
-        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        const msg = error.message.toLowerCase();
+        if (msg.includes('invalid login credentials')) {
+          toast({
+            title: 'Sign in failed',
+            description: 'Incorrect password, or this email is linked to Google Sign-In. Try signing in with Google instead.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        }
       }
     }
     setSubmitting(false);
@@ -128,7 +137,19 @@ const Auth = () => {
       // Code verified — now create the account
       const { error: signUpError } = await signUp(email, password, fullName.trim());
       if (signUpError) {
-        toast({ title: 'Error', description: signUpError.message, variant: 'destructive' });
+        const msg = signUpError.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('unique constraint') || msg.includes('duplicate')) {
+          toast({
+            title: 'Account already exists',
+            description: 'This email is already registered — possibly via Google Sign-In. Try signing in with Google or use your existing password.',
+            variant: 'destructive',
+          });
+          setStep('form');
+          setIsSignUp(false);
+          setCode(['', '', '', '']);
+        } else {
+          toast({ title: 'Error', description: signUpError.message, variant: 'destructive' });
+        }
         setVerifying(false);
         return;
       }
