@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Heart, Zap, Clock, DollarSign, Activity, Shield, Cpu } from 'lucide-react';
-import { botAvatars } from '@/data/botAvatars';
+import { useBotAvatars } from '@/hooks/useBotAvatars';
 import type { AgentConfig } from '@/types/agentBuilder';
 import { AI_MODEL } from '@/types/agentBuilder';
 
@@ -8,13 +8,16 @@ interface BotProfilePanelProps {
   config: AgentConfig;
 }
 
-const getAvatarForName = (name: string) => {
-  const hash = Array.from(name || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return botAvatars[hash % botAvatars.length];
-};
-
 const BotProfilePanel = ({ config }: BotProfilePanelProps) => {
-  const avatarSrc = useMemo(() => getAvatarForName(config.name), [config.name]);
+  const botAvatars = useBotAvatars();
+
+  const getAvatarForName = (name: string) => {
+    if (!botAvatars.length) return null;
+    const hash = Array.from(name || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return botAvatars[hash % botAvatars.length];
+  };
+
+  const avatarSrc = useMemo(() => getAvatarForName(config.name), [config.name, botAvatars]);
 
   const enabledSkills = config.skills.filter(s => s.enabled).length;
   const connectedIntegrations = config.integrations.filter(i => i.connected).length;
