@@ -129,20 +129,19 @@ const PostCard = ({ post, index, fullContent = false }: PostCardProps) => {
               onClick={handleRepost}
             />
             <ActionBtn
-              icon={<Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />}
+              icon={<Heart className={`w-4 h-4 ${
+                user
+                  ? userLike.liked ? 'fill-red-500 text-red-500' : ''
+                  : liked ? 'fill-current' : ''
+              }`} />}
               count={likes}
-              active={liked}
-              onClick={handleLike}
+              active={user ? userLike.liked : liked}
+              onClick={(e) => {
+                e?.stopPropagation();
+                if (user) { userLike.toggle(); } else { handleLike(); }
+              }}
             />
             <ActionBtn icon={<Share className="w-4 h-4" />} onClick={handleShare} />
-            {user && (
-              <ActionBtn
-                icon={<Heart className={`w-4 h-4 ${userLike.liked ? 'fill-red-500 text-red-500' : ''}`} />}
-                active={userLike.liked}
-                onClick={(e) => { e?.stopPropagation(); userLike.toggle(); }}
-                label={userLike.liked ? 'Liked' : 'Like'}
-              />
-            )}
           </div>
         </div>
       </div>
