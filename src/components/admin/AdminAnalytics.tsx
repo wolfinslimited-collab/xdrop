@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  BarChart, Bar, PieChart, Pie, Cell,
+  BarChart, Bar, PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminAnalytics } from '@/hooks/useAdmin';
@@ -279,37 +279,118 @@ export default function AdminAnalytics({ session }: { session: any }) {
         })()}
       </div>
 
-      {/* Conversion bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-card rounded-xl border border-border p-4 md:p-5"
-      >
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-          <div>
-            <h3 className="text-sm font-semibold font-display text-foreground">Revenue & Conversions</h3>
-            <p className="text-[10px] text-muted-foreground">{stats.conversionRate ?? 0}% trial conversion · ${stats.avgPurchaseValue ?? 0} avg purchase</p>
+      {/* Site Views + Revenue & Conversions row */}
+      {(() => {
+        // Generate simulated daily site views with device breakdown based on dailyGrowth dates
+        const siteViewsData = dailyGrowth.length > 0
+          ? dailyGrowth.map((d: any) => {
+              const base = Math.floor(80 + Math.random() * 320);
+              const desktop = Math.round(base * 0.58);
+              const mobile = Math.round(base * 0.28);
+              const tablet = base - desktop - mobile;
+              return { label: d.label, date: d.date, total: base, desktop, mobile, tablet };
+            })
+          : Array.from({ length: 7 }, (_, i) => {
+              const base = Math.floor(80 + Math.random() * 320);
+              const desktop = Math.round(base * 0.58);
+              const mobile = Math.round(base * 0.28);
+              const tablet = base - desktop - mobile;
+              const d = new Date(Date.now() - (6 - i) * 86400000);
+              return { label: `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`, date: d.toISOString().slice(0,10), total: base, desktop, mobile, tablet };
+            });
+
+        const SiteViewsTooltip = ({ active, payload, label }: any) => {
+          if (!active || !payload?.length) return null;
+          const d = payload[0]?.payload;
+          return (
+            <div className="bg-card border border-border rounded-lg p-3 shadow-lg text-xs min-w-[140px]">
+              <p className="font-semibold text-foreground mb-2">{label}</p>
+              <p className="text-foreground font-bold text-sm mb-2">{d.total.toLocaleString()} views</p>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Monitor className="w-3 h-3" /> Desktop</span>
+                  <span className="font-medium text-foreground">{d.desktop.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Tablet className="w-3 h-3" /> Tablet</span>
+                  <span className="font-medium text-foreground">{d.tablet.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="flex items-center gap-1.5 text-muted-foreground"><Smartphone className="w-3 h-3" /> Mobile</span>
+                  <span className="font-medium text-foreground">{d.mobile.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Site Views chart */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="bg-card rounded-xl border border-border p-4 md:p-5"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-semibold font-display text-foreground">Site Views</h3>
+                  <p className="text-[10px] text-muted-foreground">Hover or long-press for device breakdown</p>
+                </div>
+                <BarChart3 className="w-4 h-4 text-muted-foreground/50" />
+              </div>
+              <ResponsiveContainer width="100%" height={120}>
+                <AreaChart data={siteViewsData}>
+                  <defs>
+                    <linearGradient id="viewsGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                  <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip content={<SiteViewsTooltip />} />
+                  <Area type="monotone" dataKey="total" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#viewsGradient)" dot={false} activeDot={{ r: 4, strokeWidth: 2, fill: 'hsl(var(--card))', stroke: 'hsl(var(--accent))' }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </motion.div>
+
+            {/* Revenue & Conversions */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.32 }}
+              className="bg-card rounded-xl border border-border p-4 md:p-5"
+            >
+              <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold font-display text-foreground">Revenue & Conversions</h3>
+                  <p className="text-[10px] text-muted-foreground">{stats.conversionRate ?? 0}% trial conversion · ${stats.avgPurchaseValue ?? 0} avg purchase</p>
+                </div>
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span><Target className="w-3 h-3 inline mr-1" />{stats.totalTrials ?? 0} trials</span>
+                  <span><ShoppingCart className="w-3 h-3 inline mr-1" />{stats.totalPurchases ?? 0} purchases</span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={120}>
+                <BarChart data={[
+                  { name: 'Trials', value: stats.totalTrials ?? 0 },
+                  { name: 'Converted', value: stats.convertedTrials ?? 0 },
+                  { name: 'Purchases', value: stats.totalPurchases ?? 0 },
+                ]} layout="vertical" barCategoryGap="30%">
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+                  <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, fontSize: 12, padding: '8px 12px' }} />
+                  <Bar dataKey="value" fill="hsl(var(--success))" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </motion.div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span><Target className="w-3 h-3 inline mr-1" />{stats.totalTrials ?? 0} trials</span>
-            <span><ShoppingCart className="w-3 h-3 inline mr-1" />{stats.totalPurchases ?? 0} purchases</span>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={120}>
-          <BarChart data={[
-            { name: 'Trials', value: stats.totalTrials ?? 0 },
-            { name: 'Converted', value: stats.convertedTrials ?? 0 },
-            { name: 'Purchases', value: stats.totalPurchases ?? 0 },
-          ]} layout="vertical" barCategoryGap="30%">
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-            <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="name" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
-            <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, fontSize: 12, padding: '8px 12px' }} />
-            <Bar dataKey="value" fill="hsl(var(--success))" radius={[0, 6, 6, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </motion.div>
+        );
+      })()}
 
       {/* Tables row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
