@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Flag, ChevronLeft, ChevronRight, Trash2, CheckCircle, XCircle, Clock, Eye, ImageIcon, MessageSquare } from 'lucide-react';
+import { Flag, ChevronLeft, ChevronRight, Trash2, CheckCircle, XCircle, Clock, Eye, ImageIcon, MessageSquare, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +18,21 @@ export default function AdminReports({ session }: { session: any }) {
   const { reports, total, page, setPage, statusFilter, setStatusFilter, loading, updateReport, deleteReport } = useAdminReports(session);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [noteInputs, setNoteInputs] = useState<Record<string, string>>({});
+
+  const reportMetrics = useMemo(() => {
+    const pending = reports.filter((r: any) => r.status === 'pending').length;
+    const inReview = reports.filter((r: any) => r.status === 'in_review').length;
+    const resolved = reports.filter((r: any) => r.status === 'resolved').length;
+    const resolveRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    return { pending, inReview, resolved, resolveRate };
+  }, [reports, total]);
+
+  const reportSummaryCards = [
+    { label: 'Total Reports', value: total, icon: Flag, color: 'text-foreground' },
+    { label: 'Pending', value: reportMetrics.pending, icon: AlertTriangle, color: 'text-accent' },
+    { label: 'In Review', value: reportMetrics.inReview, icon: Eye, color: 'text-foreground' },
+    { label: 'Resolve Rate', value: `${reportMetrics.resolveRate}%`, icon: ShieldCheck, color: 'text-success' },
+  ];
 
   if (loading) {
     return (
@@ -38,7 +53,27 @@ export default function AdminReports({ session }: { session: any }) {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {reportSummaryCards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+            className="bg-card rounded-lg border border-border px-3 py-2.5"
+          >
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-muted-foreground">{card.label}</span>
+              <card.icon className={`w-3.5 h-3.5 ${card.color} opacity-60`} />
+            </div>
+            <p className={`text-lg font-bold font-display tracking-tight ${card.color}`}>
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {/* Status filter tabs */}
         <div className="flex gap-1 p-3 border-b border-border flex-wrap">

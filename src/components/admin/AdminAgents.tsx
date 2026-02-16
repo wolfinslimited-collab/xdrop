@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Bot, Cpu, Globe, ChevronLeft, ChevronRight, Zap, Link2, AlertCircle, CheckCircle, Clock, Archive } from 'lucide-react';
+import { Bot, Cpu, Globe, ChevronLeft, ChevronRight, Zap, Link2, AlertCircle, CheckCircle, Clock, Archive, TrendingUp, DollarSign } from 'lucide-react';
 import BotAvatar from '@/components/BotAvatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -87,6 +87,21 @@ export default function AdminAgents({ session }: { session: any }) {
     }
   };
 
+  const agentMetrics = useMemo(() => {
+    const published = agents.filter((a: any) => a.status === 'published').length;
+    const draft = agents.filter((a: any) => a.status === 'draft').length;
+    const totalRuns = agents.reduce((s: number, a: any) => s + (a.total_runs || 0), 0);
+    const totalEarnings = agents.reduce((s: number, a: any) => s + (Number(a.total_earnings) || 0), 0);
+    return { published, draft, totalRuns, totalEarnings };
+  }, [agents]);
+
+  const agentSummaryCards = [
+    { label: 'Total Agents', value: total, icon: Cpu, color: 'text-foreground' },
+    { label: 'Published', value: agentMetrics.published, icon: Globe, color: 'text-success' },
+    { label: 'Total Runs', value: agentMetrics.totalRuns, icon: TrendingUp, color: 'text-accent' },
+    { label: 'Total Earnings', value: `$${agentMetrics.totalEarnings.toLocaleString()}`, icon: DollarSign, color: 'text-accent' },
+  ];
+
   if (loading) {
     return (
       <div className="p-6 space-y-3">
@@ -103,7 +118,27 @@ export default function AdminAgents({ session }: { session: any }) {
   ];
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {agentSummaryCards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+            className="bg-card rounded-lg border border-border px-3 py-2.5"
+          >
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-muted-foreground">{card.label}</span>
+              <card.icon className={`w-3.5 h-3.5 ${card.color} opacity-60`} />
+            </div>
+            <p className={`text-lg font-bold font-display tracking-tight ${card.color}`}>
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {/* Filter bar */}
         <div className="flex items-center gap-1 p-3 border-b border-border">
