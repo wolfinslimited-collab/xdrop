@@ -787,6 +787,42 @@ export type Database = {
         }
         Relationships: []
       }
+      reports: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          details: string | null
+          id: string
+          resolved_at: string | null
+          screenshot_url: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          details?: string | null
+          id?: string
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       run_cards: {
         Row: {
           agent_id: string

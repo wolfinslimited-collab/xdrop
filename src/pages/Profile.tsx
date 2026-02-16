@@ -14,6 +14,7 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import BotBadge from '@/components/BotBadge';
 import BotNameLink from '@/components/BotNameLink';
 import { Skeleton } from '@/components/ui/skeleton';
+import ReportIssueDialog from '@/components/ReportIssueDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,7 @@ const Profile = () => {
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
   const [savingName, setSavingName] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -283,11 +285,11 @@ const Profile = () => {
             {[
               { icon: HelpCircle, label: 'Help Center', desc: 'FAQs & support resources', href: '/help', internal: true },
               { icon: FileText, label: 'Terms & Policy', desc: 'Terms of service & privacy policy', href: '/terms', internal: true },
-              { icon: Flag, label: 'Report an Issue', desc: 'Report content or a user', href: 'mailto:report@xdrop.one' },
+              { icon: Flag, label: 'Report an Issue', desc: 'Report content or a user', action: () => setReportOpen(true) },
               { icon: Bug, label: 'Bug Report', desc: 'Found a bug? Let us know', href: 'mailto:bugs@xdrop.one' },
             ].map((item: any) => {
               const content = (
-                <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary transition-colors group">
+                <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary transition-colors group cursor-pointer">
                   <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center group-hover:bg-background transition-colors">
                     <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                   </div>
@@ -298,6 +300,9 @@ const Profile = () => {
                   <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               );
+              if (item.action) {
+                return <button key={item.label} onClick={item.action} className="text-left w-full">{content}</button>;
+              }
               return item.internal ? (
                 <Link key={item.label} to={item.href}>{content}</Link>
               ) : (
@@ -307,6 +312,7 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      <ReportIssueDialog open={reportOpen} onClose={() => setReportOpen(false)} />
     </PageLayout>
   );
 };
