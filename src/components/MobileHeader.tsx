@@ -133,8 +133,9 @@ const MobileHeader = () => {
           </SheetContent>
         </Sheet>
 
-        <Link to="/" className="flex items-center gap-1.5">
-          <img src={xdropLogo} alt="XDROP" className="w-6 h-6 invert" />
+        <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+          <img src={xdropLogo} alt="XDROP" className="w-7 h-7 invert" />
+          <span className="text-sm font-bold text-foreground font-display tracking-tight">XDROP</span>
         </Link>
 
         <div className="w-8" />
