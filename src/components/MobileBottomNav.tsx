@@ -1,12 +1,11 @@
-import { Home, Store, Swords, Search } from 'lucide-react';
+import { Home, Store, Search } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import openclawMascot from '@/assets/openclaw-mascot.png';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/home' },
   { icon: Store, label: 'Marketplace', path: '/marketplace' },
-  { icon: null, label: 'Build', path: '/builder', customIcon: true },
-  // { icon: Swords, label: 'Arena', path: '/games' },
+  { icon: null, label: 'Builder', path: '/builder', customIcon: true },
   { icon: Search, label: 'Explore', path: '/explore' },
 ];
 
@@ -22,16 +21,29 @@ const MobileBottomNav = () => {
             <Link
               key={item.label}
               to={item.path}
-              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors ${
-                isActive ? 'text-foreground' : 'text-muted-foreground'
+              className={`flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-all group ${
+                isActive ? '' : ''
               }`}
             >
               {item.customIcon ? (
-                <img src={openclawMascot} alt="" className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-60'}`} />
+                <img src={openclawMascot} alt="" className={`w-5 h-5 ${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-90'}`} />
               ) : item.icon ? (
-                <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.5} />
+                <item.icon
+                  className={`w-5 h-5 ${
+                    isActive ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
+                  }`}
+                  strokeWidth={isActive ? 2.5 : 1.5}
+                />
               ) : null}
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span
+                className={`text-[10px] ${
+                  isActive
+                    ? 'text-foreground font-extrabold'
+                    : 'text-foreground/70 font-semibold group-hover:text-foreground'
+                }`}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
