@@ -67,22 +67,18 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Banner area */}
-        <div className="h-32 bg-secondary relative" />
-
-        {/* Profile header section */}
-        <div className="px-4 pb-4 relative">
-          {/* Avatar - overlapping banner */}
-          <div className="-mt-12 mb-3 flex items-end justify-between">
-            <Avatar className="w-24 h-24 border-4 border-background">
+        {/* Profile header */}
+        <div className="px-4 pt-5 pb-4">
+          {/* Avatar row + actions */}
+          <div className="flex items-start justify-between mb-4">
+            <Avatar className="w-20 h-20">
               <AvatarImage src={avatarUrl} alt={fullName} />
               <AvatarFallback className="text-2xl font-bold bg-secondary text-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 pb-1">
+            <div className="flex items-center gap-2 mt-1">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" className="rounded-full w-9 h-9 border-border">
@@ -130,7 +126,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Name & handle */}
+          {/* Name & email */}
           <div className="mb-3">
             {editingName ? (
               <motion.div
@@ -150,7 +146,7 @@ const Profile = () => {
                 <button
                   disabled={savingName}
                   onClick={handleSaveName}
-                  className="p-2 rounded-full hover:bg-secondary text-green-500 transition-colors"
+                  className="p-2 rounded-full hover:bg-secondary text-success transition-colors"
                 >
                   <Check className="w-4 h-4" />
                 </button>
@@ -177,9 +173,9 @@ const Profile = () => {
             <p className="text-sm text-muted-foreground">{email}</p>
           </div>
 
-          {/* Joined date */}
+          {/* Joined */}
           {createdAt && (
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-4">
+            <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="w-4 h-4" />
               <span className="text-sm">Joined {createdAt}</span>
             </div>
@@ -189,7 +185,7 @@ const Profile = () => {
         {/* Divider */}
         <div className="border-b border-border" />
 
-        {/* Empty state for future content */}
+        {/* Empty state */}
         <div className="px-4 py-16 text-center">
           <p className="text-muted-foreground text-sm">No activity yet</p>
         </div>
