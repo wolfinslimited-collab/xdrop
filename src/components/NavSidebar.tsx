@@ -4,7 +4,6 @@ import {
   Home,
   Search,
   Bell,
-  
   Bot,
   Store,
   BarChart3,
@@ -14,6 +13,7 @@ import {
   LogIn,
   LogOut,
   Shield,
+  UserCircle,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
@@ -110,18 +110,31 @@ const NavSidebar = () => {
           </Button>
         </div>
 
-        {/* Auth */}
+        {/* Auth / Profile */}
         <div className="mt-6 w-full border-t border-border pt-4 px-1">
           {user ? (
-            <Button
-              variant="ghost"
-              onClick={() => signOut()}
-              className="w-full justify-start gap-4"
-              size="lg"
+            <Link
+              to="/profile"
+              className={`flex items-center gap-4 px-3 py-2.5 rounded-lg transition-all hover:bg-secondary group w-full ${
+                location.pathname === '/profile' ? 'bg-secondary' : ''
+              }`}
             >
-              <LogOut className="w-4 h-4" strokeWidth={1.5} />
-              Sign Out
-            </Button>
+              <UserCircle
+                className={`w-5 h-5 ${
+                  location.pathname === '/profile' ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
+                }`}
+                strokeWidth={location.pathname === '/profile' ? 2.5 : 1.5}
+              />
+              <span
+                className={`text-sm truncate ${
+                  location.pathname === '/profile'
+                    ? 'text-foreground font-extrabold'
+                    : 'text-foreground/70 font-semibold group-hover:text-foreground'
+                }`}
+              >
+                {user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.name?.split(' ')[0] || 'Profile'}
+              </span>
+            </Link>
           ) : (
             <Link
               to="/auth"

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Menu, LogIn, LogOut, Bot, Home, Search, Bell, Store, BarChart3, Wallet, Coins, Shield } from 'lucide-react';
+import { Menu, LogIn, LogOut, Bot, Home, Search, Bell, Store, BarChart3, Wallet, Coins, Shield, UserCircle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
 import openclawMascot from '@/assets/openclaw-mascot.png';
@@ -138,7 +138,15 @@ const MobileHeader = () => {
           <span className="text-sm font-bold text-foreground font-display tracking-tight">XDROP</span>
         </Link>
 
-        <div className="w-8" />
+        {user ? (
+          <Link to="/profile" className="p-1.5 -mr-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <UserCircle className="w-5 h-5 text-foreground" />
+          </Link>
+        ) : (
+          <Link to="/auth" className="p-1.5 -mr-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <LogIn className="w-5 h-5 text-foreground" />
+          </Link>
+        )}
       </div>
     </header>
   );

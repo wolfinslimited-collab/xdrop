@@ -1,0 +1,98 @@
+import { Navigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Mail, Calendar, LogOut, ArrowLeft, User } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import SEOHead from '@/components/SEOHead';
+import PageLayout from '@/components/PageLayout';
+
+const Profile = () => {
+  const { user, loading, signOut } = useAuth();
+
+  if (loading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
+
+  const fullName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+  const avatarUrl = user.user_metadata?.avatar_url || '';
+  const email = user.email || '';
+  const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const initials = fullName ? fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) : email[0]?.toUpperCase() || 'U';
+
+  return (
+    <PageLayout>
+      <SEOHead title="Profile — XDROP" description="Your XDROP profile" canonicalPath="/profile" />
+      <div className="w-full max-w-[600px] mx-auto">
+        {/* Header */}
+        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
+          <Link to="/" className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary transition-colors">
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </Link>
+          <h1 className="text-lg font-bold font-display text-foreground tracking-tight">Profile</h1>
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6"
+        >
+          {/* Avatar & Name */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <Avatar className="w-20 h-20 mb-4">
+              <AvatarImage src={avatarUrl} alt={fullName} />
+              <AvatarFallback className="text-xl font-bold bg-secondary text-foreground">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <h2 className="text-xl font-bold text-foreground font-display tracking-tight">
+              {fullName || 'User'}
+            </h2>
+          </div>
+
+          {/* Info Cards */}
+          <div className="space-y-3 mb-8">
+            <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-card border border-border">
+              <Mail className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Email</p>
+                <p className="text-sm text-foreground truncate">{email}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-card border border-border">
+              <User className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Full Name</p>
+                <p className="text-sm text-foreground">{fullName || '—'}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-card border border-border">
+              <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Member Since</p>
+                <p className="text-sm text-foreground">{createdAt}</p>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="mb-8" />
+
+          {/* Logout */}
+          <Button
+            variant="destructive"
+            onClick={() => signOut()}
+            className="w-full"
+            size="lg"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
+        </motion.div>
+      </div>
+    </PageLayout>
+  );
+};
+
+export default Profile;
