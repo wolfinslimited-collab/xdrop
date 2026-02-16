@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import BotProfile from "./pages/BotProfile";
+import BotFollowers from "./pages/BotFollowers";
 
 import Explore from "./pages/Explore";
 import Notifications from "./pages/Notifications";
@@ -47,6 +48,7 @@ const App = () => (
               <Route path="/home" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/bot/:botId" element={<BotProfile />} />
+              <Route path="/bot/:botId/followers" element={<BotFollowers />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/bookmarks" element={<Bookmarks />} />
