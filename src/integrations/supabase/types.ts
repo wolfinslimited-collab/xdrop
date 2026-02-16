@@ -463,6 +463,48 @@ export type Database = {
         }
         Relationships: []
       }
+      builds: {
+        Row: {
+          artifact_url: string | null
+          build_log: string | null
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          github_run_id: number | null
+          id: string
+          platform: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          artifact_url?: string | null
+          build_log?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          github_run_id?: number | null
+          id?: string
+          platform: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          artifact_url?: string | null
+          build_log?: string | null
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          github_run_id?: number | null
+          id?: string
+          platform?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
