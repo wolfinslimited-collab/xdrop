@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Search, ChevronLeft, ChevronRight, Coins, MoreHorizontal } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, ChevronLeft, ChevronRight, Coins, Users, UserPlus, UserCheck, UserMinus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,22 @@ export default function AdminUsers({ session }: { session: any }) {
     ? users.filter((u: any) => (u.display_name || '').toLowerCase().includes(search.toLowerCase()))
     : users;
 
+  // Compute user summary metrics (must be before early returns)
+  const userMetrics = useMemo(() => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 86400000).toISOString();
+    const sixtyDaysAgo = new Date(now.getTime() - 60 * 86400000).toISOString();
+
+    const newToday = users.filter((u: any) => u.created_at >= todayStart).length;
+    const active = users.filter((u: any) => u.credits !== 25 || u.created_at >= thirtyDaysAgo).length;
+    const cohort = users.filter((u: any) => u.created_at >= sixtyDaysAgo && u.created_at < thirtyDaysAgo);
+    const churned = cohort.filter((u: any) => u.credits === 25).length;
+    const churnRate = cohort.length > 0 ? Math.round((churned / cohort.length) * 100) : 0;
+
+    return { newToday, active, churnRate };
+  }, [users]);
+
   if (loading) {
     return (
       <div className="p-6 space-y-3">
@@ -35,8 +51,35 @@ export default function AdminUsers({ session }: { session: any }) {
     }
   };
 
+  const summaryCards = [
+    { label: 'Total Users', value: total, icon: Users, color: 'text-foreground' },
+    { label: 'Active Users', value: userMetrics.active, icon: UserCheck, color: 'text-success' },
+    { label: 'New Today', value: userMetrics.newToday, icon: UserPlus, color: 'text-accent' },
+    { label: 'Churn Rate', value: `${userMetrics.churnRate}%`, icon: UserMinus, color: 'text-destructive' },
+  ];
+
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {summaryCards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+            className="bg-card rounded-lg border border-border px-3 py-2.5"
+          >
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-muted-foreground">{card.label}</span>
+              <card.icon className={`w-3.5 h-3.5 ${card.color} opacity-60`} />
+            </div>
+            <p className={`text-lg font-bold font-display tracking-tight ${card.color}`}>
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {/* Header */}
         <div className="p-4 flex items-center gap-3 border-b border-border">
