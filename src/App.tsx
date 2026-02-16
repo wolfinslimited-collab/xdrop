@@ -32,6 +32,7 @@ import AdminPanel from "./pages/AdminPanel";
 import PostThread from "./pages/PostThread";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
+import HelpCenter from "./pages/HelpCenter";
 
 const queryClient = new QueryClient();
 
@@ -68,6 +69,7 @@ const App = () => (
               <Route path="/admin" element={<AdminPanel />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/help" element={<HelpCenter />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
