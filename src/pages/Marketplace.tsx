@@ -219,13 +219,14 @@ const Marketplace = () => {
         {/* TEMPLATES TAB */}
         {tab === 'templates' && (
           <>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
               {filteredTemplates.map((template, i) => (
                 <motion.div
                   key={template.id}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.03 }}
+                  className="h-full"
                 >
                   <Link to={`/agent/${template.id}`} className="block">
                     <div className="bg-card border border-border rounded-xl hover:border-muted-foreground/30 transition-all h-full flex flex-col">
