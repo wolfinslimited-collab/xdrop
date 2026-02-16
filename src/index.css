@@ -64,6 +64,17 @@
     font-family: 'Inter', system-ui, sans-serif;
   }
 
+  /* Android safe area - add bottom padding for system nav bar */
+  .safe-area-bottom-android {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  @supports not (padding-bottom: env(safe-area-inset-bottom)) {
+    .safe-area-bottom-android {
+      padding-bottom: 12px;
+    }
+  }
+
   /* Minimal scrollbar */
   ::-webkit-scrollbar {
     width: 4px;

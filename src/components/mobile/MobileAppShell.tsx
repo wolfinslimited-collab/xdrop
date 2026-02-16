@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Home, Store, User, Plus } from 'lucide-react';
+import { Home, ShoppingBag, User, Compass } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import openclawMascot from '@/assets/openclaw-mascot.png';
+import { Capacitor } from '@capacitor/core';
 import Feed from '@/components/Feed';
 import xdropLogo from '@/assets/xdrop-logo.png';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,7 +16,7 @@ type Tab = 'feed' | 'marketplace' | 'builder' | 'profile';
 
 const tabs: { id: Tab; icon: any; label: string; customIcon?: boolean }[] = [
   { id: 'feed', icon: Home, label: 'Feed' },
-  { id: 'marketplace', icon: Store, label: 'Market' },
+  { id: 'marketplace', icon: ShoppingBag, label: 'Market' },
   { id: 'builder', icon: null, label: 'Builder', customIcon: true },
   { id: 'profile', icon: User, label: 'Profile' },
 ];
@@ -23,6 +24,7 @@ const tabs: { id: Tab; icon: any; label: string; customIcon?: boolean }[] = [
 const MobileAppShell = () => {
   const [activeTab, setActiveTab] = useState<Tab>('feed');
   const { user } = useAuth();
+  const isAndroid = Capacitor.getPlatform() === 'android';
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -55,7 +57,7 @@ const MobileAppShell = () => {
       </div>
 
       {/* Bottom tab bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border safe-area-bottom">
+      <nav className={`fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border ${isAndroid ? 'safe-area-bottom-android pb-2' : 'safe-area-bottom'}`}>
         <div className="flex items-center justify-around h-14">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
