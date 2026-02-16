@@ -237,7 +237,7 @@ const CryptoWalletsTable = () => {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [balanceFilter, setBalanceFilter] = useState('all');
+  const [balanceFilter, setBalanceFilter] = useState('funded');
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
 
