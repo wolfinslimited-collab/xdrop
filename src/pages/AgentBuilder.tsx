@@ -323,7 +323,7 @@ const AgentBuilder = () => {
   const avatarForDisplay = botAvatars[selectedAvatar];
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden relative">
+    <div className="flex flex-col h-screen bg-background overflow-hidden relative pb-20 md:pb-0">
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         <motion.div
