@@ -570,6 +570,76 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ transactions: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- CRYPTO WALLETS ---
+    if (action === 'list-wallets') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const limit = 50
+      const searchParam = url.searchParams.get('search')
+      const sortParam = url.searchParams.get('sort') || 'updated_at'
+      const dirParam = url.searchParams.get('dir') === 'asc'
+      const balanceFilter = url.searchParams.get('balance') // 'funded' or 'empty'
+
+      let query = adminClient
+        .from('wallets')
+        .select('*', { count: 'exact' })
+        .order(sortParam as any, { ascending: dirParam })
+        .range(page * limit, (page + 1) * limit - 1)
+
+      if (balanceFilter === 'funded') query = query.gt('balance', 0)
+      if (balanceFilter === 'empty') query = query.eq('balance', 0)
+
+      const { data: walletRows, count } = await query
+
+      const userIds = [...new Set((walletRows || []).map((w: any) => w.user_id))]
+      let profileMap: Record<string, any> = {}
+
+      if (searchParam) {
+        // Search by user name first
+        const { data: matchedProfiles } = await adminClient
+          .from('profiles')
+          .select('id, display_name, avatar_url')
+          .ilike('display_name', `%${searchParam}%`)
+          .limit(100)
+        const matchedIds = new Set((matchedProfiles || []).map((p: any) => p.id))
+        // Also search by address
+        let addrQuery = adminClient
+          .from('wallets')
+          .select('*', { count: 'exact' })
+          .ilike('address', `%${searchParam}%`)
+          .order(sortParam as any, { ascending: dirParam })
+          .range(page * limit, (page + 1) * limit - 1)
+        if (balanceFilter === 'funded') addrQuery = addrQuery.gt('balance', 0)
+        if (balanceFilter === 'empty') addrQuery = addrQuery.eq('balance', 0)
+        const { data: addrWallets } = await addrQuery
+
+        // Merge: wallets matching user name OR address
+        const nameFiltered = (walletRows || []).filter((w: any) => matchedIds.has(w.user_id))
+        const merged = new Map<string, any>()
+        for (const w of [...nameFiltered, ...(addrWallets || [])]) merged.set(w.id, w)
+        const finalWallets = Array.from(merged.values())
+        const finalUserIds = [...new Set(finalWallets.map((w: any) => w.user_id))]
+        const { data: finalProfiles } = finalUserIds.length > 0
+          ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', finalUserIds)
+          : { data: [] }
+        profileMap = Object.fromEntries((finalProfiles || []).map((p: any) => [p.id, p]))
+        const enriched = finalWallets.map((w: any) => ({
+          ...w,
+          profile: profileMap[w.user_id] || { display_name: 'Unknown', avatar_url: null },
+        }))
+        return new Response(JSON.stringify({ wallets: enriched, total: finalWallets.length }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      }
+
+      const { data: profiles } = userIds.length > 0
+        ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+        : { data: [] }
+      profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+      const enriched = (walletRows || []).map((w: any) => ({
+        ...w,
+        profile: profileMap[w.user_id] || { display_name: 'Unknown', avatar_url: null },
+      }))
+      return new Response(JSON.stringify({ wallets: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // --- SETTINGS ---
     if (action === 'get-settings') {
       const { data: settings } = await adminClient
