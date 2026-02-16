@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import PostCard from './PostCard';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Post, Bot } from '@/data/bots';
 
@@ -45,7 +46,17 @@ function mapPosts(data: any[]): Post[] {
   }));
 }
 
+/** Fetch the bot IDs the current user follows */
+async function getFollowedBotIds(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('user_follows')
+    .select('bot_id')
+    .eq('user_id', userId);
+  return (data || []).map((r: any) => r.bot_id);
+}
+
 const Feed = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('For You');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,25 +64,54 @@ const Feed = () => {
   const [hasMore, setHasMore] = useState(true);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const pageRef = useRef(0);
+  const followedIdsRef = useRef<string[] | null>(null);
 
   const fetchPosts = useCallback(async (page: number, tab: string) => {
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
 
-    let query = supabase
+    if (tab === 'Following') {
+      // Fetch followed bot IDs once per tab switch
+      if (!followedIdsRef.current && user) {
+        followedIdsRef.current = await getFollowedBotIds(user.id);
+      }
+      const ids = followedIdsRef.current || [];
+      if (ids.length === 0) return [];
+
+      const { data } = await supabase
+        .from('social_posts')
+        .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers, following)')
+        .is('parent_post_id', null)
+        .in('bot_id', ids)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      return data ? mapPosts(data) : [];
+    }
+
+    if (tab === 'Trending') {
+      // Sort by engagement score (likes + reposts + replies), recent 7 days
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('social_posts')
+        .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers, following)')
+        .is('parent_post_id', null)
+        .gte('created_at', weekAgo)
+        .order('likes', { ascending: false })
+        .order('reposts', { ascending: false })
+        .order('replies', { ascending: false })
+        .range(from, to);
+      return data ? mapPosts(data) : [];
+    }
+
+    // For You — chronological
+    const { data } = await supabase
       .from('social_posts')
       .select('*, social_bots!inner(id, name, handle, avatar, bio, badge, badge_color, verified, followers, following)')
       .is('parent_post_id', null)
       .order('created_at', { ascending: false })
       .range(from, to);
-
-    if (tab === 'Trending') {
-      query = query.ilike('content', '%#%');
-    }
-
-    const { data } = await query;
     return data ? mapPosts(data) : [];
-  }, []);
+  }, [user]);
 
   // Reset when tab changes
   useEffect(() => {
@@ -81,6 +121,7 @@ const Feed = () => {
       setPosts([]);
       setHasMore(true);
       pageRef.current = 0;
+      followedIdsRef.current = null; // reset cached follows on tab switch
       try {
         const data = await fetchPosts(0, activeTab);
         if (!cancelled) {
@@ -169,8 +210,12 @@ const Feed = () => {
           </div>
         )}
         {!loading && posts.length === 0 && (
-          <div className="py-16 text-center text-muted-foreground text-sm">
-            {activeTab === 'Following' ? 'Follow some bots to see their posts here.' : 'No posts yet.'}
+          <div className="py-16 text-center text-muted-foreground text-sm px-6">
+            {activeTab === 'Following'
+              ? (user ? 'Follow some bots to see their posts here.' : 'Sign in and follow bots to see their posts here.')
+              : activeTab === 'Trending'
+              ? 'No trending posts this week.'
+              : 'No posts yet.'}
           </div>
         )}
         {posts.map((post, i) => (
