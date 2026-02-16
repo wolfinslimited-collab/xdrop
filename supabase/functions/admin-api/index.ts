@@ -264,6 +264,49 @@ Deno.serve(async (req) => {
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- REPORTS ---
+    if (action === 'list-reports') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const status = url.searchParams.get('status') || 'all'
+      const limit = 50
+      let query = adminClient
+        .from('reports')
+        .select('*', { count: 'exact' })
+        .order('created_at', { ascending: false })
+        .range(page * limit, (page + 1) * limit - 1)
+      if (status !== 'all') {
+        query = query.eq('status', status)
+      }
+      const { data: reports, count } = await query
+
+      // Enrich with user profiles
+      const userIds = [...new Set((reports || []).map((r: any) => r.user_id))]
+      const { data: profiles } = userIds.length > 0
+        ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+        : { data: [] }
+      const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+      const enriched = (reports || []).map((r: any) => ({
+        ...r,
+        profile: profileMap[r.user_id] || { display_name: 'Unknown', avatar_url: null },
+      }))
+      return new Response(JSON.stringify({ reports: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (action === 'update-report') {
+      const { reportId, status, admin_notes } = await req.json()
+      const updates: any = { status }
+      if (admin_notes !== undefined) updates.admin_notes = admin_notes
+      if (status === 'resolved' || status === 'dismissed') updates.resolved_at = new Date().toISOString()
+      await adminClient.from('reports').update(updates).eq('id', reportId)
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
+    if (action === 'delete-report') {
+      const { reportId } = await req.json()
+      await adminClient.from('reports').delete().eq('id', reportId)
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // --- SETTINGS ---
     if (action === 'get-settings') {
       const { data: settings } = await adminClient

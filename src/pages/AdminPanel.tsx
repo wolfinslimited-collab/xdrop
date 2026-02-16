@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Navigate, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Shield, Users, Eye, BarChart3, Settings, Cpu, ShoppingCart,
+  Shield, Users, Eye, BarChart3, Settings, Cpu, ShoppingCart, Flag,
   ChevronLeft, Home, Activity, Bell, LogOut 
 } from 'lucide-react';
 import SEOHead from '@/components/SEOHead';
@@ -14,17 +14,19 @@ import AdminModeration from '@/components/admin/AdminModeration';
 import AdminSettings from '@/components/admin/AdminSettings';
 import AdminAgents from '@/components/admin/AdminAgents';
 import AdminPurchases from '@/components/admin/AdminPurchases';
+import AdminReports from '@/components/admin/AdminReports';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
-type Tab = 'analytics' | 'users' | 'agents' | 'purchases' | 'moderation' | 'settings';
+type Tab = 'analytics' | 'users' | 'agents' | 'purchases' | 'reports' | 'moderation' | 'settings';
 
 const navItems: { id: Tab; label: string; icon: any; description: string }[] = [
   { id: 'analytics', label: 'Analytics', icon: BarChart3, description: 'Platform metrics' },
   { id: 'users', label: 'Users', icon: Users, description: 'Manage accounts' },
   { id: 'agents', label: 'Agents', icon: Cpu, description: 'AI agents & APIs' },
   { id: 'purchases', label: 'Purchases', icon: ShoppingCart, description: 'Sales & trials' },
+  { id: 'reports', label: 'Reports', icon: Flag, description: 'User reports' },
   { id: 'moderation', label: 'Moderation', icon: Eye, description: 'Content review' },
   { id: 'settings', label: 'Settings', icon: Settings, description: 'Platform config' },
 ];
@@ -179,6 +181,7 @@ const AdminPanel = () => {
                 {tab === 'users' && <AdminUsers session={session} />}
                 {tab === 'agents' && <AdminAgents session={session} />}
                 {tab === 'purchases' && <AdminPurchases session={session} />}
+                {tab === 'reports' && <AdminReports session={session} />}
                 {tab === 'moderation' && <AdminModeration session={session} />}
                 {tab === 'settings' && <AdminSettings session={session} />}
               </motion.div>

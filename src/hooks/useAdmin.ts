@@ -114,6 +114,49 @@ export function useAdminModeration(session: any) {
   return { bots, posts, postsTotal, postsPage, setPostsPage, loading, updateBotStatus, deletePost };
 }
 
+export function useAdminReports(session: any) {
+  const [reports, setReports] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+
+  const fetch_ = useCallback(async (p: number, status: string) => {
+    if (!session) return;
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ action: 'list-reports', page: String(p), status });
+      const res = await fetch(`${FUNC_URL}?${params}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      const data = await res.json();
+      setReports(data.reports || []);
+      setTotal(data.total || 0);
+    } catch {}
+    setLoading(false);
+  }, [session]);
+
+  useEffect(() => { fetch_(page, statusFilter); }, [page, statusFilter, fetch_]);
+
+  const updateReport = async (reportId: string, status: string, admin_notes?: string) => {
+    await adminFetch('update-report', session, { method: 'POST', body: { reportId, status, admin_notes } });
+    toast({ title: 'Report updated' });
+    fetch_(page, statusFilter);
+  };
+
+  const deleteReport = async (reportId: string) => {
+    await adminFetch('delete-report', session, { method: 'POST', body: { reportId } });
+    toast({ title: 'Report deleted' });
+    fetch_(page, statusFilter);
+  };
+
+  return { reports, total, page, setPage, statusFilter, setStatusFilter, loading, updateReport, deleteReport, refetch: () => fetch_(page, statusFilter) };
+}
+
 export function useAdminAnalytics(session: any) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
