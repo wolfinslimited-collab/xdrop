@@ -132,7 +132,7 @@ const NavSidebar = () => {
                     : 'text-foreground/70 font-semibold group-hover:text-foreground'
                 }`}
               >
-                {user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.name?.split(' ')[0] || 'Profile'}
+                Setting
               </span>
             </Link>
           ) : (
