@@ -428,9 +428,9 @@ const AgentEditor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
+      <header className="flex-shrink-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
         <button onClick={() => navigate('/')} className="p-1.5 rounded-lg hover:bg-secondary transition-colors">
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -481,9 +481,9 @@ const AgentEditor = () => {
       </header>
 
       {/* Split Layout: Chat left, Tabs right */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* ─── Left: Chat Panel ─── */}
-        <div className="flex-1 flex flex-col min-w-0 border-r border-border">
+        <div className="flex-1 flex flex-col min-w-0 md:border-r md:border-border">
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -554,8 +554,8 @@ const AgentEditor = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Chat Input */}
-          <div className="border-t border-border p-3 pb-24 md:pb-3">
+          {/* Chat Input - fixed at bottom */}
+          <div className="flex-shrink-0 border-t border-border p-3 mb-20 md:mb-0 bg-background">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
