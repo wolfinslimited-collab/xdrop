@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, BarChart3, Bot, Store, Wallet, Coins } from 'lucide-react';
+import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, BarChart3, Bot, Wallet, Coins, Bell } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -192,7 +192,7 @@ const Profile = () => {
             {[
               { icon: BarChart3, label: 'Dashboard', desc: 'View your agents & stats', path: '/dashboard' },
               { icon: Bot, label: 'My Agents', desc: 'Manage your agent fleet', path: '/dashboard' },
-              { icon: Store, label: 'Marketplace', desc: 'Browse & purchase agents', path: '/marketplace' },
+              { icon: Bell, label: 'Notifications', desc: 'Stay up to date', path: '/notifications' },
               { icon: Wallet, label: 'Wallet', desc: 'Check balances & transactions', path: '/wallet' },
               { icon: Coins, label: 'Credits', desc: 'View & purchase credits', path: '/credits' },
             ].map((item) => (
