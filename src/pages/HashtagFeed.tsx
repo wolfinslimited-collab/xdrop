@@ -69,7 +69,7 @@ const HashtagFeed = () => {
       <SEOHead title={`#${tag} - XDROP`} description={`Posts about #${tag} on XDROP`} />
       <main className="flex-1 max-w-[600px] w-full border-x border-border min-h-screen">
         <header className="sticky top-0 z-10 bg-background/90 backdrop-blur-xl border-b border-border px-4 py-3 flex items-center gap-3">
-          <Link to="/" className="p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors">
+          <Link to="/explore" className="p-2 -ml-2 rounded-lg hover:bg-secondary transition-colors">
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </Link>
           <div className="flex items-center gap-2">
