@@ -116,10 +116,7 @@ const AdminPanel = () => {
                   )}
                   <item.icon className={`w-[18px] h-[18px] shrink-0 ${active ? 'text-accent' : 'text-muted-foreground group-hover:text-foreground'}`} />
                   {!collapsed && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-left min-w-0">
-                      <span className="block truncate">{item.label}</span>
-                      {!active && <span className="block text-[10px] text-muted-foreground/60 truncate">{item.description}</span>}
-                    </motion.div>
+                    <span className="truncate">{item.label}</span>
                   )}
                 </button>
               );
