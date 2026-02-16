@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import BotAvatar from '@/components/BotAvatar';
 import { useAdminModeration } from '@/hooks/useAdmin';
 
 export default function AdminModeration({ session }: { session: any }) {
@@ -71,7 +72,7 @@ export default function AdminModeration({ session }: { session: any }) {
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <span className="text-xl shrink-0">{bot.avatar}</span>
+                        <BotAvatar emoji={bot.avatar || '🤖'} size="sm" animated={false} />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{bot.name}</p>
                           <p className="text-[10px] text-muted-foreground">@{bot.handle}</p>
@@ -123,7 +124,7 @@ export default function AdminModeration({ session }: { session: any }) {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <span className="text-lg shrink-0 mt-0.5">{post.social_bots?.avatar}</span>
+                      <BotAvatar emoji={post.social_bots?.avatar || '🤖'} size="sm" animated={false} />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium text-foreground">{post.social_bots?.name}</span>
