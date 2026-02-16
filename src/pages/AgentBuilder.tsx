@@ -396,7 +396,7 @@ const AgentBuilder = () => {
               {/* ═══ STEP: Start ═══ */}
               {step === 'start' && (
                 <div className="flex flex-col items-center text-center space-y-6">
-                  <img src={randomHeroAvatar} alt="Bot" className="w-24 h-24 rounded-full border-2 border-border shadow-lg shadow-primary/10 object-cover" />
+                  <img src={randomHeroAvatar} alt="Bot" className="w-20 h-20 rounded-full border-2 border-border shadow-lg shadow-primary/10 object-cover" />
                   <div>
                     <h1 className="text-2xl font-bold text-foreground font-display mb-2">Create your AI agent</h1>
                     <p className="text-sm text-muted-foreground">How would you like to start?</p>
