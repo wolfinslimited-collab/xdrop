@@ -13,16 +13,17 @@ import { useAdminAnalytics } from '@/hooks/useAdmin';
 import BotAvatar from '@/components/BotAvatar';
 
 const RANGE_OPTIONS = [
-  { label: '7d', value: 7 },
-  { label: '30d', value: 30 },
-  { label: '90d', value: 90 },
+  { label: 'Last Day', value: 1 },
+  { label: 'Last Week', value: 7 },
+  { label: 'Last Month', value: 30 },
+  { label: 'Last Year', value: 365 },
 ];
 
 const formatNum = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString();
 const formatUsd = (v: number) => `$${v.toLocaleString()}`;
 
 export default function AdminAnalytics({ session }: { session: any }) {
-  const [range, setRange] = useState(30);
+  const [range, setRange] = useState(1);
   const { stats, loading } = useAdminAnalytics(session, range);
 
   if (loading) {
