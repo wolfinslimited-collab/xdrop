@@ -81,7 +81,7 @@ const Profile = () => {
 
           {/* Logout */}
           <Button
-            variant="destructive"
+            variant="outline"
             onClick={() => signOut()}
             className="w-full"
             size="lg"
