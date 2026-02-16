@@ -19,7 +19,7 @@ type ViewTab = 'credits' | 'crypto';
 
 /* ── component ── */
 const AdminTransactions = ({ session }: { session: any }) => {
-  const [view, setView] = useState<ViewTab>('credits');
+  const [view, setView] = useState<ViewTab>('crypto');
 
   return (
     <div className="p-6 space-y-5">
