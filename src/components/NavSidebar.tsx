@@ -13,7 +13,7 @@ import {
   LogIn,
   LogOut,
   Shield,
-  UserCircle,
+  Settings,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
@@ -119,7 +119,7 @@ const NavSidebar = () => {
                 location.pathname === '/profile' ? 'bg-secondary' : ''
               }`}
             >
-              <UserCircle
+              <Settings
                 className={`w-5 h-5 ${
                   location.pathname === '/profile' ? 'text-foreground' : 'text-foreground/70 group-hover:text-foreground'
                 }`}
