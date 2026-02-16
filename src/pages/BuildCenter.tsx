@@ -404,8 +404,16 @@ function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }
                   </div>
                   {job.failed_step_log && (
                     <div className="pl-5 mt-1">
-                      <p className="text-xs font-medium text-red-400">Error Output:</p>
-                      <pre className="text-[10px] text-red-300/80 bg-red-950/30 rounded p-2 mt-1 overflow-x-auto max-h-40">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-medium text-red-400">Error Output:</p>
+                        <Button variant="ghost" size="sm" className="h-5 text-[10px] px-1.5" onClick={() => {
+                          navigator.clipboard.writeText(job.failed_step_log || "");
+                          toast.success("Error log copied!");
+                        }}>
+                          <Copy className="h-2.5 w-2.5 mr-1" /> Copy
+                        </Button>
+                      </div>
+                      <pre className="text-[10px] text-red-300/80 bg-red-950/30 rounded p-2 mt-1 overflow-x-auto max-h-96 overflow-y-auto select-all">
                         {job.failed_step_log}
                       </pre>
                     </div>

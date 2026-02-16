@@ -135,16 +135,68 @@ async function handleFetchLogs(supabase: any, buildId: string) {
   if (!jobsRes.ok) throw new Error("Failed to fetch jobs from GitHub");
 
   const jobsData = await jobsRes.json();
-  const jobs = (jobsData.jobs || []).map((job: any) => ({
-    name: job.name,
-    status: job.status,
-    conclusion: job.conclusion,
-    steps: (job.steps || []).map((s: any) => ({
+
+  // For each job with a failed step, fetch the actual log output
+  const jobs = [];
+  for (const job of (jobsData.jobs || [])) {
+    const steps = (job.steps || []).map((s: any) => ({
       name: s.name,
       status: s.status,
       conclusion: s.conclusion,
-    })),
-  }));
+      number: s.number,
+    }));
+
+    let failed_step_log: string | null = null;
+
+    // If job has failed or has a failed step, fetch logs
+    if (job.conclusion === "failure" || job.status === "completed") {
+      const failedStep = steps.find((s: any) => s.conclusion === "failure");
+      if (failedStep) {
+        try {
+          const logRes = await fetch(
+            `https://api.github.com/repos/${GITHUB_REPO}/actions/jobs/${job.id}/logs`,
+            { headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: "application/vnd.github.v3+json" }, redirect: "follow" }
+          );
+          if (logRes.ok) {
+            const fullLog = await logRes.text();
+            // Extract the failed step's log section
+            // GitHub logs are formatted with step headers like "##[group]Run step name"
+            const lines = fullLog.split("\n");
+            const stepLines: string[] = [];
+            let capturing = false;
+            for (const line of lines) {
+              // Step markers vary but typically contain the step name
+              if (line.includes(failedStep.name)) {
+                capturing = true;
+              } else if (capturing && line.match(/^##\[group\]/)) {
+                break; // Next step started
+              }
+              if (capturing) {
+                // Clean timestamp prefixes
+                stepLines.push(line.replace(/^\d{4}-\d{2}-\d{2}T[\d:.]+Z\s*/, ""));
+              }
+            }
+            failed_step_log = stepLines.length > 0
+              ? stepLines.slice(-80).join("\n") // Last 80 lines of the failed step
+              : fullLog.slice(-3000); // Fallback: last 3000 chars of full log
+          }
+        } catch (e) {
+          console.error("Failed to fetch job logs:", e);
+          failed_step_log = `Could not fetch detailed logs: ${e.message}`;
+        }
+      }
+    }
+
+    jobs.push({
+      name: job.name,
+      status: job.status,
+      conclusion: job.conclusion,
+      started_at: job.started_at,
+      completed_at: job.completed_at,
+      steps,
+      failed_step_log,
+    });
+  }
 
   // Update build status based on GitHub run status
   const runRes = await fetch(
