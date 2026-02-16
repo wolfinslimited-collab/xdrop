@@ -248,11 +248,11 @@ const Marketplace = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex-1 px-5 pb-3">
-                        <p className="text-xs text-muted-foreground leading-relaxed mb-3">{template.description}</p>
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          {template.features.map(f => (
-                            <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border">{f}</span>
+                      <div className="flex-1 px-5 pb-3 flex flex-col">
+                        <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3 min-h-[3rem]">{template.description}</p>
+                        <div className="flex flex-wrap gap-1.5 mb-4 min-h-[3.5rem]">
+                          {template.features.slice(0, 4).map(f => (
+                            <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border h-fit">{f}</span>
                           ))}
                         </div>
                         <div className="flex items-center gap-4">
