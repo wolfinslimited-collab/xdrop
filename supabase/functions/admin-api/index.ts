@@ -62,7 +62,74 @@ Deno.serve(async (req) => {
         .select('user_id, role')
         .in('user_id', userIds)
 
-      return new Response(JSON.stringify({ profiles, roles, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      // Enrich with activity counts per user
+      const [
+        { data: deposits },
+        { data: agents },
+        { data: bots },
+        { data: follows },
+      ] = await Promise.all([
+        adminClient.from('credit_transactions').select('user_id').gt('amount', 0).in('user_id', userIds),
+        adminClient.from('agents').select('creator_id').in('creator_id', userIds),
+        adminClient.from('social_bots').select('owner_id').in('owner_id', userIds),
+        adminClient.from('user_follows').select('user_id').in('user_id', userIds),
+      ])
+
+      // Count posts per user via their bots
+      const botOwnerMap: Record<string, string> = {}
+      for (const b of (bots || [])) botOwnerMap[b.owner_id] = b.owner_id
+      const userBotIds = [...new Set((bots || []).map((b: any) => b.owner_id))]
+      // Get bot ids owned by these users
+      const { data: userBotRows } = userIds.length > 0
+        ? await adminClient.from('social_bots').select('id, owner_id').in('owner_id', userIds)
+        : { data: [] }
+      const botToOwner: Record<string, string> = {}
+      for (const b of (userBotRows || [])) botToOwner[b.id] = b.owner_id
+      const botIds = Object.keys(botToOwner)
+      const { data: posts } = botIds.length > 0
+        ? await adminClient.from('social_posts').select('bot_id').in('bot_id', botIds)
+        : { data: [] }
+
+      // Last activity: latest credit_transaction timestamp per user
+      const { data: lastTx } = await adminClient
+        .from('credit_transactions')
+        .select('user_id, created_at')
+        .in('user_id', userIds)
+        .order('created_at', { ascending: false })
+
+      // Build count maps
+      const countMap = (arr: any[], key: string) => {
+        const m: Record<string, number> = {}
+        for (const r of (arr || [])) m[r[key]] = (m[r[key]] || 0) + 1
+        return m
+      }
+      const depositCounts = countMap(deposits, 'user_id')
+      const agentCounts = countMap(agents, 'creator_id')
+      const botCounts = countMap(bots, 'owner_id')
+      const followCounts = countMap(follows, 'user_id')
+      // Posts per owner
+      const postCounts: Record<string, number> = {}
+      for (const p of (posts || [])) {
+        const owner = botToOwner[p.bot_id]
+        if (owner) postCounts[owner] = (postCounts[owner] || 0) + 1
+      }
+      // Last active per user
+      const lastActiveMap: Record<string, string> = {}
+      for (const tx of (lastTx || [])) {
+        if (!lastActiveMap[tx.user_id]) lastActiveMap[tx.user_id] = tx.created_at
+      }
+
+      const enrichedProfiles = (profiles || []).map((p: any) => ({
+        ...p,
+        deposit_count: depositCounts[p.id] || 0,
+        agent_count: agentCounts[p.id] || 0,
+        bot_count: botCounts[p.id] || 0,
+        post_count: postCounts[p.id] || 0,
+        follow_count: followCounts[p.id] || 0,
+        last_active: lastActiveMap[p.id] || null,
+      }))
+
+      return new Response(JSON.stringify({ profiles: enrichedProfiles, roles, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (action === 'set-role') {
