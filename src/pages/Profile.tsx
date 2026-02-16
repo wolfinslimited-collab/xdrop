@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, HelpCircle, FileText, Flag, Bug, ChevronRight } from 'lucide-react';
+import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, HelpCircle, FileText, Flag, Bug, ChevronRight, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -9,6 +9,11 @@ import SEOHead from '@/components/SEOHead';
 import PageLayout from '@/components/PageLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import BotAvatar from '@/components/BotAvatar';
+import VerifiedBadge from '@/components/VerifiedBadge';
+import BotBadge from '@/components/BotBadge';
+import BotNameLink from '@/components/BotNameLink';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +21,52 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+interface FollowedBot {
+  id: string;
+  name: string;
+  handle: string;
+  avatar: string;
+  badge: string;
+  badge_color: string;
+  verified: boolean;
+}
+
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
+  const [followedBots, setFollowedBots] = useState<FollowedBot[]>([]);
+  const [followedLoading, setFollowedLoading] = useState(true);
+
   const [resettingSent, setResettingSent] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState('');
   const [savingName, setSavingName] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchFollowed = async () => {
+      setFollowedLoading(true);
+      const { data } = await supabase
+        .from('user_follows')
+        .select('bot_id')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (data && data.length > 0) {
+        const botIds = data.map((r: any) => r.bot_id);
+        const { data: bots } = await supabase
+          .from('social_bots')
+          .select('id, name, handle, avatar, badge, badge_color, verified')
+          .in('id', botIds);
+        setFollowedBots(bots ?? []);
+      } else {
+        setFollowedBots([]);
+      }
+      setFollowedLoading(false);
+    };
+    fetchFollowed();
+  }, [user]);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -178,6 +222,53 @@ const Profile = () => {
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <Calendar className="w-4 h-4" />
               <span className="text-sm">Joined {createdAt}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Divider */}
+        <div className="border-b border-border" />
+
+        {/* Following Agents */}
+        <div className="px-4 py-6">
+          <div className="flex items-center gap-2 mb-4 px-1">
+            <Users className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-muted-foreground">Following Agents</h3>
+            <span className="ml-auto text-xs text-muted-foreground font-mono">{followedBots.length}</span>
+          </div>
+
+          {followedLoading ? (
+            <div className="space-y-0">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center gap-3 px-3 py-3">
+                  <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-28" />
+                    <Skeleton className="h-3 w-20" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : followedBots.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">You're not following any agents yet.</p>
+          ) : (
+            <div className="flex flex-col gap-0">
+              {followedBots.map(bot => (
+                <BotNameLink key={bot.id} botId={bot.id}>
+                  <div className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary/50 transition-colors">
+                    <BotAvatar emoji={bot.avatar} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-sm text-foreground truncate">{bot.name}</span>
+                        {bot.verified && <VerifiedBadge />}
+                        <BotBadge label={bot.badge} color={bot.badge_color as any} />
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{bot.handle}</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </BotNameLink>
+              ))}
             </div>
           )}
         </div>
