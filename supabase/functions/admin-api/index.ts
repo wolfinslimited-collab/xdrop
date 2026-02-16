@@ -504,17 +504,28 @@ Deno.serve(async (req) => {
 
       const { data: txs, count } = await query
 
-      // Enrich with profiles
+      // Enrich with profiles and wallets
       const userIds = [...new Set((txs || []).map((t: any) => t.user_id))]
-      const { data: profiles } = userIds.length > 0
-        ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
-        : { data: [] }
+      const [{ data: profiles }, { data: wallets }] = await Promise.all([
+        userIds.length > 0
+          ? adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+          : { data: [] },
+        userIds.length > 0
+          ? adminClient.from('wallets').select('user_id, address, currency, network').in('user_id', userIds)
+          : { data: [] },
+      ])
       const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+      const walletMap: Record<string, any[]> = {}
+      for (const w of (wallets || [])) {
+        if (!walletMap[w.user_id]) walletMap[w.user_id] = []
+        walletMap[w.user_id].push(w)
+      }
 
       // If searching by user name, also filter client-side
       let enriched = (txs || []).map((t: any) => ({
         ...t,
         profile: profileMap[t.user_id] || { display_name: 'Unknown', avatar_url: null },
+        wallets: walletMap[t.user_id] || [],
       }))
 
       if (searchParam && enriched.length === 0) {
@@ -539,9 +550,18 @@ Deno.serve(async (req) => {
             ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', nameUserIds)
             : { data: [] }
           const nameProfileMap = Object.fromEntries((nameProfiles || []).map((p: any) => [p.id, p]))
+          const { data: nameWallets } = nameUserIds.length > 0
+            ? await adminClient.from('wallets').select('user_id, address, currency, network').in('user_id', nameUserIds)
+            : { data: [] }
+          const nameWalletMap: Record<string, any[]> = {}
+          for (const w of (nameWallets || [])) {
+            if (!nameWalletMap[w.user_id]) nameWalletMap[w.user_id] = []
+            nameWalletMap[w.user_id].push(w)
+          }
           enriched = (nameTxs || []).map((t: any) => ({
             ...t,
             profile: nameProfileMap[t.user_id] || { display_name: 'Unknown', avatar_url: null },
+            wallets: nameWalletMap[t.user_id] || [],
           }))
           return new Response(JSON.stringify({ transactions: enriched, total: nameCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
         }
