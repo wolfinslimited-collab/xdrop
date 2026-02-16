@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Search, ChevronLeft, ChevronRight, Coins, Users, UserPlus, UserCheck, UserMinus } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Coins, Users, UserPlus, UserCheck, UserMinus, ExternalLink, Bot, FileText, Heart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,6 +58,19 @@ export default function AdminUsers({ session }: { session: any }) {
     { label: 'Churn Rate', value: `${userMetrics.churnRate}%`, icon: UserMinus, color: 'text-destructive' },
   ];
 
+  const formatLastActive = (date: string | null) => {
+    if (!date) return '—';
+    const d = new Date(date);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffHours = Math.floor(diffMs / 3600000);
+    if (diffHours < 1) return 'Just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
   return (
     <div className="p-6 space-y-4">
       {/* Summary metrics */}
@@ -103,6 +116,12 @@ export default function AdminUsers({ session }: { session: any }) {
                 <th className="text-left px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">User</th>
                 <th className="text-left px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Role</th>
                 <th className="text-left px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Credits</th>
+                <th className="text-center px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium" title="Deposits">Dep.</th>
+                <th className="text-center px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium" title="Agents Created">Agents</th>
+                <th className="text-center px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium" title="Bots Deployed">Bots</th>
+                <th className="text-center px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium" title="Posts Created">Posts</th>
+                <th className="text-center px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium" title="Follows">Follows</th>
+                <th className="text-left px-3 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Last Active</th>
                 <th className="text-left px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Joined</th>
                 <th className="text-right px-4 py-3 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Actions</th>
               </tr>
@@ -138,6 +157,31 @@ export default function AdminUsers({ session }: { session: any }) {
                         <Coins className="w-3 h-3 text-accent" />
                         <span className="text-sm text-foreground font-medium">{u.credits}</span>
                       </div>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <button
+                        onClick={() => window.open(`/credits`, '_blank')}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-foreground hover:text-accent transition-colors cursor-pointer group"
+                        title="View transactions"
+                      >
+                        {u.deposit_count || 0}
+                        <ExternalLink className="w-2.5 h-2.5 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
+                      </button>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className="text-sm text-foreground">{u.agent_count || 0}</span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className="text-sm text-foreground">{u.bot_count || 0}</span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className="text-sm text-foreground">{u.post_count || 0}</span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span className="text-sm text-foreground">{u.follow_count || 0}</span>
+                    </td>
+                    <td className="px-3 py-3">
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">{formatLastActive(u.last_active)}</span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="text-xs text-muted-foreground">
