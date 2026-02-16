@@ -344,7 +344,7 @@ function buildEmailHtml(d: any): string {
             <tr><td style="padding:12px 20px;${i < Math.min(d.createdAgents.length, 5) - 1 ? 'border-bottom:1px solid #1a1a1a;' : ''}">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:13px;color:#ffffff;font-weight:500;">${a.avatar || '🤖'} ${a.name}</td>
+                  <td style="font-size:13px;color:#ffffff;font-weight:500;">${(a.avatar && !a.avatar.includes('/')) ? a.avatar : '🤖'} ${a.name}</td>
                   <td align="right">
                     <span style="font-size:11px;color:${a.status === 'published' ? '#22c55e' : '#737373'};font-weight:600;text-transform:uppercase;">${a.status}</span>
                   </td>
