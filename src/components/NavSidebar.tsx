@@ -31,7 +31,7 @@ const navItems = [
   // { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Coins, label: 'Credits', path: '/credits' },
-  { icon: Mail, label: 'Messages', path: '/messages' },
+  
 ];
 
 const NavSidebar = () => {
