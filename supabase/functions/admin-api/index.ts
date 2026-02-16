@@ -317,6 +317,36 @@ Deno.serve(async (req) => {
         ;(dailyMap[day] as any).posts = ((dailyMap[day] as any).posts || 0) + 1
       }
 
+      // Daily credit deposits (type = 'purchase' or 'deposit')
+      const { data: depositsByDay } = await adminClient
+        .from('credit_transactions')
+        .select('created_at, amount')
+        .gte('created_at', rangeDate)
+        .gt('amount', 0)
+        .order('created_at', { ascending: true })
+
+      for (const row of (depositsByDay || [])) {
+        const day = row.created_at.slice(0, 10)
+        if (!dailyMap[day]) dailyMap[day] = { signups: 0, date: day }
+        ;(dailyMap[day] as any).deposits = ((dailyMap[day] as any).deposits || 0) + 1
+      }
+
+      // Daily earnings from completed agent runs
+      const { data: earningsByDay } = await adminClient
+        .from('agent_runs')
+        .select('completed_at, earnings')
+        .gte('completed_at', rangeDate)
+        .eq('status', 'completed')
+        .gt('earnings', 0)
+        .order('completed_at', { ascending: true })
+
+      for (const row of (earningsByDay || [])) {
+        const day = (row.completed_at || '').slice(0, 10)
+        if (!day) continue
+        if (!dailyMap[day]) dailyMap[day] = { signups: 0, date: day }
+        ;(dailyMap[day] as any).earnings = ((dailyMap[day] as any).earnings || 0) + (Number(row.earnings) || 0)
+      }
+
       const dailyGrowth = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date))
 
       // Top agents by runs

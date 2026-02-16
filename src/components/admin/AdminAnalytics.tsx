@@ -28,6 +28,9 @@ const pctChange = (cur: number, prev: number) => {
 
 export default function AdminAnalytics({ session }: { session: any }) {
   const [range, setRange] = useState(1);
+  const [activeLines, setActiveLines] = useState<Record<string, boolean>>({
+    signups: true, posts: true, deposits: true, earnings: true,
+  });
   const { stats, loading } = useAdminAnalytics(session, range);
 
   if (loading) {
@@ -58,9 +61,28 @@ export default function AdminAnalytics({ session }: { session: any }) {
 
   const dailyGrowth = (stats.dailyGrowth || []).map((d: any) => ({
     ...d,
-    label: d.date?.slice(5), // MM-DD
+    label: d.date?.slice(5),
     posts: d.posts || 0,
+    deposits: d.deposits || 0,
+    earnings: d.earnings || 0,
   }));
+
+  const GROWTH_LINES = [
+    { key: 'signups', label: 'Signups', color: 'hsl(var(--accent))' },
+    { key: 'posts', label: 'Posts', color: 'hsl(var(--success))' },
+    { key: 'deposits', label: 'Deposits', color: 'hsl(200 80% 55%)' },
+    { key: 'earnings', label: 'Earnings', color: 'hsl(280 60% 55%)' },
+  ];
+
+  const toggleLine = (key: string) => {
+    setActiveLines(prev => {
+      const activeCount = Object.values(prev).filter(Boolean).length;
+      const isActive = prev[key];
+      // If clicking an active one and it's the only one, do nothing
+      if (isActive && activeCount === 1) return prev;
+      return { ...prev, [key]: !isActive };
+    });
+  };
 
   const pieData = [
     { name: 'Users', value: stats.totalUsers ?? 0 },
@@ -139,14 +161,29 @@ export default function AdminAnalytics({ session }: { session: any }) {
           transition={{ delay: 0.2 }}
           className="lg:col-span-2 bg-card rounded-xl border border-border p-4 md:p-5"
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
               <h3 className="text-sm font-semibold font-display text-foreground">Growth</h3>
-              <p className="text-[10px] text-muted-foreground">Signups & posts over time</p>
+              <p className="text-[10px] text-muted-foreground">Activity over time</p>
             </div>
-            <div className="flex items-center gap-3 text-[10px]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" />Signups</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: 'hsl(var(--success))' }} />Posts</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {GROWTH_LINES.map(line => {
+                const active = activeLines[line.key];
+                return (
+                  <button
+                    key={line.key}
+                    onClick={() => toggleLine(line.key)}
+                    className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border ${
+                      active
+                        ? 'border-border bg-secondary/60 text-foreground'
+                        : 'border-transparent bg-transparent text-muted-foreground/40'
+                    }`}
+                  >
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: line.color, opacity: active ? 1 : 0.3 }} />
+                    {line.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <ResponsiveContainer width="100%" height={240}>
@@ -158,8 +195,9 @@ export default function AdminAnalytics({ session }: { session: any }) {
                 contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, fontSize: 12, padding: '8px 12px' }}
                 labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600, marginBottom: 4 }}
               />
-              <Line type="monotone" dataKey="signups" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="posts" stroke="hsl(var(--success))" strokeWidth={2} dot={false} />
+              {GROWTH_LINES.map(line => activeLines[line.key] && (
+                <Line key={line.key} type="monotone" dataKey={line.key} stroke={line.color} strokeWidth={2} dot={false} />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </motion.div>
