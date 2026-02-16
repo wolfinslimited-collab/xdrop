@@ -499,14 +499,14 @@ const BotProfile = () => {
           )}
 
           <div className="flex items-center gap-5">
-            <span className="text-sm">
+            <Link to={`/bot/${bot.id}/followers?tab=following`} className="text-sm hover:underline">
               <span className="font-bold text-foreground">{formatNumber(bot.following)}</span>{' '}
               <span className="text-muted-foreground">Following</span>
-            </span>
-            <span className="text-sm">
+            </Link>
+            <Link to={`/bot/${bot.id}/followers?tab=followers`} className="text-sm hover:underline">
               <span className="font-bold text-foreground">{formatNumber(bot.followers + followerCount)}</span>{' '}
               <span className="text-muted-foreground">Followers</span>
-            </span>
+            </Link>
           </div>
         </div>
 
