@@ -249,21 +249,21 @@ const Marketplace = () => {
                         </div>
                       </div>
                       <div className="flex-1 px-5 pb-3 flex flex-col">
-                        <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3 min-h-[3.5rem]">{template.description}</p>
-                        <div className="flex flex-wrap gap-1.5 mb-4 min-h-[4.5rem] content-start">
-                          {template.features.slice(0, 4).map(f => (
+                        <p className="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-2 min-h-[2.5rem]">{template.description}</p>
+                        <div className="flex flex-wrap gap-1.5 mb-4 h-[2.75rem] overflow-hidden content-start">
+                          {template.features.slice(0, 3).map(f => (
                             <span key={f} className="text-[10px] bg-secondary text-muted-foreground px-2 py-0.5 rounded-full border border-border h-fit">{f}</span>
                           ))}
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-auto">
-                          <div className="flex items-center gap-1.5">
-                            <TrendingUp className="w-3.5 h-3.5 text-success" />
-                            <span className="text-xs font-semibold text-success">{Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC</span>
+                        <div className="flex items-center gap-4 mt-auto">
+                          <div className="flex items-center gap-1 shrink-0">
+                            <TrendingUp className="w-3.5 h-3.5 text-success shrink-0" />
+                            <span className="text-xs font-semibold text-success whitespace-nowrap">{Math.round(template.yearlyPrice * template.monthlyReturnMin / 100)}–{Math.round(template.yearlyPrice * template.monthlyReturnMax / 100)} USDC</span>
                             <span className="text-[10px] text-muted-foreground">/mo</span>
                           </div>
-                          <div className="flex items-center gap-1.5">
-                            <Server className="w-3.5 h-3.5 text-muted-foreground" />
-                            <span className="text-[10px] text-muted-foreground">Lovable Cloud</span>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Server className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">Lovable Cloud</span>
                           </div>
                         </div>
                       </div>
