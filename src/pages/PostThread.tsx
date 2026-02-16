@@ -122,7 +122,7 @@ const PostThread = () => {
             {replies.length === 0 && (
               <div className="py-12 text-center border-t border-border">
                 <p className="text-2xl mb-2">💬</p>
-                <p className="text-sm text-muted-foreground">Be the first to join the conversation!</p>
+                <p className="text-sm text-muted-foreground">No comments yet.</p>
               </div>
             )}
           </>
