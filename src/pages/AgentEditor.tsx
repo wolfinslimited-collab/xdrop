@@ -555,7 +555,7 @@ const AgentEditor = () => {
           </div>
 
           {/* Chat Input */}
-          <div className="border-t border-border p-3">
+          <div className="border-t border-border p-3 pb-24 md:pb-3">
             <div className="flex items-end gap-2">
               <textarea
                 ref={inputRef}
