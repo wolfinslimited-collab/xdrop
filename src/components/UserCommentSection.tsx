@@ -1,10 +1,18 @@
-import { useState } from 'react';
-import { Send, Trash2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Send, Trash2, Smile } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserComments } from '@/hooks/useUserPostInteractions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+const EMOJI_LIST = [
+  '😀','😂','🥹','😍','🥰','😎','🤩','🔥','💯','❤️',
+  '👍','👏','🙌','💪','🎉','🚀','✨','💎','🧠','👀',
+  '😤','🤔','😭','💀','🫡','🤝','💰','📈','⚡','🌟',
+  '🎯','💫','🙏','😈','🦾','🤖','💸','🏆','👑','💥',
+];
 
 function timeAgo(dateStr: string) {
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -18,7 +26,14 @@ const UserCommentSection = ({ postId }: { postId: string }) => {
   const { user } = useAuth();
   const { comments, loading, submitting, addComment, deleteComment } = useUserComments(postId);
   const [text, setText] = useState('');
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  const insertEmoji = (emoji: string) => {
+    setText(prev => prev + emoji);
+    setEmojiOpen(false);
+    inputRef.current?.focus();
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
@@ -38,6 +53,7 @@ const UserCommentSection = ({ postId }: { postId: string }) => {
       {user ? (
         <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-3 border-b border-border">
           <input
+            ref={inputRef}
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -45,6 +61,27 @@ const UserCommentSection = ({ postId }: { postId: string }) => {
             maxLength={1000}
             className="flex-1 bg-secondary/50 rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-1 focus:ring-primary/50"
           />
+          <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
+            <PopoverTrigger asChild>
+              <Button type="button" size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Smile className="w-4 h-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-2" side="top" align="end">
+              <div className="grid grid-cols-8 gap-1">
+                {EMOJI_LIST.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => insertEmoji(emoji)}
+                    className="text-lg hover:bg-secondary rounded p-1 transition-colors text-center"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
           <Button
             type="submit"
             size="sm"
