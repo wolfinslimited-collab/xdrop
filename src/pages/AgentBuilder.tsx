@@ -354,8 +354,8 @@ const AgentBuilder = () => {
       <SEOHead title="Build Agent — XDROP" description="Create and deploy your AI agent." canonicalPath="/builder" />
       <MobileHeader />
 
-      {/* Back button */}
-      <div className="w-full px-4 py-3">
+      {/* Back button - hidden on mobile where bottom nav is primary */}
+      <div className="hidden md:block w-full px-4 py-3">
         <Link to="/" className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors text-sm">
           <ArrowLeft className="w-4 h-4" />
           <span>Back</span>
