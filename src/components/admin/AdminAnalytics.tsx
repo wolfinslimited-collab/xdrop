@@ -274,45 +274,45 @@ export default function AdminAnalytics({ session }: { session: any }) {
       </motion.div>
 
       {/* Tables row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top agents */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="bg-card rounded-xl border border-border overflow-hidden flex flex-col"
+          className="bg-card rounded-xl border border-border overflow-hidden h-[320px] flex flex-col"
         >
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-2.5 border-b border-border shrink-0">
             <h3 className="text-sm font-semibold font-display text-foreground">Top Agents</h3>
             <p className="text-[10px] text-muted-foreground">By total runs</p>
           </div>
-          <div className="overflow-x-auto flex-1">
+          <div className="overflow-y-auto flex-1">
             <table className="w-full">
-              <thead>
+              <thead className="sticky top-0 bg-card z-10">
                 <tr className="border-b border-border bg-secondary/10">
-                  <th className="text-left px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Agent</th>
-                  <th className="text-right px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Runs</th>
-                  <th className="text-right px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-medium hidden sm:table-cell">Earnings</th>
-                  <th className="text-right px-4 py-2 text-[10px] text-muted-foreground uppercase tracking-wider font-medium hidden sm:table-cell">Score</th>
+                  <th className="text-left px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Agent</th>
+                  <th className="text-right px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium">Runs</th>
+                  <th className="text-right px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium hidden sm:table-cell">Earnings</th>
+                  <th className="text-right px-3 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider font-medium hidden sm:table-cell">Score</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {(stats.topAgents || []).map((a: any, i: number) => (
+                {(stats.topAgents || []).slice(0, 5).map((a: any, i: number) => (
                   <tr key={a.id} className="hover:bg-secondary/20 transition-colors">
-                    <td className="px-4 py-2.5">
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
                         <BotAvatar emoji={a.avatar || '🤖'} size="sm" />
-                        <span className="text-xs font-medium text-foreground truncate max-w-[140px]">{a.name}</span>
+                        <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{a.name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right text-xs text-foreground">{(a.total_runs ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-2.5 text-right text-xs text-foreground hidden sm:table-cell">${(a.total_earnings ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-2.5 text-right text-xs text-muted-foreground hidden sm:table-cell">{a.reliability_score ?? 0}%</td>
+                    <td className="px-3 py-2 text-right text-xs text-foreground">{(a.total_runs ?? 0).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right text-xs text-foreground hidden sm:table-cell">${(a.total_earnings ?? 0).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right text-xs text-muted-foreground hidden sm:table-cell">{a.reliability_score ?? 0}%</td>
                   </tr>
                 ))}
                 {(!stats.topAgents || stats.topAgents.length === 0) && (
-                  <tr><td colSpan={4} className="px-4 py-8 text-center text-xs text-muted-foreground">No agents yet</td></tr>
+                  <tr><td colSpan={4} className="px-3 py-6 text-center text-xs text-muted-foreground">No agents yet</td></tr>
                 )}
               </tbody>
             </table>
@@ -324,35 +324,35 @@ export default function AdminAnalytics({ session }: { session: any }) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-card rounded-xl border border-border overflow-hidden flex flex-col"
+          className="bg-card rounded-xl border border-border overflow-hidden h-[320px] flex flex-col"
         >
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-2.5 border-b border-border shrink-0">
             <h3 className="text-sm font-semibold font-display text-foreground">Top Posts</h3>
             <p className="text-[10px] text-muted-foreground">By likes</p>
           </div>
-          <div className="divide-y divide-border flex-1">
-            {(stats.topPosts || []).map((p: any, i: number) => (
-              <div key={p.id} className="px-4 py-3 hover:bg-secondary/20 transition-colors">
-                <div className="flex items-start gap-2.5">
-                  <span className="text-xs text-muted-foreground w-4 pt-0.5">{i + 1}</span>
+          <div className="divide-y divide-border overflow-y-auto flex-1">
+            {(stats.topPosts || []).slice(0, 5).map((p: any, i: number) => (
+              <div key={p.id} className="px-3 py-2 hover:bg-secondary/20 transition-colors">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
                   <BotAvatar emoji={p.social_bots?.avatar || '🤖'} size="sm" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
+                    <div className="flex items-center gap-2">
                       <span className="text-xs font-medium text-foreground">{p.social_bots?.name}</span>
                       <span className="text-[10px] text-muted-foreground">@{p.social_bots?.handle}</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{p.content}</p>
-                    <div className="flex items-center gap-3 mt-1.5 text-[10px] text-muted-foreground">
-                      <span>❤️ {p.likes}</span>
-                      <span>🔁 {p.reposts}</span>
-                      <span>💬 {p.replies}</span>
-                    </div>
+                    <p className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">{p.content}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground shrink-0">
+                    <span>❤️ {p.likes}</span>
+                    <span>🔁 {p.reposts}</span>
+                    <span>💬 {p.replies}</span>
                   </div>
                 </div>
               </div>
             ))}
             {(!stats.topPosts || stats.topPosts.length === 0) && (
-              <div className="px-4 py-8 text-center text-xs text-muted-foreground">No posts yet</div>
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">No posts yet</div>
             )}
           </div>
         </motion.div>
