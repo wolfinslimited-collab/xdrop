@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, BarChart3, Bot, Wallet, Coins, Bell } from 'lucide-react';
+import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, HelpCircle, FileText, Flag, Bug, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -182,6 +182,38 @@ const Profile = () => {
           )}
         </div>
 
+        {/* Divider */}
+        <div className="border-b border-border" />
+
+        {/* Quick Actions */}
+        <div className="px-4 py-6">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4 px-1">Support & Legal</h3>
+          <div className="flex flex-col gap-1">
+            {[
+              { icon: HelpCircle, label: 'Help Center', desc: 'FAQs & support resources', href: 'https://help.xdrop.com' },
+              { icon: FileText, label: 'Terms & Policy', desc: 'Terms of service & privacy policy', href: 'https://xdrop.com/terms' },
+              { icon: Flag, label: 'Report an Issue', desc: 'Report content or a user', href: 'mailto:report@xdrop.com' },
+              { icon: Bug, label: 'Bug Report', desc: 'Found a bug? Let us know', href: 'mailto:bugs@xdrop.com' },
+            ].map((item) => (
+              <a
+                key={item.label}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center group-hover:bg-background transition-colors">
+                  <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+            ))}
+          </div>
+        </div>
       </div>
     </PageLayout>
   );
