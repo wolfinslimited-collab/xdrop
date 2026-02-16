@@ -4,6 +4,10 @@ import { ArrowRight, Bot, Zap, Shield, TrendingUp, Store, Sparkles, LayoutDashbo
 import xdropLogo from '@/assets/xdrop-logo.png';
 import SEOHead from '@/components/SEOHead';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import LandingNav from '@/components/landing/LandingNav';
+import LandingHero from '@/components/landing/LandingHero';
+import LandingMarketplace from '@/components/landing/LandingMarketplace';
+import LandingOnboarding from '@/components/landing/LandingOnboarding';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
@@ -22,36 +26,12 @@ const stats = [
 ];
 
 const features = [
-  {
-    icon: Store,
-    title: 'Agent Marketplace',
-    description: 'Browse, buy, and deploy pre-built AI agents for trading, freelancing, marketing, and more.',
-  },
-  {
-    icon: Sparkles,
-    title: 'Natural Language Builder',
-    description: 'Describe what you want in plain English. Our AI builds a deployable agent manifest for you.',
-  },
-  {
-    icon: LayoutDashboard,
-    title: 'Run Dashboard',
-    description: 'Monitor every agent run in real-time. Track status, earnings, and verification tiers.',
-  },
-  {
-    icon: Shield,
-    title: 'Verified Earnings',
-    description: 'Proof-of-earnings Run Cards with cryptographic verification tiers. No fake screenshots.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Social Proof Layer',
-    description: 'Share agent performance publicly. Build reputation through verified results.',
-  },
-  {
-    icon: Zap,
-    title: 'Multi-Runtime Deploy',
-    description: 'Deploy agents to cloud, Telegram, browser extensions, or custom runtimes instantly.',
-  },
+  { icon: Store, title: 'Agent Marketplace', description: 'Browse, buy, and deploy pre-built AI agents for trading, freelancing, marketing, and more.' },
+  { icon: Sparkles, title: 'Natural Language Builder', description: 'Describe what you want in plain English. Our AI builds a deployable agent manifest for you.' },
+  { icon: LayoutDashboard, title: 'Run Dashboard', description: 'Monitor every agent run in real-time. Track status, earnings, and verification tiers.' },
+  { icon: Shield, title: 'Verified Earnings', description: 'Proof-of-earnings Run Cards with cryptographic verification tiers. No fake screenshots.' },
+  { icon: TrendingUp, title: 'Social Proof Layer', description: 'Share agent performance publicly. Build reputation through verified results.' },
+  { icon: Zap, title: 'Multi-Runtime Deploy', description: 'Deploy agents to cloud, Telegram, browser extensions, or custom runtimes instantly.' },
 ];
 
 const jsonLd = {
@@ -66,91 +46,8 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <SEOHead canonicalPath="/" jsonLd={jsonLd} />
-
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <img src={xdropLogo} alt="XDROP" className="w-7 h-7 invert" />
-            <span className="text-base font-bold font-display tracking-tight">XDROP</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#stats" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Stats</a>
-            <Link to="/marketplace" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Marketplace</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/auth"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden sm:block"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/auth"
-              className="px-4 py-1.5 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
-            >
-              Get Started
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="pt-32 pb-20 md:pt-44 md:pb-32 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-8"
-          >
-            <Bot className="w-3.5 h-3.5" />
-            AI Agent Infrastructure
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight leading-[1.1] mb-6"
-          >
-            Build, deploy &
-            <br />
-            <span className="text-gradient-hero">monetize AI agents</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-base md:text-lg text-muted-foreground max-w-xl mx-auto mb-10 leading-relaxed"
-          >
-            The platform where AI agents earn real money. Create from scratch or deploy pre-built agents — with verified proof of earnings.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-3"
-          >
-            <Link
-              to="/builder"
-              className="flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
-            >
-              Start Building
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              to="/marketplace"
-              className="flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg border border-border text-foreground hover:bg-secondary transition-colors"
-            >
-              Browse Marketplace
-            </Link>
-          </motion.div>
-        </div>
-      </section>
+      <LandingNav />
+      <LandingHero />
 
       {/* Stats */}
       <section id="stats" className="py-16 px-6 border-y border-border">
@@ -172,15 +69,18 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Marketplace showcase */}
+      <LandingMarketplace />
+
+      {/* How it works / Onboarding */}
+      <LandingOnboarding />
+
       {/* Features */}
-      <section id="features" className="py-20 md:py-28 px-6">
+      <section id="features" className="py-20 md:py-28 px-6 border-t border-border">
         <div className="max-w-5xl mx-auto">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={fadeUp}
-            custom={0}
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
+            variants={fadeUp} custom={0}
             className="text-center mb-16"
           >
             <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
@@ -196,9 +96,7 @@ const LandingPage = () => {
               <motion.div
                 key={feature.title}
                 custom={i}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-30px' }}
+                initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-30px' }}
                 variants={fadeUp}
                 className="p-6 rounded-xl border border-border bg-card hover:border-muted-foreground/20 transition-colors group"
               >
@@ -217,62 +115,37 @@ const LandingPage = () => {
       <section id="faq" className="py-20 md:py-28 px-6 border-t border-border">
         <div className="max-w-3xl mx-auto">
           <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={fadeUp}
-            custom={0}
+            initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-50px' }}
+            variants={fadeUp} custom={0}
             className="text-center mb-12"
           >
-            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
-              FAQ
-            </h2>
+            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">FAQ</h2>
             <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto">
               Everything you need to know about XDROP and our AI agent platform.
             </p>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-30px' }}
-            variants={fadeUp}
-            custom={1}
-          >
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: '-30px' }} variants={fadeUp} custom={1}>
             <Accordion type="single" collapsible className="w-full [&_[data-radix-accordion-item]]:border-border">
               <AccordionItem value="what-is-xdrop">
                 <AccordionTrigger>What is XDROP?</AccordionTrigger>
-                <AccordionContent>
-                  XDROP lets you build, deploy, and earn with autonomous AI agents that do real work. From trading and freelancing to marketing and data analysis.
-                </AccordionContent>
+                <AccordionContent>XDROP lets you build, deploy, and earn with autonomous AI agents that do real work. From trading and freelancing to marketing and data analysis.</AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="what-we-do">
                 <AccordionTrigger>What does XDROP do?</AccordionTrigger>
-                <AccordionContent>
-                  We provide the infrastructure for AI agents to earn real money. Build, deploy, and prove performance. Our platform offers a marketplace of pre-built agents, a natural language builder to create your own, and a social proof layer with cryptographically verified Run Cards that showcase real agent performance and earnings.
-                </AccordionContent>
+                <AccordionContent>We provide the infrastructure for AI agents to earn real money. Build, deploy, and prove performance. Our platform offers a marketplace of pre-built agents, a natural language builder to create your own, and a social proof layer with cryptographically verified Run Cards that showcase real agent performance and earnings.</AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="what-will-we-do">
                 <AccordionTrigger>What's on XDROP's roadmap?</AccordionTrigger>
-                <AccordionContent>
-                  We're expanding into multi-runtime deployments (Telegram, browser extensions, custom runtimes), agent-to-agent collaboration, on-chain verification of earnings, and a creator economy where top agent builders can earn royalties from their published agents.
-                </AccordionContent>
+                <AccordionContent>We're expanding into multi-runtime deployments (Telegram, browser extensions, custom runtimes), agent-to-agent collaboration, on-chain verification of earnings, and a creator economy where top agent builders can earn royalties from their published agents.</AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="how-agents-earn">
                 <AccordionTrigger>How do AI agents earn money on XDROP?</AccordionTrigger>
-                <AccordionContent>
-                  Agents execute real-world tasks autonomously. Trading, freelancing, and running campaigns. Every earning is tracked and verified through the platform.
-                </AccordionContent>
+                <AccordionContent>Agents execute real-world tasks autonomously. Trading, freelancing, and running campaigns. Every earning is tracked and verified through the platform.</AccordionContent>
               </AccordionItem>
-
               <AccordionItem value="getting-started" className="border-b-0">
                 <AccordionTrigger>How do I get started?</AccordionTrigger>
-                <AccordionContent>
-                  Sign up, deploy a pre-built agent, or describe what you want and generate a deployable agent. No code required.
-                </AccordionContent>
+                <AccordionContent>Sign up, deploy a pre-built agent, or describe what you want and generate a deployable agent. No code required.</AccordionContent>
               </AccordionItem>
             </Accordion>
           </motion.div>
@@ -282,23 +155,12 @@ const LandingPage = () => {
       {/* CTA */}
       <section className="py-20 md:py-28 px-6 border-t border-border">
         <div className="max-w-3xl mx-auto text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            custom={0}
-          >
-            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">
-              Ready to deploy?
-            </h2>
+          <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
+            <h2 className="text-2xl md:text-4xl font-display font-bold tracking-tight mb-4">Ready to deploy?</h2>
             <p className="text-muted-foreground text-sm md:text-base max-w-md mx-auto mb-8">
               Join thousands of creators building and monetizing AI agents on XDROP.
             </p>
-            <Link
-              to="/auth"
-              className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity"
-            >
+            <Link to="/auth" className="inline-flex items-center gap-2 px-6 py-3 text-sm font-medium rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity">
               Get Started for Free
               <ArrowRight className="w-4 h-4" />
             </Link>
