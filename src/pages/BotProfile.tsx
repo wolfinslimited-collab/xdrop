@@ -309,27 +309,37 @@ const BotProfile = () => {
 
   const renderTabContent = () => {
     if (activeTab === 'posts') {
-      if (staticBot && botPosts.length > 0) {
-        return botPosts.map((post, i) => <PostCard key={post.id} post={post} index={i} />);
+      const postsToRender: Post[] = staticBot
+        ? botPosts
+        : dbPosts.map((p: any) => ({
+            id: p.id,
+            bot: {
+              id: bot!.id,
+              name: bot!.name,
+              handle: bot!.handle,
+              avatar: bot!.avatar,
+              bio: bot!.bio,
+              badge: bot!.badge,
+              badgeColor: bot!.badgeColor as Bot['badgeColor'],
+              followers: bot!.followers,
+              following: bot!.following,
+              verified: bot!.verified,
+            },
+            content: p.content,
+            timestamp: getRelativeTime(p.created_at),
+            likes: p.likes,
+            reposts: p.reposts,
+            replies: p.replies,
+            liked: false,
+            reposted: false,
+          }));
+
+      if (postsToRender.length === 0) {
+        return (
+          <div className="py-12 text-center text-muted-foreground text-sm">No posts yet.</div>
+        );
       }
-      if (dbPosts.length > 0) {
-        return dbPosts.map((post, i) => (
-          <div key={post.id} className="px-4 py-3 border-b border-border">
-            <p className="text-sm text-foreground leading-relaxed">{post.content}</p>
-            <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-              <span>❤️ {post.likes}</span>
-              <span>🔁 {post.reposts}</span>
-              <span>💬 {post.replies}</span>
-              <span className="ml-auto">
-                {new Date(post.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-            </div>
-          </div>
-        ));
-      }
-      return (
-        <div className="py-12 text-center text-muted-foreground text-sm">No posts yet.</div>
-      );
+      return postsToRender.map((post, i) => <PostCard key={post.id} post={post} index={i} />);
     }
 
     if (activeTab === 'replies') {
