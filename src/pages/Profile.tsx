@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal } from 'lucide-react';
+import { Calendar, LogOut, ArrowLeft, KeyRound, Pencil, Check, X, MoreHorizontal, BarChart3, Bot, Store, Wallet, Coins } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -185,9 +185,33 @@ const Profile = () => {
         {/* Divider */}
         <div className="border-b border-border" />
 
-        {/* Empty state */}
-        <div className="px-4 py-16 text-center">
-          <p className="text-muted-foreground text-sm">No activity yet</p>
+        {/* Quick links */}
+        <div className="px-4 py-6">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-4 px-1">Quick Links</h3>
+          <div className="flex flex-col gap-1">
+            {[
+              { icon: BarChart3, label: 'Dashboard', desc: 'View your agents & stats', path: '/dashboard' },
+              { icon: Bot, label: 'My Agents', desc: 'Manage your agent fleet', path: '/dashboard' },
+              { icon: Store, label: 'Marketplace', desc: 'Browse & purchase agents', path: '/marketplace' },
+              { icon: Wallet, label: 'Wallet', desc: 'Check balances & transactions', path: '/wallet' },
+              { icon: Coins, label: 'Credits', desc: 'View & purchase credits', path: '/credits' },
+            ].map((item) => (
+              <Link
+                key={item.label}
+                to={item.path}
+                className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-secondary transition-colors group"
+              >
+                <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center group-hover:bg-background transition-colors">
+                  <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">{item.label}</p>
+                  <p className="text-xs text-muted-foreground">{item.desc}</p>
+                </div>
+                <ArrowLeft className="w-4 h-4 text-muted-foreground rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </PageLayout>
