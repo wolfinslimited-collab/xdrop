@@ -115,6 +115,92 @@ interface JobLog {
   failed_step_log?: string;
 }
 
+// Debug log store
+type DebugEntry = { time: string; label: string; data: unknown };
+const debugLogStore: DebugEntry[] = [];
+function addDebugLog(label: string, data: unknown) {
+  debugLogStore.unshift({
+    time: new Date().toLocaleTimeString(),
+    label,
+    data,
+  });
+  if (debugLogStore.length > 100) debugLogStore.length = 100;
+  // Trigger re-render via custom event
+  window.dispatchEvent(new CustomEvent("debug-log-update"));
+}
+
+function DebugLogPanel() {
+  const [logs, setLogs] = useState<DebugEntry[]>([...debugLogStore]);
+  const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    const handler = () => setLogs([...debugLogStore]);
+    window.addEventListener("debug-log-update", handler);
+    return () => window.removeEventListener("debug-log-update", handler);
+  }, []);
+
+  if (!expanded) {
+    return (
+      <Card className="border-border/50 bg-black/30">
+        <CardContent className="p-3">
+          <Button variant="ghost" size="sm" className="text-xs w-full" onClick={() => setExpanded(true)}>
+            <Terminal className="h-3 w-3 mr-1" /> Show Debug Logs ({logs.length})
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="border-border/50 bg-black/30">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Terminal className="h-4 w-4 text-green-400" />
+            Debug Logs
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{logs.length}</Badge>
+          </CardTitle>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => { debugLogStore.length = 0; setLogs([]); }}>
+              Clear
+            </Button>
+            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => {
+              navigator.clipboard.writeText(JSON.stringify(logs, null, 2));
+              toast.success("Logs copied!");
+            }}>
+              <Copy className="h-3 w-3 mr-1" /> Copy All
+            </Button>
+            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => setExpanded(false)}>
+              Hide
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="p-3 pt-0">
+        <div className="max-h-80 overflow-y-auto space-y-1">
+          {logs.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-4">No logs yet. Trigger a build or action.</p>
+          ) : logs.map((entry, i) => (
+            <div key={i} className="border border-border/30 rounded p-2 bg-black/20">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-muted-foreground">{entry.time}</span>
+                <Badge variant="outline" className={`text-[10px] px-1 py-0 ${
+                  entry.label.includes("ERROR") ? "text-red-400" : entry.label.includes("OK") ? "text-green-400" : "text-blue-400"
+                }`}>
+                  {entry.label}
+                </Badge>
+              </div>
+              <pre className="text-[10px] text-foreground/80 font-mono overflow-x-auto whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                {typeof entry.data === "string" ? entry.data : JSON.stringify(entry.data, null, 2)}
+              </pre>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }) {
   const meta = PLATFORM_META[build.platform];
   const statusMeta = STATUS_META[build.status];
@@ -131,6 +217,7 @@ function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }
   async function handleDownload() {
     if (!build.artifact_url) return;
     setDownloading(true);
+    addDebugLog("DOWNLOAD → REQ", { buildId: build.id });
     try {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
@@ -151,9 +238,9 @@ function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: "Download failed" }));
+        addDebugLog("DOWNLOAD → ERROR", { status: res.status, err });
         throw new Error(err.error || "Download failed");
       }
-
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -163,9 +250,11 @@ function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      addDebugLog("DOWNLOAD → OK", "started");
       toast.success("Download started!");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Download failed";
+      addDebugLog("DOWNLOAD → ERROR", msg);
       toast.error(msg);
     } finally {
       setDownloading(false);
@@ -175,17 +264,26 @@ function BuildCard({ build, onRefresh }: { build: Build; onRefresh: () => void }
   async function fetchLogs() {
     setLoadingLogs(true);
     setLogMessage(null);
+    addDebugLog("LOGS → REQ", { buildId: build.id });
     try {
       const { data, error } = await supabase.functions.invoke("github-build", {
         body: { action: "fetch-logs", buildId: build.id },
       });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to fetch logs");
+      if (error) {
+        addDebugLog("LOGS → ERROR", { error: error.message || error });
+        throw error;
+      }
+      if (!data?.success) {
+        addDebugLog("LOGS → FAIL", data);
+        throw new Error(data?.error || "Failed to fetch logs");
+      }
+      addDebugLog("LOGS → OK", { jobs: data.jobs?.length, message: data.message, run_url: data.run_url });
       setLogs(data.jobs || []);
       if (data.message) setLogMessage(data.message);
       if (data.run_url) setRunUrl(data.run_url);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to fetch logs";
+      addDebugLog("LOGS → ERROR", msg);
       toast.error(msg);
     } finally {
       setLoadingLogs(false);
@@ -356,29 +454,52 @@ export default function BuildCenter() {
 
   async function loadBuilds() {
     setLoading(true);
+    addDebugLog("BUILDS → LOAD", "fetching...");
     try {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("builds")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(20);
-      if (data) setBuilds(data as Build[]);
+      if (error) {
+        addDebugLog("BUILDS → ERROR", error);
+      } else {
+        addDebugLog("BUILDS → OK", { count: data?.length });
+        if (data) setBuilds(data as Build[]);
+      }
     } finally {
       setLoading(false);
     }
   }
 
+  // Auto-refresh builds every 10s
+  useEffect(() => {
+    const hasActive = builds.some(b => ["pending", "provisioning", "building", "uploading"].includes(b.status));
+    if (!hasActive) return;
+    const interval = setInterval(loadBuilds, 10000);
+    return () => clearInterval(interval);
+  }, [builds]);
+
   async function triggerBuild(platform: Platform) {
     setTriggering(platform);
+    addDebugLog("TRIGGER → REQ", { platform });
     try {
       const { data, error } = await supabase.functions.invoke("github-build", {
         body: { action: "trigger", platform },
       });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error || "Failed to trigger build");
+      if (error) {
+        addDebugLog("TRIGGER → ERROR", { error: error.message || error });
+        throw error;
+      }
+      if (!data?.success) {
+        addDebugLog("TRIGGER → FAIL", data);
+        throw new Error(data?.error || "Failed to trigger build");
+      }
+      addDebugLog("TRIGGER → OK", data);
       toast.success(`${PLATFORM_META[platform].label} build triggered!`);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to trigger build";
+      addDebugLog("TRIGGER → ERROR", msg);
       toast.error(msg);
     } finally {
       setTriggering(null);
@@ -476,6 +597,9 @@ export default function BuildCenter() {
             )}
           </CardContent>
         </Card>
+
+        {/* Debug Log Panel */}
+        <DebugLogPanel />
 
         <Separator />
 
