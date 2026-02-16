@@ -34,9 +34,16 @@ const navItems: { id: Tab; label: string; icon: any; description: string }[] = [
 const AdminPanel = () => {
   const { user, session, loading: authLoading, signOut } = useAuth();
   const { isAdmin, checking } = useAdminCheck();
-  const [tab, setTab] = useState<Tab>('analytics');
+  const [tab, setTab] = useState<Tab>(() => {
+    const saved = sessionStorage.getItem('admin-tab');
+    return (saved && navItems.some(n => n.id === saved) ? saved : 'analytics') as Tab;
+  });
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    sessionStorage.setItem('admin-tab', tab);
+  }, [tab]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -46,7 +53,18 @@ const AdminPanel = () => {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [navigate]);
 
-  if (authLoading || checking) return null;
+  if (authLoading || checking) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center animate-pulse">
+            <Shield className="w-4.5 h-4.5 text-accent" />
+          </div>
+          <p className="text-xs text-muted-foreground">Loading admin panel…</p>
+        </div>
+      </div>
+    );
+  }
   if (!user || !isAdmin) return <Navigate to="/" replace />;
 
   const currentNav = navItems.find(n => n.id === tab);
