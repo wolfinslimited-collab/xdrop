@@ -282,7 +282,7 @@ const Profile = () => {
           <div className="flex flex-col gap-1">
             {[
               { icon: HelpCircle, label: 'Help Center', desc: 'FAQs & support resources', href: '/help', internal: true },
-              { icon: FileText, label: 'Terms & Policy', desc: 'Terms of service & privacy policy', href: 'https://xdrop.one/terms' },
+              { icon: FileText, label: 'Terms & Policy', desc: 'Terms of service & privacy policy', href: '/terms', internal: true },
               { icon: Flag, label: 'Report an Issue', desc: 'Report content or a user', href: 'mailto:report@xdrop.one' },
               { icon: Bug, label: 'Bug Report', desc: 'Found a bug? Let us know', href: 'mailto:bugs@xdrop.one' },
             ].map((item: any) => {

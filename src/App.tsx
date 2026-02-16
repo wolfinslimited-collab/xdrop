@@ -33,6 +33,7 @@ import PostThread from "./pages/PostThread";
 import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import HelpCenter from "./pages/HelpCenter";
+import TermsPolicy from "./pages/TermsPolicy";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/help" element={<HelpCenter />} />
+              <Route path="/terms" element={<TermsPolicy />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
