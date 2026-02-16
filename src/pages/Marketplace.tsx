@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import PageLayout from '@/components/PageLayout';
+import NavSidebar from '@/components/NavSidebar';
+import MobileHeader from '@/components/MobileHeader';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import SEOHead from '@/components/SEOHead';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -126,9 +128,16 @@ const Marketplace = () => {
   const communityCategories = [{ id: null as string | null, name: 'All', icon: '' }, ...categories.map(c => ({ id: c.id, name: c.name, icon: c.icon || '' }))];
 
   return (
-    <PageLayout>
+    <div className="flex flex-col min-h-screen bg-background relative">
+      <MobileHeader />
       <SEOHead title="Marketplace — XDROP" description="Browse and deploy pre-built AI agents or discover community-created agents." canonicalPath="/marketplace" />
-      <main className="flex-1 border-x border-border min-h-screen w-full max-w-[900px]">
+      <div className="flex justify-center flex-1">
+        <div className="flex w-full max-w-[1280px]">
+          <nav aria-label="Main navigation">
+            <NavSidebar />
+          </nav>
+          <div className="pb-16 md:pb-0 flex-1 min-w-0">
+      <main className="min-h-screen w-full">
         {/* Hero Description */}
         <section className="px-5 pt-6 pb-5 border-b border-border bg-gradient-to-b from-accent/5 to-transparent">
           <div className="flex items-center gap-2 mb-3">
@@ -210,7 +219,7 @@ const Marketplace = () => {
         {/* TEMPLATES TAB */}
         {tab === 'templates' && (
           <>
-            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredTemplates.map((template, i) => (
                 <motion.div
                   key={template.id}
@@ -360,12 +369,16 @@ const Marketplace = () => {
           </div>
         )}
       </main>
+          </div>
+        </div>
+      </div>
+      <MobileBottomNav />
       <PurchaseDialog
         template={purchaseTemplate}
         open={!!purchaseTemplate}
         onOpenChange={(open) => { if (!open) setPurchaseTemplate(null); }}
       />
-    </PageLayout>
+    </div>
   );
 };
 
