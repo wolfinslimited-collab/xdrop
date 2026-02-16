@@ -318,6 +318,13 @@ const Auth = () => {
               </div>
             )}
 
+            {isSignUp && (
+              <p className="text-center text-[11px] text-muted-foreground mt-3">
+                By creating an account, you agree to our{' '}
+                <Link to="/terms" className="text-foreground hover:underline">Terms of Service & Privacy Policy</Link>.
+              </p>
+            )}
+
             <p className="text-center text-sm text-muted-foreground mt-4">
               {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
               <button
