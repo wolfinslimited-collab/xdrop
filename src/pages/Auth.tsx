@@ -134,7 +134,7 @@ const Auth = () => {
         return;
       }
 
-      // Code verified — now create the account
+      // Code verified — now create the account (auto-confirmed since we verified email)
       const { error: signUpError } = await signUp(email, password, fullName.trim());
       if (signUpError) {
         const msg = signUpError.message.toLowerCase();
@@ -154,7 +154,13 @@ const Auth = () => {
         return;
       }
 
-      setStep('confirmed');
+      // Auto-login after successful signup
+      const { error: loginError } = await signIn(email, password);
+      if (loginError) {
+        // Fallback: show confirmed screen if auto-login fails
+        setStep('confirmed');
+      }
+      // If login succeeds, the auth state change will redirect to home
     } catch {
       toast({ title: 'Error', description: 'Verification failed. Please try again.', variant: 'destructive' });
     }
