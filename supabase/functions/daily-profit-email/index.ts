@@ -18,7 +18,6 @@ Deno.serve(async (req) => {
 
     const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
 
-    // Get all users with profiles
     const { data: profiles } = await adminClient.from('profiles').select('id, display_name, credits')
     if (!profiles || profiles.length === 0) {
       return new Response(JSON.stringify({ message: 'No profiles found.' }), {
@@ -30,113 +29,40 @@ Deno.serve(async (req) => {
 
     for (const profile of profiles) {
       const userId = profile.id
-
-      // Get user email
       const { data: { user } } = await adminClient.auth.admin.getUserById(userId)
       if (!user?.email) continue
 
-      // --- 1. PURCHASED AGENTS ---
-      const { data: purchases } = await adminClient
-        .from('agent_purchases')
-        .select('agent_id, price_paid')
-        .eq('user_id', userId)
-
-      const purchasedAgentIds = (purchases || []).map(p => p.agent_id)
-
-      let purchasedAgents: any[] = []
-      let purchasedDailyEarnings = 0
-      let purchasedDailyRuns = 0
-      let purchasedSuccessRuns = 0
-      let purchasedTotalEarnings = 0
-      let topPurchasedAgent: any = null
-      let topPurchasedEarning = 0
-
-      if (purchasedAgentIds.length > 0) {
-        const { data: agents } = await adminClient
-          .from('agents')
-          .select('id, name, usdc_earnings, total_runs, reliability_score, avatar, purchased_at, price, monthly_return_min, monthly_return_max')
-          .in('id', purchasedAgentIds)
-        purchasedAgents = agents || []
-
-        // Calculate simulated earnings (matching dashboard logic)
-        for (const agent of purchasedAgents) {
-          const sim = getSimulatedEarnings(agent)
-          agent._simTotal = sim.total
-          agent._simDaily = sim.dailyRate
-        }
-
-        const { data: recentRuns } = await adminClient
-          .from('agent_runs')
-          .select('agent_id, earnings, status')
-          .in('agent_id', purchasedAgentIds)
-          .gte('created_at', yesterday)
-
-        for (const run of (recentRuns || [])) {
-          purchasedDailyRuns++
-          if (run.status === 'completed') {
-            purchasedSuccessRuns++
-            const e = Number(run.earnings || 0)
-            purchasedDailyEarnings += e
-            if (e > topPurchasedEarning) {
-              topPurchasedEarning = e
-              topPurchasedAgent = purchasedAgents.find(a => a.id === run.agent_id)
-            }
-          }
-        }
-
-        // Use simulated earnings if no real earnings exist
-        const realTotal = purchasedAgents.reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
-        const simTotal = purchasedAgents.reduce((s, a) => s + (a._simTotal || 0), 0)
-        const simDaily = purchasedAgents.reduce((s, a) => s + (a._simDaily || 0), 0)
-        purchasedTotalEarnings = realTotal > 0 ? realTotal : simTotal
-        if (purchasedDailyEarnings === 0 && simDaily > 0) {
-          purchasedDailyEarnings = simDaily
-          // Find top by daily simulated
-          for (const a of purchasedAgents) {
-            if ((a._simDaily || 0) > topPurchasedEarning) {
-              topPurchasedEarning = a._simDaily
-              topPurchasedAgent = a
-            }
-          }
-        }
-      }
-
-      // --- 2. CREATED AGENTS ---
-      const { data: createdAgents } = await adminClient
+      // --- 1. ALL USER'S AGENTS (created by them, includes template-based "purchased" ones) ---
+      const { data: allAgents } = await adminClient
         .from('agents')
-        .select('id, name, status, usdc_earnings, total_runs, reliability_score, avatar, created_at')
+        .select('id, name, status, usdc_earnings, total_runs, reliability_score, avatar, created_at, purchased_at, price, monthly_return_min, monthly_return_max, template_id')
         .eq('creator_id', userId)
 
-      const createdAgentIds = (createdAgents || []).map(a => a.id)
-      let createdDailyEarnings = 0
-      let createdDailyRuns = 0
-      let createdSuccessRuns = 0
-      let createdTotalEarnings = (createdAgents || []).reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
-      let topCreatedAgent: any = null
-      let topCreatedEarning = 0
+      const agents = allAgents || []
+      if (agents.length === 0) continue
 
-      if (createdAgentIds.length > 0) {
-        const { data: recentRuns } = await adminClient
-          .from('agent_runs')
-          .select('agent_id, earnings, status')
-          .in('agent_id', createdAgentIds)
-          .gte('created_at', yesterday)
+      // Separate: template-based (purchased/pre-built) vs custom-created
+      const purchasedAgents = agents.filter(a => a.template_id)
+      const customAgents = agents.filter(a => !a.template_id)
 
-        for (const run of (recentRuns || [])) {
-          createdDailyRuns++
-          if (run.status === 'completed') {
-            createdSuccessRuns++
-            const e = Number(run.earnings || 0)
-            createdDailyEarnings += e
-            if (e > topCreatedEarning) {
-              topCreatedEarning = e
-              topCreatedAgent = (createdAgents || []).find(a => a.id === run.agent_id)
-            }
-          }
-        }
+      // Calculate simulated earnings for purchased agents
+      for (const agent of purchasedAgents) {
+        const sim = getSimulatedEarnings(agent)
+        agent._simTotal = sim.total
+        agent._simDaily = sim.dailyRate
       }
 
-      // --- 3. DAILY CREDIT USAGE ---
+      // Purchased agent totals
+      const purchasedSimTotal = purchasedAgents.reduce((s, a) => s + (a._simTotal || 0), 0)
+      const purchasedSimDaily = purchasedAgents.reduce((s, a) => s + (a._simDaily || 0), 0)
+      const purchasedRealTotal = purchasedAgents.reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
+      const purchasedTotalEarnings = purchasedRealTotal > 0 ? purchasedRealTotal : purchasedSimTotal
+      const purchasedDailyEarnings = purchasedSimDaily // always show simulated daily
+
+      // Custom agent totals
+      const customTotalEarnings = customAgents.reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
+
+      // --- 2. DAILY CREDIT USAGE ---
       const { data: creditTxns } = await adminClient
         .from('credit_transactions')
         .select('amount, type, description')
@@ -157,38 +83,23 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Skip users with zero activity
-      const hasActivity = purchasedAgentIds.length > 0 || (createdAgents || []).length > 0 || (creditTxns || []).length > 0
-      if (!hasActivity) continue
-
       const displayName = profile.display_name || user.email.split('@')[0]
-      const totalDailyEarnings = purchasedDailyEarnings + createdDailyEarnings
+      const totalDailyEarnings = purchasedDailyEarnings
+      const totalAllTimeEarnings = purchasedTotalEarnings + customTotalEarnings
 
-      // --- BUILD EMAIL ---
       const emailHtml = buildEmailHtml({
         displayName,
-        // Purchased
         purchasedAgents,
         purchasedDailyEarnings,
-        purchasedDailyRuns,
-        purchasedSuccessRuns,
         purchasedTotalEarnings,
-        topPurchasedAgent,
-        topPurchasedEarning,
-        // Created
-        createdAgents: createdAgents || [],
-        createdDailyEarnings,
-        createdDailyRuns,
-        createdSuccessRuns,
-        createdTotalEarnings,
-        topCreatedAgent,
-        topCreatedEarning,
-        // Credits
+        customAgents,
+        customTotalEarnings,
+        totalDailyEarnings,
+        totalAllTimeEarnings,
         currentCredits: profile.credits,
         creditsSpent,
         creditsEarned,
         usageBreakdown,
-        totalDailyEarnings,
       })
 
       const resendRes = await fetch('https://api.resend.com/emails', {
@@ -249,6 +160,11 @@ function formatCreditType(type: string): string {
   return map[type] || type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
+function avatarText(avatar: string | null): string {
+  if (!avatar || avatar.includes('/')) return '🤖'
+  return avatar
+}
+
 function buildEmailHtml(d: any): string {
   const sectionTitle = (text: string) =>
     `<div style="font-size:10px;font-weight:700;color:#525252;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px;">${text}</div>`
@@ -273,26 +189,39 @@ function buildEmailHtml(d: any): string {
       </table>
     </td></tr>`
 
-  const topPerformerBlock = (agent: any, earning: number, label: string) => agent ? `
-    <tr><td style="padding-bottom:16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
-        <tr><td style="padding:16px 20px;">
-          <div style="display:inline-block;background-color:#1f1f1f;border-radius:100px;padding:3px 10px;font-size:9px;font-weight:700;color:#a3a3a3;text-transform:uppercase;letter-spacing:0.8px;">${label}</div>
-          <div style="font-size:14px;font-weight:600;color:#ffffff;margin-top:8px;">${agent.name}</div>
-          <div style="font-size:12px;color:#737373;margin-top:2px;">+$${earning.toFixed(2)} earned today</div>
-        </td></tr>
-      </table>
-    </td></tr>` : ''
-
-  // Credit usage rows
   const creditRows = Object.entries(d.usageBreakdown)
     .sort((a, b) => (b[1] as number) - (a[1] as number))
     .map(([label, amount], i, arr) => statRow(label, `${amount} credits`, i === arr.length - 1))
     .join('')
 
   const hasPurchased = d.purchasedAgents.length > 0
-  const hasCreated = d.createdAgents.length > 0
+  const hasCustom = d.customAgents.length > 0
   const hasCredits = d.creditsSpent > 0 || d.creditsEarned > 0
+
+  // Per-agent breakdown for purchased agents
+  const purchasedAgentRows = hasPurchased ? d.purchasedAgents
+    .filter((a: any) => (a._simTotal || 0) > 0 || Number(a.usdc_earnings || 0) > 0)
+    .sort((a: any, b: any) => (b._simTotal || 0) - (a._simTotal || 0))
+    .map((a: any, i: number, arr: any[]) => {
+      const total = Number(a.usdc_earnings || 0) > 0 ? Number(a.usdc_earnings) : (a._simTotal || 0)
+      const daily = a._simDaily || 0
+      return `
+      <tr><td style="padding:12px 20px;${i < arr.length - 1 ? 'border-bottom:1px solid #1a1a1a;' : ''}">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="font-size:13px;color:#ffffff;font-weight:500;">${avatarText(a.avatar)} ${a.name}</td>
+            <td align="right" style="font-size:13px;font-weight:600;color:#22c55e;">$${total.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td style="font-size:11px;color:#525252;padding-top:2px;">+$${daily.toFixed(2)}/day · ${a.total_runs || 0} runs</td>
+            <td></td>
+          </tr>
+        </table>
+      </td></tr>`
+    }).join('') : ''
+
+  // Created agents summary — just count, no individual list
+  const customAgentCount = d.customAgents.length
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -316,19 +245,19 @@ function buildEmailHtml(d: any): string {
           Hi <span style="color:#ffffff;font-weight:600;">${d.displayName}</span> — here's your daily summary.
         </td></tr>
 
-        <!-- Combined Daily Earnings -->
+        <!-- Overview Metrics -->
         <tr><td style="padding-bottom:16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
             <tr><td style="padding:24px;text-align:center;">
-              <div style="font-size:11px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;">Total Daily Earnings</div>
-              <div style="font-size:36px;font-weight:700;color:#ffffff;letter-spacing:-1.5px;line-height:1;">$${d.totalDailyEarnings.toFixed(2)}</div>
-              <div style="font-size:12px;color:#525252;margin-top:6px;">${d.purchasedDailyRuns + d.createdDailyRuns} total runs today</div>
+              <div style="font-size:11px;font-weight:600;color:#525252;text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;">Total Earnings</div>
+              <div style="font-size:36px;font-weight:700;color:#ffffff;letter-spacing:-1.5px;line-height:1;">$${d.totalAllTimeEarnings.toFixed(2)}</div>
+              <div style="font-size:12px;color:#22c55e;margin-top:6px;">+$${d.totalDailyEarnings.toFixed(2)} today</div>
             </td></tr>
           </table>
         </td></tr>
 
         ${hasPurchased ? `
-        <!-- PURCHASED AGENTS SECTION -->
+        <!-- PURCHASED AGENTS WITH PER-AGENT BREAKDOWN -->
         <tr><td style="padding:20px 0 8px;">
           ${sectionTitle('Purchased Agents')}
         </td></tr>
@@ -336,62 +265,36 @@ function buildEmailHtml(d: any): string {
         <tr><td style="padding-bottom:12px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              ${metricBox('$' + d.purchasedDailyEarnings.toFixed(2), 'Earned')}
-              ${metricBox(String(d.purchasedSuccessRuns), 'Success')}
+              ${metricBox('$' + d.purchasedTotalEarnings.toFixed(2), 'All-Time')}
+              ${metricBox('$' + d.purchasedDailyEarnings.toFixed(2), 'Today')}
               ${metricBox(String(d.purchasedAgents.length), 'Agents')}
             </tr>
           </table>
         </td></tr>
 
+        ${purchasedAgentRows ? `
         <tr><td style="padding-bottom:16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
-            ${statRow('All-Time Earnings', '$' + d.purchasedTotalEarnings.toFixed(2))}
-            ${statRow('Daily Runs', String(d.purchasedDailyRuns))}
-            ${statRow('Failed Runs', String(d.purchasedDailyRuns - d.purchasedSuccessRuns), true)}
+            ${purchasedAgentRows}
           </table>
-        </td></tr>
-
-        ${topPerformerBlock(d.topPurchasedAgent, d.topPurchasedEarning, 'Top Purchased Agent')}
+        </td></tr>` : ''}
         ` : ''}
 
-        ${hasCreated ? `
-        <!-- CREATED AGENTS SECTION -->
+        ${hasCustom ? `
+        <!-- CREATED AGENTS SUMMARY (no individual listing) -->
         <tr><td style="padding:20px 0 8px;">
           ${sectionTitle('Your Created Agents')}
         </td></tr>
 
-        <tr><td style="padding-bottom:12px;">
+        <tr><td style="padding-bottom:16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              ${metricBox('$' + d.createdDailyEarnings.toFixed(2), 'Earned')}
-              ${metricBox(String(d.createdSuccessRuns), 'Success')}
-              ${metricBox(String(d.createdAgents.length), 'Total')}
+              ${metricBox('$' + d.customTotalEarnings.toFixed(2), 'Earned')}
+              ${metricBox(String(customAgentCount), 'Total')}
+              ${metricBox(String(d.customAgents.filter((a: any) => a.status === 'published').length), 'Live')}
             </tr>
           </table>
         </td></tr>
-
-        <!-- Created agents list -->
-        <tr><td style="padding-bottom:16px;">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#141414;border:1px solid #1f1f1f;border-radius:12px;">
-            ${(d.createdAgents as any[]).slice(0, 5).map((a: any, i: number) => `
-            <tr><td style="padding:12px 20px;${i < Math.min(d.createdAgents.length, 5) - 1 ? 'border-bottom:1px solid #1a1a1a;' : ''}">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="font-size:13px;color:#ffffff;font-weight:500;">${(a.avatar && !a.avatar.includes('/')) ? a.avatar : '🤖'} ${a.name}</td>
-                  <td align="right">
-                    <span style="font-size:11px;color:${a.status === 'published' ? '#22c55e' : '#737373'};font-weight:600;text-transform:uppercase;">${a.status}</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="font-size:11px;color:#525252;padding-top:2px;">$${Number(a.usdc_earnings || 0).toFixed(2)} earned · ${a.total_runs || 0} runs</td>
-                  <td></td>
-                </tr>
-              </table>
-            </td></tr>`).join('')}
-          </table>
-        </td></tr>
-
-        ${topPerformerBlock(d.topCreatedAgent, d.topCreatedEarning, 'Top Created Agent')}
         ` : ''}
 
         ${hasCredits ? `
