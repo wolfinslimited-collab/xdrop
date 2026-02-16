@@ -323,7 +323,7 @@ const AgentBuilder = () => {
   const avatarForDisplay = botAvatars[selectedAvatar];
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden relative pb-20 md:pb-0 pt-16 md:pt-8">
+    <div className="flex flex-col h-screen bg-background overflow-hidden relative pb-20 md:pb-0">
       {/* Animated background orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
         <motion.div
@@ -362,7 +362,7 @@ const AgentBuilder = () => {
         </Link>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8">
+      <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 pt-16 pb-8 md:pt-8">
         <div className="w-full max-w-lg">
 
           {/* Agent name + avatar header (shown after identity step) */}
