@@ -362,7 +362,7 @@ const AgentBuilder = () => {
         </Link>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8">
+      <div className="flex-1 flex flex-col items-center justify-center overflow-y-auto px-4 py-8 pt-16 md:pt-8">
         <div className="w-full max-w-lg">
 
           {/* Agent name + avatar header (shown after identity step) */}
