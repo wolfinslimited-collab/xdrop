@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { useIsNative } from "@/hooks/useNativePlatform";
 import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
@@ -34,8 +35,69 @@ import Profile from "./pages/Profile";
 import ResetPassword from "./pages/ResetPassword";
 import HelpCenter from "./pages/HelpCenter";
 import TermsPolicy from "./pages/TermsPolicy";
+import NativeApp from "./pages/NativeApp";
 
 const queryClient = new QueryClient();
+
+const AppRoutes = () => {
+  const isNative = useIsNative();
+
+  // Native mobile: show tab-based layout with onboarding
+  if (isNative) {
+    return (
+      <Routes>
+        {/* Native app uses NativeApp as default, but still supports deep links */}
+        <Route path="/" element={<NativeApp />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/builder" element={<AgentBuilder />} />
+        <Route path="/agent/:agentId" element={<AgentDetail />} />
+        <Route path="/agent/:agentId/edit" element={<AgentEditor />} />
+        <Route path="/bot/:botId" element={<BotProfile />} />
+        <Route path="/bot/:botId/followers" element={<BotFollowers />} />
+        <Route path="/post/:postId" element={<PostThread />} />
+        <Route path="/tag/:tag" element={<HashtagFeed />} />
+        <Route path="/help" element={<HelpCenter />} />
+        <Route path="/terms" element={<TermsPolicy />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="*" element={<NativeApp />} />
+      </Routes>
+    );
+  }
+
+  // Web: full routing
+  return (
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/home" element={<Index />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/bot/:botId" element={<BotProfile />} />
+      <Route path="/bot/:botId/followers" element={<BotFollowers />} />
+      <Route path="/explore" element={<Explore />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/bookmarks" element={<Bookmarks />} />
+      <Route path="/communities" element={<Communities />} />
+      <Route path="/add-agent" element={<AddAgent />} />
+      <Route path="/marketplace" element={<Marketplace />} />
+      <Route path="/builder" element={<AgentBuilder />} />
+      <Route path="/templates" element={<Marketplace />} />
+      <Route path="/agent/:agentId" element={<AgentDetail />} />
+      <Route path="/agent/:agentId/edit" element={<AgentEditor />} />
+      <Route path="/tag/:tag" element={<HashtagFeed />} />
+      <Route path="/post/:postId" element={<PostThread />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/games" element={<Games />} />
+      <Route path="/wallet" element={<Wallet />} />
+      <Route path="/credits" element={<Credits />} />
+      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/help" element={<HelpCenter />} />
+      <Route path="/terms" element={<TermsPolicy />} />
+      {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
 
 const App = () => (
   <HelmetProvider>
@@ -45,36 +107,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/home" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/bot/:botId" element={<BotProfile />} />
-              <Route path="/bot/:botId/followers" element={<BotFollowers />} />
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/bookmarks" element={<Bookmarks />} />
-              <Route path="/communities" element={<Communities />} />
-              <Route path="/add-agent" element={<AddAgent />} />
-              <Route path="/marketplace" element={<Marketplace />} />
-              <Route path="/builder" element={<AgentBuilder />} />
-              <Route path="/templates" element={<Marketplace />} />
-              <Route path="/agent/:agentId" element={<AgentDetail />} />
-              <Route path="/agent/:agentId/edit" element={<AgentEditor />} />
-              <Route path="/tag/:tag" element={<HashtagFeed />} />
-              <Route path="/post/:postId" element={<PostThread />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/games" element={<Games />} />
-              <Route path="/wallet" element={<Wallet />} />
-              <Route path="/credits" element={<Credits />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/help" element={<HelpCenter />} />
-              <Route path="/terms" element={<TermsPolicy />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
