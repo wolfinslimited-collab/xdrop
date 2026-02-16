@@ -54,9 +54,16 @@ Deno.serve(async (req) => {
       if (purchasedAgentIds.length > 0) {
         const { data: agents } = await adminClient
           .from('agents')
-          .select('id, name, usdc_earnings, total_runs, reliability_score, avatar')
+          .select('id, name, usdc_earnings, total_runs, reliability_score, avatar, purchased_at, price, monthly_return_min, monthly_return_max')
           .in('id', purchasedAgentIds)
         purchasedAgents = agents || []
+
+        // Calculate simulated earnings (matching dashboard logic)
+        for (const agent of purchasedAgents) {
+          const sim = getSimulatedEarnings(agent)
+          agent._simTotal = sim.total
+          agent._simDaily = sim.dailyRate
+        }
 
         const { data: recentRuns } = await adminClient
           .from('agent_runs')
@@ -70,14 +77,28 @@ Deno.serve(async (req) => {
             purchasedSuccessRuns++
             const e = Number(run.earnings || 0)
             purchasedDailyEarnings += e
-            const agentEarning = e
-            if (agentEarning > topPurchasedEarning) {
-              topPurchasedEarning = agentEarning
+            if (e > topPurchasedEarning) {
+              topPurchasedEarning = e
               topPurchasedAgent = purchasedAgents.find(a => a.id === run.agent_id)
             }
           }
         }
-        purchasedTotalEarnings = purchasedAgents.reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
+
+        // Use simulated earnings if no real earnings exist
+        const realTotal = purchasedAgents.reduce((s, a) => s + Number(a.usdc_earnings || 0), 0)
+        const simTotal = purchasedAgents.reduce((s, a) => s + (a._simTotal || 0), 0)
+        const simDaily = purchasedAgents.reduce((s, a) => s + (a._simDaily || 0), 0)
+        purchasedTotalEarnings = realTotal > 0 ? realTotal : simTotal
+        if (purchasedDailyEarnings === 0 && simDaily > 0) {
+          purchasedDailyEarnings = simDaily
+          // Find top by daily simulated
+          for (const a of purchasedAgents) {
+            if ((a._simDaily || 0) > topPurchasedEarning) {
+              topPurchasedEarning = a._simDaily
+              topPurchasedAgent = a
+            }
+          }
+        }
       }
 
       // --- 2. CREATED AGENTS ---
@@ -203,6 +224,18 @@ Deno.serve(async (req) => {
     })
   }
 })
+
+function getSimulatedEarnings(agent: any): { total: number; monthly: number; dailyRate: number } {
+  if (!agent.purchased_at || !agent.monthly_return_min) return { total: 0, monthly: 0, dailyRate: 0 }
+  const purchasedDate = new Date(agent.purchased_at)
+  const now = new Date()
+  const daysSincePurchase = Math.max(1, Math.floor((now.getTime() - purchasedDate.getTime()) / (1000 * 60 * 60 * 24)))
+  const avgMonthlyReturn = ((agent.monthly_return_min || 0) + (agent.monthly_return_max || 0)) / 2
+  const dailyRate = (avgMonthlyReturn / 30) / 100 * (agent.price || 100)
+  const total = +(dailyRate * daysSincePurchase).toFixed(2)
+  const monthly = +(dailyRate * 30).toFixed(2)
+  return { total, monthly, dailyRate: +dailyRate.toFixed(2) }
+}
 
 function formatCreditType(type: string): string {
   const map: Record<string, string> = {
