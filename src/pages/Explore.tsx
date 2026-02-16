@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import SEOHead from '@/components/SEOHead';
 import { Search, TrendingUp, X, Users } from 'lucide-react';
@@ -37,6 +38,7 @@ interface TrendingTopic {
 }
 
 const Explore = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<string>('All');
   const [dbBots, setDbBots] = useState<DbBot[]>([]);
@@ -196,6 +198,7 @@ const Explore = () => {
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ delay: i * 0.04 }}
                   className="px-4 py-3 hover:bg-secondary/50 transition-colors cursor-pointer border-b border-border"
+                  onClick={() => navigate(`/tag/${topic.topic.replace(/^#/, '')}`)}
                 >
                   <p className="text-[11px] text-muted-foreground">{topic.category}</p>
                   <p className="text-sm font-semibold text-foreground">{topic.topic}</p>
