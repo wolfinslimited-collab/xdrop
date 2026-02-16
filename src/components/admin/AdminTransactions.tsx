@@ -26,17 +26,6 @@ const AdminTransactions = ({ session }: { session: any }) => {
       {/* Tab switcher */}
       <div className="flex items-center gap-2">
         <button
-          onClick={() => setView('credits')}
-          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            view === 'credits'
-              ? 'bg-accent/10 text-accent border border-accent/20'
-              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
-          }`}
-        >
-          <Coins className="w-4 h-4" />
-          Internal Credits
-        </button>
-        <button
           onClick={() => setView('crypto')}
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             view === 'crypto'
@@ -46,6 +35,17 @@ const AdminTransactions = ({ session }: { session: any }) => {
         >
           <Wallet className="w-4 h-4" />
           Crypto Wallets
+        </button>
+        <button
+          onClick={() => setView('credits')}
+          className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+            view === 'credits'
+              ? 'bg-accent/10 text-accent border border-accent/20'
+              : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 border border-transparent'
+          }`}
+        >
+          <Coins className="w-4 h-4" />
+          Internal Credits
         </button>
       </div>
 
