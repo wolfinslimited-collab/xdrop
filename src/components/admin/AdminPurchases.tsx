@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Clock, ChevronLeft, ChevronRight, DollarSign, PlayCircle } from 'lucide-react';
+import { ShoppingCart, Clock, ChevronLeft, ChevronRight, DollarSign, PlayCircle, TrendingUp, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -77,6 +77,20 @@ export default function AdminPurchases({ session }: { session: any }) {
     return <Badge className="bg-success/10 text-success border-success/20 text-[10px]">Active</Badge>;
   };
 
+  const purchaseMetrics = useMemo(() => {
+    const totalRevenue = purchases.reduce((s: number, p: any) => s + (Number(p.price_paid) || 0), 0);
+    const activeTrials = trials.filter((t: any) => t.status !== 'expired' && new Date(t.expires_at) >= new Date()).length;
+    const avgPrice = purchases.length > 0 ? Math.round(totalRevenue / purchases.length) : 0;
+    return { totalRevenue, activeTrials, avgPrice };
+  }, [purchases, trials]);
+
+  const purchaseSummaryCards = [
+    { label: 'Total Purchases', value: totalP, icon: ShoppingCart, color: 'text-foreground' },
+    { label: 'Revenue', value: `$${purchaseMetrics.totalRevenue.toLocaleString()}`, icon: DollarSign, color: 'text-accent' },
+    { label: 'Avg Purchase', value: `$${purchaseMetrics.avgPrice}`, icon: TrendingUp, color: 'text-success' },
+    { label: 'Active Trials', value: purchaseMetrics.activeTrials, icon: PlayCircle, color: 'text-accent' },
+  ];
+
   if (loading) {
     return (
       <div className="p-6 space-y-3">
@@ -96,7 +110,27 @@ export default function AdminPurchases({ session }: { session: any }) {
   const setPage = view === 'purchases' ? setPageP : setPageT;
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
+      {/* Summary metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {purchaseSummaryCards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+            className="bg-card rounded-lg border border-border px-3 py-2.5"
+          >
+            <div className="flex items-center justify-between mb-0.5">
+              <span className="text-[10px] text-muted-foreground">{card.label}</span>
+              <card.icon className={`w-3.5 h-3.5 ${card.color} opacity-60`} />
+            </div>
+            <p className={`text-lg font-bold font-display tracking-tight ${card.color}`}>
+              {typeof card.value === 'number' ? card.value.toLocaleString() : card.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {/* Tabs */}
         <div className="flex items-center gap-1 p-3 border-b border-border">
