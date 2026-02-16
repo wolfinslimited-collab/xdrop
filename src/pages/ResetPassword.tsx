@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, Eye, EyeOff, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,29 +21,60 @@ const ResetPassword = () => {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Listen for PASSWORD_RECOVERY event from the auth state change
+    let resolved = false;
+    const resolve = () => {
+      if (resolved) return;
+      resolved = true;
+      setIsRecovery(true);
+      setChecking(false);
+    };
+
+    // 1. Listen for PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
-        setIsRecovery(true);
+        resolve();
+      }
+    });
+
+    // 2. Check URL hash for type=recovery (token fragments)
+    const hash = window.location.hash;
+    if (hash.includes('type=recovery')) {
+      resolve();
+    }
+
+    // 3. Check if we were redirected here with an active session
+    // (PASSWORD_RECOVERY event already fired in AuthContext before this page mounted)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session && !resolved) {
+        // Check if the URL or referrer suggests this is a recovery flow
+        // The presence of hash params or the fact we landed on /reset-password with a session
+        // means the recovery was already processed
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(hash.replace('#', ''));
+        
+        if (hash.includes('access_token') || urlParams.has('type') || hashParams.has('type')) {
+          resolve();
+        } else {
+          // User has a session and navigated here directly — 
+          // they likely came from the recovery email and the token was already exchanged
+          // Allow them to reset since they have a valid session
+          resolve();
+        }
+      } else if (!resolved) {
+        // No session and no recovery event — invalid/expired
         setChecking(false);
       }
     });
 
-    // Also check the URL hash for recovery token (type=recovery)
-    const hash = window.location.hash;
-    if (hash.includes('type=recovery')) {
-      setIsRecovery(true);
-      setChecking(false);
-    } else {
-      // Give auth state change a moment to fire
-      const timeout = setTimeout(() => setChecking(false), 2000);
-      return () => {
-        clearTimeout(timeout);
-        subscription.unsubscribe();
-      };
-    }
+    // Fallback timeout
+    const timeout = setTimeout(() => {
+      if (!resolved) setChecking(false);
+    }, 3000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleReset = async (e: React.FormEvent) => {
@@ -68,6 +99,8 @@ const ResetPassword = () => {
       return;
     }
 
+    // Sign out so they can log in fresh with new password
+    await supabase.auth.signOut();
     setSuccess(true);
     setSubmitting(false);
   };
@@ -178,9 +211,9 @@ const ResetPassword = () => {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.1 }}
-              className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mb-4"
+              className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mb-4"
             >
-              <CheckCircle2 className="w-8 h-8 text-green-500" />
+              <CheckCircle2 className="w-8 h-8 text-success" />
             </motion.div>
             <h2 className="text-lg font-bold text-foreground font-display mb-2">Password Updated!</h2>
             <p className="text-sm text-muted-foreground mb-6">
