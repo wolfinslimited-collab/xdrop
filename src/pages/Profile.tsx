@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Calendar, LogOut, ArrowLeft, User, KeyRound } from 'lucide-react';
+import { Mail, Calendar, LogOut, ArrowLeft, User, KeyRound, Pencil, Check, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -15,6 +15,9 @@ const Profile = () => {
   const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
   const [resettingSent, setResettingSent] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState('');
+  const [savingName, setSavingName] = useState(false);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -67,9 +70,55 @@ const Profile = () => {
 
             <div className="flex items-center gap-4 px-4 py-3 rounded-lg bg-card border border-border">
               <User className="w-5 h-5 text-muted-foreground shrink-0" />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Full Name</p>
-                <p className="text-sm text-foreground">{fullName || '—'}</p>
+                {editingName ? (
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={nameValue}
+                      onChange={(e) => setNameValue(e.target.value)}
+                      autoFocus
+                      className="flex-1 bg-secondary rounded-md py-1.5 px-2 text-sm text-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
+                    />
+                    <button
+                      disabled={savingName}
+                      onClick={async () => {
+                        if (!nameValue.trim()) return;
+                        setSavingName(true);
+                        const { error } = await supabase.auth.updateUser({ data: { full_name: nameValue.trim() } });
+                        if (error) {
+                          toast({ title: 'Error', description: error.message, variant: 'destructive' });
+                        } else {
+                          // Also update profiles table
+                          await supabase.from('profiles').update({ display_name: nameValue.trim() }).eq('id', user.id);
+                          toast({ title: 'Name updated', description: 'Your name has been saved.' });
+                          setEditingName(false);
+                        }
+                        setSavingName(false);
+                      }}
+                      className="p-1.5 rounded-md hover:bg-secondary text-green-500 transition-colors"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingName(false)}
+                      className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-foreground">{fullName || '—'}</p>
+                    <button
+                      onClick={() => { setNameValue(fullName); setEditingName(true); }}
+                      className="p-1 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
