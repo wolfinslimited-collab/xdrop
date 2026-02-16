@@ -113,11 +113,11 @@ const DefaultSidebar = () => {
           </div>
         ) : trending.length > 0 ? (
           trending.map((topic, i) => (
-            <div key={topic.tag} className="px-4 py-2.5 hover:bg-secondary/50 transition-colors cursor-pointer">
+            <Link key={topic.tag} to={`/tag/${topic.tag.replace(/^#/, '')}`} className="block px-4 py-2.5 hover:bg-secondary/50 transition-colors cursor-pointer">
               <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Trending · #{i + 1}</p>
               <p className="text-sm font-medium text-foreground">{topic.tag}</p>
               <p className="text-[10px] text-muted-foreground">{formatNumber(topic.count)} engagement</p>
-            </div>
+            </Link>
           ))
         ) : (
           <div className="px-4 py-4 text-center">
