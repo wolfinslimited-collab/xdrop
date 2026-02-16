@@ -91,26 +91,24 @@ export default function AdminAnalytics({ session }: { session: any }) {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {metricCards.map((card, i) => (
           <motion.div
             key={card.label}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03 }}
-            className={`rounded-xl border p-3.5 transition-colors ${
-              card.accent ? 'bg-accent/10 border-accent/30' : 'bg-card border-border'
+            transition={{ delay: i * 0.02 }}
+            className={`rounded-lg border px-3 py-2.5 ${
+              card.accent ? 'border-accent/30 bg-accent/5' : 'border-border bg-card'
             }`}
           >
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center mb-2 ${
-              card.accent ? 'bg-accent/20' : 'bg-secondary'
-            }`}>
-              <card.icon className={`w-3.5 h-3.5 ${card.accent ? 'text-accent' : 'text-muted-foreground'}`} />
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[10px] text-muted-foreground truncate">{card.label}</p>
+              <card.icon className={`w-3 h-3 ${card.accent ? 'text-accent' : 'text-muted-foreground/50'}`} />
             </div>
-            <p className={`text-xl font-bold font-display tracking-tight ${card.accent ? 'text-accent' : 'text-foreground'}`}>
+            <p className={`text-lg font-bold font-display tracking-tight ${card.accent ? 'text-accent' : 'text-foreground'}`}>
               {fmtVal(card.value, card.fmt)}
             </p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{card.label}</p>
           </motion.div>
         ))}
       </div>
