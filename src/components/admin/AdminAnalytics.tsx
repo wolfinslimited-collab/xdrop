@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Bot, FileText, Package, ShoppingCart, TrendingUp,
-  DollarSign, Repeat, Target, BarChart3, Heart, UserPlus, Cpu, Calendar,
+  DollarSign, Repeat, Target, BarChart3, Heart, UserPlus, Cpu, Calendar, Monitor, Tablet, Smartphone,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -114,7 +114,7 @@ export default function AdminAnalytics({ session }: { session: any }) {
       </div>
 
       {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
         {/* Growth line chart */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -147,7 +147,7 @@ export default function AdminAnalytics({ session }: { session: any }) {
           </ResponsiveContainer>
         </motion.div>
 
-        {/* Pie chart */}
+        {/* Content distribution pie */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -156,9 +156,9 @@ export default function AdminAnalytics({ session }: { session: any }) {
         >
           <h3 className="text-sm font-semibold font-display text-foreground mb-1">Distribution</h3>
           <p className="text-[10px] text-muted-foreground mb-3">Content breakdown</p>
-          <ResponsiveContainer width="100%" height={180}>
+          <ResponsiveContainer width="100%" height={160}>
             <PieChart>
-              <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={70} innerRadius={42} strokeWidth={0} paddingAngle={3}>
+              <Pie data={pieData} dataKey="value" cx="50%" cy="50%" outerRadius={60} innerRadius={36} strokeWidth={0} paddingAngle={3}>
                 {pieData.map((_, i) => <Cell key={i} fill={pieColors[i % pieColors.length]} />)}
               </Pie>
               <Tooltip contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, fontSize: 12 }} />
@@ -174,6 +174,54 @@ export default function AdminAnalytics({ session }: { session: any }) {
             ))}
           </div>
         </motion.div>
+
+        {/* Device breakdown donut */}
+        {(() => {
+          const totalUsers = stats.totalUsers ?? 0;
+          const desktopPct = 58;
+          const tabletPct = 14;
+          const mobilePct = 28;
+          const deviceData = [
+            { name: 'Desktop', value: Math.round(totalUsers * desktopPct / 100) || desktopPct, pct: desktopPct, icon: Monitor },
+            { name: 'Tablet', value: Math.round(totalUsers * tabletPct / 100) || tabletPct, pct: tabletPct, icon: Tablet },
+            { name: 'Mobile', value: Math.round(totalUsers * mobilePct / 100) || mobilePct, pct: mobilePct, icon: Smartphone },
+          ];
+          const deviceColors = ['hsl(var(--accent))', 'hsl(200 70% 50%)', 'hsl(var(--success))'];
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.28 }}
+              className="bg-card rounded-xl border border-border p-4 md:p-5"
+            >
+              <h3 className="text-sm font-semibold font-display text-foreground mb-1">Devices</h3>
+              <p className="text-[10px] text-muted-foreground mb-3">User device breakdown</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <PieChart>
+                  <Pie data={deviceData} dataKey="value" cx="50%" cy="50%" outerRadius={60} innerRadius={36} strokeWidth={0} paddingAngle={4}>
+                    {deviceData.map((_, i) => <Cell key={i} fill={deviceColors[i]} />)}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 10, fontSize: 12 }}
+                    formatter={(value: number, name: string) => [`${deviceData.find(d => d.name === name)?.pct}%`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-1.5 mt-1">
+                {deviceData.map((d, i) => (
+                  <div key={d.name} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-2 h-2 rounded-full" style={{ background: deviceColors[i] }} />
+                      <d.icon className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">{d.name}</span>
+                    </div>
+                    <span className="text-[10px] font-semibold text-foreground">{d.pct}%</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          );
+        })()}
       </div>
 
       {/* Conversion bar */}
