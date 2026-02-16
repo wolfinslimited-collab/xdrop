@@ -208,6 +208,7 @@ Deno.serve(async (req) => {
       const rangeParam = url.searchParams.get('range') || '30'
       const rangeDays = parseInt(rangeParam)
       const rangeDate = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString()
+      const prevRangeDate = new Date(Date.now() - rangeDays * 2 * 24 * 60 * 60 * 1000).toISOString()
       const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
       const [
@@ -232,25 +233,50 @@ Deno.serve(async (req) => {
         adminClient.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo),
       ])
 
-      // Range-scoped counts
+      // Range-scoped counts (current period)
       const [
         { count: rangeSignups },
         { count: rangePosts },
         { count: rangeLikes },
         { count: rangeFollows },
         { count: rangeAgents },
+        { count: rangeBots },
+        { count: rangePurchases },
       ] = await Promise.all([
         adminClient.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
         adminClient.from('social_posts').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
         adminClient.from('user_post_likes').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
         adminClient.from('user_follows').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
         adminClient.from('agents').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('social_bots').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('agent_purchases').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
       ])
 
-      // Revenue
-      const { data: purchases } = await adminClient.from('agent_purchases').select('price_paid')
-      const totalRevenue = (purchases || []).reduce((sum: number, p: any) => sum + (Number(p.price_paid) || 0), 0)
+      // Previous period counts (for % change)
+      const [
+        { count: prevSignups },
+        { count: prevPosts },
+        { count: prevLikes },
+        { count: prevFollows },
+        { count: prevAgents },
+        { count: prevBots },
+        { count: prevPurchases },
+      ] = await Promise.all([
+        adminClient.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('social_posts').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('user_post_likes').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('user_follows').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('agents').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('social_bots').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+        adminClient.from('agent_purchases').select('*', { count: 'exact', head: true }).gte('created_at', prevRangeDate).lt('created_at', rangeDate),
+      ])
+
+      // Revenue (current + previous period)
+      const { data: allPurchases } = await adminClient.from('agent_purchases').select('price_paid, purchased_at')
+      const totalRevenue = (allPurchases || []).reduce((sum: number, p: any) => sum + (Number(p.price_paid) || 0), 0)
       const avgPurchaseValue = (totalPurchases || 0) > 0 ? Math.round(totalRevenue / (totalPurchases || 1)) : 0
+      const rangeRevenue = (allPurchases || []).filter((p: any) => p.purchased_at >= rangeDate).reduce((s: number, p: any) => s + (Number(p.price_paid) || 0), 0)
+      const prevRevenue = (allPurchases || []).filter((p: any) => p.purchased_at >= prevRangeDate && p.purchased_at < rangeDate).reduce((s: number, p: any) => s + (Number(p.price_paid) || 0), 0)
 
       // Conversion rate
       const { data: trials } = await adminClient.from('agent_trials').select('user_id, template_id')
@@ -312,7 +338,8 @@ Deno.serve(async (req) => {
         totalUsers, totalBots, totalPosts, totalAgents, totalPurchases, recentSignups,
         totalTrials, totalRevenue, convertedTrials, conversionRate, avgPurchaseValue,
         totalLikes, totalFollows,
-        rangeSignups, rangePosts, rangeLikes, rangeFollows, rangeAgents,
+        rangeSignups, rangePosts, rangeLikes, rangeFollows, rangeAgents, rangeBots, rangePurchases, rangeRevenue,
+        prevSignups, prevPosts, prevLikes, prevFollows, prevAgents, prevBots, prevPurchases, prevRevenue,
         dailyGrowth, topAgents, topPosts,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
