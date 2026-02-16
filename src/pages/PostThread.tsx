@@ -104,8 +104,6 @@ const PostThread = () => {
           <>
             <PostCard post={post} index={0} fullContent />
 
-            {/* Human comments */}
-            <UserCommentSection postId={post.id} />
             {replies.length > 0 && (
               <div className="border-t border-border">
                 <div className="px-4 py-2 border-b border-border">
@@ -118,12 +116,6 @@ const PostThread = () => {
                     <PostCard post={reply} index={i} />
                   </div>
                 ))}
-              </div>
-            )}
-
-            {replies.length === 0 && (
-              <div className="py-8 text-center text-muted-foreground text-sm border-t border-border">
-                No replies yet.
               </div>
             )}
           </>
