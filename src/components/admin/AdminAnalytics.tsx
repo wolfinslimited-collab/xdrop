@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Users, Bot, FileText, Package, ShoppingCart, TrendingUp,
+  Users, Bot, FileText, Package, ShoppingCart, TrendingUp, TrendingDown,
   DollarSign, Repeat, Target, BarChart3, Heart, UserPlus, Cpu, Calendar, Monitor, Tablet, Smartphone,
 } from 'lucide-react';
 import {
@@ -21,6 +21,10 @@ const RANGE_OPTIONS = [
 
 const formatNum = (v: number) => v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toLocaleString();
 const formatUsd = (v: number) => `$${v.toLocaleString()}`;
+const pctChange = (cur: number, prev: number) => {
+  if (prev === 0) return cur > 0 ? 100 : 0;
+  return Math.round(((cur - prev) / prev) * 100);
+};
 
 export default function AdminAnalytics({ session }: { session: any }) {
   const [range, setRange] = useState(1);
@@ -40,16 +44,16 @@ export default function AdminAnalytics({ session }: { session: any }) {
   if (!stats) return <p className="p-6 text-muted-foreground">Failed to load analytics.</p>;
 
   const metricCards = [
-    { label: 'Total Users', value: stats.totalUsers ?? 0, icon: Users, fmt: 'num' },
-    { label: `New Signups (${range}d)`, value: stats.rangeSignups ?? 0, icon: UserPlus, fmt: 'num' },
-    { label: 'Active Bots', value: stats.totalBots ?? 0, icon: Bot, fmt: 'num' },
-    { label: 'Total Posts', value: stats.totalPosts ?? 0, icon: FileText, fmt: 'num' },
-    { label: 'Agents Created', value: stats.totalAgents ?? 0, icon: Cpu, fmt: 'num' },
-    { label: 'Total Likes', value: stats.totalLikes ?? 0, icon: Heart, fmt: 'num' },
-    { label: 'Total Follows', value: stats.totalFollows ?? 0, icon: UserPlus, fmt: 'num' },
-    { label: 'Revenue', value: stats.totalRevenue ?? 0, icon: DollarSign, fmt: 'usd', accent: true },
-    { label: 'Purchases', value: stats.totalPurchases ?? 0, icon: ShoppingCart, fmt: 'num' },
-    { label: 'Conversion', value: stats.conversionRate ?? 0, icon: Repeat, fmt: 'pct' },
+    { label: 'Total Users', value: stats.totalUsers ?? 0, prev: (stats.totalUsers ?? 0) - (stats.rangeSignups ?? 0), icon: Users, fmt: 'num' },
+    { label: `New Signups`, value: stats.rangeSignups ?? 0, prev: stats.prevSignups ?? 0, icon: UserPlus, fmt: 'num' },
+    { label: 'Active Bots', value: stats.totalBots ?? 0, prev: (stats.totalBots ?? 0) - (stats.rangeBots ?? 0), icon: Bot, fmt: 'num' },
+    { label: 'Total Posts', value: stats.totalPosts ?? 0, prev: (stats.totalPosts ?? 0) - (stats.rangePosts ?? 0), icon: FileText, fmt: 'num' },
+    { label: 'Agents Created', value: stats.totalAgents ?? 0, prev: (stats.totalAgents ?? 0) - (stats.rangeAgents ?? 0), icon: Cpu, fmt: 'num' },
+    { label: 'Total Likes', value: stats.totalLikes ?? 0, prev: (stats.totalLikes ?? 0) - (stats.rangeLikes ?? 0), icon: Heart, fmt: 'num' },
+    { label: 'Total Follows', value: stats.totalFollows ?? 0, prev: (stats.totalFollows ?? 0) - (stats.rangeFollows ?? 0), icon: UserPlus, fmt: 'num' },
+    { label: 'Revenue', value: stats.totalRevenue ?? 0, prev: (stats.totalRevenue ?? 0) - (stats.rangeRevenue ?? 0), icon: DollarSign, fmt: 'usd', accent: true },
+    { label: 'Purchases', value: stats.totalPurchases ?? 0, prev: (stats.totalPurchases ?? 0) - (stats.rangePurchases ?? 0), icon: ShoppingCart, fmt: 'num' },
+    { label: 'Conversion', value: stats.conversionRate ?? 0, prev: null, icon: Repeat, fmt: 'pct' },
   ];
 
   const dailyGrowth = (stats.dailyGrowth || []).map((d: any) => ({
@@ -106,9 +110,22 @@ export default function AdminAnalytics({ session }: { session: any }) {
               <p className="text-[10px] text-muted-foreground truncate">{card.label}</p>
               <card.icon className={`w-3 h-3 ${card.accent ? 'text-accent' : 'text-muted-foreground/50'}`} />
             </div>
-            <p className={`text-lg font-bold font-display tracking-tight ${card.accent ? 'text-accent' : 'text-foreground'}`}>
-              {fmtVal(card.value, card.fmt)}
-            </p>
+            <div className="flex items-end justify-between gap-1">
+              <p className={`text-lg font-bold font-display tracking-tight ${card.accent ? 'text-accent' : 'text-foreground'}`}>
+                {fmtVal(card.value, card.fmt)}
+              </p>
+              {card.prev !== null && (() => {
+                const change = pctChange(card.value, card.prev);
+                if (change === 0) return null;
+                const positive = change > 0;
+                return (
+                  <span className={`flex items-center gap-0.5 text-[10px] font-semibold ${positive ? 'text-success' : 'text-destructive'}`}>
+                    {positive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                    {positive ? '+' : ''}{change}%
+                  </span>
+                );
+              })()}
+            </div>
           </motion.div>
         ))}
       </div>
