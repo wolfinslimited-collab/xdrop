@@ -4,8 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Wallet, Copy } from 'lucide-react';
 import { format } from 'date-fns';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { toast } from 'sonner';
+
+interface WalletInfo {
+  address: string;
+  currency: string;
+  network: string;
+}
 
 interface Transaction {
   id: string;
@@ -15,8 +23,17 @@ interface Transaction {
   type: string;
   description: string | null;
   created_at: string;
+  metadata: any;
   profile?: { display_name: string; avatar_url: string | null };
+  wallets?: WalletInfo[];
 }
+
+const truncAddr = (addr: string) => addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr;
+
+const copyAddr = (addr: string) => {
+  navigator.clipboard.writeText(addr);
+  toast.success('Address copied');
+};
 
 type SortField = 'created_at' | 'amount' | 'balance_after' | 'type';
 type SortDir = 'asc' | 'desc';
@@ -142,6 +159,7 @@ const AdminTransactions = ({ session }: { session: any }) => {
             <thead>
               <tr className="border-b border-border bg-secondary/30">
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">User</th>
+                <th className="text-left px-4 py-3 font-medium text-muted-foreground">Wallet</th>
                 <th
                   className="text-left px-4 py-3 font-medium text-muted-foreground cursor-pointer select-none"
                   onClick={() => toggleSort('type')}
@@ -158,7 +176,7 @@ const AdminTransactions = ({ session }: { session: any }) => {
                   className="text-right px-4 py-3 font-medium text-muted-foreground cursor-pointer select-none"
                   onClick={() => toggleSort('balance_after')}
                 >
-                  <span className="inline-flex items-center gap-1 justify-end">Balance After <SortIcon field="balance_after" /></span>
+                  <span className="inline-flex items-center gap-1 justify-end">Balance <SortIcon field="balance_after" /></span>
                 </th>
                 <th className="text-left px-4 py-3 font-medium text-muted-foreground">Description</th>
                 <th
@@ -173,7 +191,7 @@ const AdminTransactions = ({ session }: { session: any }) => {
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
                   <tr key={i} className="border-b border-border/50">
-                    {Array.from({ length: 6 }).map((_, j) => (
+                    {Array.from({ length: 7 }).map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 bg-secondary/60 rounded animate-pulse w-20" />
                       </td>
@@ -182,37 +200,70 @@ const AdminTransactions = ({ session }: { session: any }) => {
                 ))
               ) : transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-muted-foreground">
+                  <td colSpan={7} className="text-center py-12 text-muted-foreground">
                     No transactions found
                   </td>
                 </tr>
               ) : (
-                transactions.map(tx => (
-                  <tr key={tx.id} className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="font-medium text-foreground truncate max-w-[160px] block">
-                        {tx.profile?.display_name || tx.user_id.slice(0, 8)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className={`text-[10px] capitalize ${typeColor(tx.type)}`}>
-                        {tx.type.replace(/_/g, ' ')}
-                      </Badge>
-                    </td>
-                    <td className={`px-4 py-3 text-right font-mono text-xs ${tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                      {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
-                      {tx.balance_after.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground text-xs truncate max-w-[200px]">
-                      {tx.description || '—'}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
-                      {format(new Date(tx.created_at), 'MMM d, yyyy HH:mm')}
-                    </td>
-                  </tr>
-                ))
+                <TooltipProvider delayDuration={200}>
+                  {transactions.map(tx => (
+                    <tr key={tx.id} className="border-b border-border/50 hover:bg-secondary/20 transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="min-w-0">
+                          <span className="font-medium text-foreground truncate max-w-[140px] block text-xs">
+                            {tx.profile?.display_name || 'Unknown'}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground font-mono">{tx.user_id.slice(0, 8)}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {tx.wallets && tx.wallets.length > 0 ? (
+                          <div className="space-y-1">
+                            {tx.wallets.map((w, i) => (
+                              <Tooltip key={i}>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    onClick={() => copyAddr(w.address)}
+                                    className="flex items-center gap-1.5 group"
+                                  >
+                                    <Wallet className="w-3 h-3 text-muted-foreground shrink-0" />
+                                    <span className="font-mono text-[11px] text-foreground/80 group-hover:text-accent transition-colors">
+                                      {truncAddr(w.address)}
+                                    </span>
+                                    <Copy className="w-2.5 h-2.5 text-muted-foreground/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-xs">
+                                  <p className="font-mono text-[10px]">{w.address}</p>
+                                  <p className="text-muted-foreground mt-0.5">{w.currency} · {w.network}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/50">No wallet</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Badge variant="outline" className={`text-[10px] capitalize ${typeColor(tx.type)}`}>
+                          {tx.type.replace(/_/g, ' ')}
+                        </Badge>
+                      </td>
+                      <td className={`px-4 py-3 text-right font-mono text-xs ${tx.amount > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-xs text-muted-foreground">
+                        {tx.balance_after.toLocaleString()}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground text-xs truncate max-w-[200px]">
+                        {tx.description || '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                        {format(new Date(tx.created_at), 'MMM d, yyyy HH:mm')}
+                      </td>
+                    </tr>
+                  ))}
+                </TooltipProvider>
               )}
             </tbody>
           </table>
