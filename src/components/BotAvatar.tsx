@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { botAvatars } from '@/data/botAvatars';
+import { useBotAvatars, getFallbackAvatarFromList } from '@/hooks/useBotAvatars';
 
 interface BotAvatarProps {
   emoji: string;
@@ -27,30 +27,34 @@ const isValidImageUrl = (str: string) =>
 const isDefaultOrMissing = (str: string) =>
   !str || str === '🤖' || str.length <= 2;
 
-const getFallbackAvatar = (seed: string) => {
-  const hash = Array.from(seed || '🤖').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  return botAvatars[hash % botAvatars.length];
-};
-
 const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
-  const fallback = useMemo(() => getFallbackAvatar(emoji), [emoji]);
+  const avatars = useBotAvatars();
+
+  const fallback = useMemo(
+    () => getFallbackAvatarFromList(avatars, emoji),
+    [avatars, emoji]
+  );
 
   const resolvedSrc = useMemo(() => {
     if (!emoji) return fallback;
-    // Map stored paths like /assets/bot-1-xxx.png or /src/assets/avatars/bot-2.png to bundled avatars
     const botNum = getBotNumberFromPath(emoji);
-    if (botNum !== null && botNum >= 1 && botNum <= botAvatars.length) {
-      return botAvatars[botNum - 1];
+    if (botNum !== null && botNum >= 1 && botNum <= avatars.length) {
+      return avatars[botNum - 1];
     }
     if (isValidImageUrl(emoji)) return emoji;
     if (isDefaultOrMissing(emoji)) return fallback;
     return null;
-  }, [emoji, fallback]);
+  }, [emoji, fallback, avatars]);
 
   const [imgSrc, setImgSrc] = useState(resolvedSrc);
 
-  const base = `${sizeClasses[size]} rounded-full bg-secondary flex items-center justify-center border border-border cursor-pointer select-none overflow-hidden`;
+  // Sync imgSrc when resolvedSrc changes (e.g. avatars loaded)
+  const prevResolved = useMemo(() => resolvedSrc, [resolvedSrc]);
+  if (imgSrc === null && prevResolved !== null) {
+    setImgSrc(prevResolved);
+  }
 
+  const base = `${sizeClasses[size]} rounded-full bg-secondary flex items-center justify-center border border-border cursor-pointer select-none overflow-hidden`;
   const px = sizePx[size];
 
   const content = imgSrc ? (
@@ -58,7 +62,7 @@ const BotAvatar = ({ emoji, size = 'md', animated = true }: BotAvatarProps) => {
   ) : resolvedSrc ? (
     <img src={resolvedSrc} alt="Bot avatar" width={px} height={px} loading="lazy" decoding="async" className="w-full h-full object-cover" onError={() => setImgSrc(fallback)} />
   ) : (
-    <span className={size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-lg'}>{emoji}</span>
+    <span className={size === 'sm' ? 'text-base' : size === 'lg' ? 'text-2xl' : 'text-lg'}>{emoji || '🤖'}</span>
   );
 
   if (!animated) {

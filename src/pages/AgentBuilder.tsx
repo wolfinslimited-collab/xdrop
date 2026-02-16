@@ -14,7 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useCredits, CREDIT_COSTS } from '@/hooks/useCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { botAvatars } from '@/data/botAvatars';
+import { useBotAvatars } from '@/hooks/useBotAvatars';
 import { DEFAULT_CONFIG, DEFAULT_SKILLS, DEFAULT_INTEGRATIONS, GPU_TIERS, AI_MODEL, type AgentConfig, type AgentSkill, type AgentIntegration } from '@/types/agentBuilder';
 import { generateOpenClawConfig } from '@/lib/openclawConfig';
 import CreditsPurchaseDialog from '@/components/agent-builder/CreditsPurchaseDialog';
@@ -71,6 +71,7 @@ const HOURLY_RATES: Record<string, number> = { rtx3070: 0.05, rtx3080: 0.07, rtx
 const AgentBuilder = () => {
   const { user, loading } = useAuth();
   const { toast } = useToast();
+  const botAvatars = useBotAvatars();
   const { credits, deductCredits, refetch: refetchCredits } = useCredits();
   const navigate = useNavigate();
 
