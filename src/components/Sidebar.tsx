@@ -197,7 +197,7 @@ const Sidebar = () => {
   const isMarketplace = location.pathname === '/marketplace';
 
   return (
-    <aside className="w-[350px] pl-6 py-4 hidden lg:block">
+    <aside className="w-[350px] pl-6 py-4 hidden lg:block sticky top-0 h-screen overflow-y-auto scrollbar-none">
       <div className="relative mb-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
