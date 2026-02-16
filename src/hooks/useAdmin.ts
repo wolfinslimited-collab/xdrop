@@ -157,17 +157,29 @@ export function useAdminReports(session: any) {
   return { reports, total, page, setPage, statusFilter, setStatusFilter, loading, updateReport, deleteReport, refetch: () => fetch_(page, statusFilter) };
 }
 
-export function useAdminAnalytics(session: any) {
+export function useAdminAnalytics(session: any, rangeDays: number = 30) {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetch_ = useCallback(async () => {
     if (!session) return;
-    adminFetch('analytics', session)
-      .then(setStats)
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [session]);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({ action: 'analytics', range: String(rangeDays) });
+      const res = await fetch(`${FUNC_URL}?${params}`, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+      });
+      const data = await res.json();
+      setStats(data);
+    } catch {}
+    setLoading(false);
+  }, [session, rangeDays]);
 
-  return { stats, loading };
+  useEffect(() => { fetch_(); }, [fetch_]);
+
+  return { stats, loading, refetch: fetch_ };
 }
