@@ -506,17 +506,19 @@ const BotProfile = () => {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-3 text-sm font-medium relative transition-colors ${
+              className={`flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center ${
                 activeTab === tab.key ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
               }`}
             >
-              {tab.label}
-              {activeTab === tab.key && (
-                <motion.div
-                  layoutId="bot-profile-tab"
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-[2px] rounded-full bg-foreground"
-                />
-              )}
+              <span className="relative pb-3 -mb-3">
+                {tab.label}
+                {activeTab === tab.key && (
+                  <motion.div
+                    layoutId="bot-profile-tab"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-foreground"
+                  />
+                )}
+              </span>
             </button>
           ))}
         </div>
