@@ -205,6 +205,11 @@ Deno.serve(async (req) => {
 
     // --- ANALYTICS ---
     if (action === 'analytics') {
+      const rangeParam = url.searchParams.get('range') || '30'
+      const rangeDays = parseInt(rangeParam)
+      const rangeDate = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString()
+      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
       const [
         { count: totalUsers },
         { count: totalBots },
@@ -212,6 +217,9 @@ Deno.serve(async (req) => {
         { count: totalAgents },
         { count: totalPurchases },
         { count: totalTrials },
+        { count: totalLikes },
+        { count: totalFollows },
+        { count: recentSignups },
       ] = await Promise.all([
         adminClient.from('profiles').select('*', { count: 'exact', head: true }),
         adminClient.from('social_bots').select('*', { count: 'exact', head: true }),
@@ -219,48 +227,93 @@ Deno.serve(async (req) => {
         adminClient.from('agents').select('*', { count: 'exact', head: true }),
         adminClient.from('agent_purchases').select('*', { count: 'exact', head: true }),
         adminClient.from('agent_trials').select('*', { count: 'exact', head: true }),
+        adminClient.from('user_post_likes').select('*', { count: 'exact', head: true }),
+        adminClient.from('user_follows').select('*', { count: 'exact', head: true }),
+        adminClient.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', weekAgo),
       ])
 
-      // Recent signups (last 7 days)
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-      const { count: recentSignups } = await adminClient
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', weekAgo)
+      // Range-scoped counts
+      const [
+        { count: rangeSignups },
+        { count: rangePosts },
+        { count: rangeLikes },
+        { count: rangeFollows },
+        { count: rangeAgents },
+      ] = await Promise.all([
+        adminClient.from('profiles').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('social_posts').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('user_post_likes').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('user_follows').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+        adminClient.from('agents').select('*', { count: 'exact', head: true }).gte('created_at', rangeDate),
+      ])
 
-      // Revenue: sum of all purchase prices
-      const { data: purchases } = await adminClient
-        .from('agent_purchases')
-        .select('price_paid')
+      // Revenue
+      const { data: purchases } = await adminClient.from('agent_purchases').select('price_paid')
       const totalRevenue = (purchases || []).reduce((sum: number, p: any) => sum + (Number(p.price_paid) || 0), 0)
+      const avgPurchaseValue = (totalPurchases || 0) > 0 ? Math.round(totalRevenue / (totalPurchases || 1)) : 0
 
-      // Trials that converted (user_id exists in both trials and purchases for same agent)
-      const { data: trials } = await adminClient
-        .from('agent_trials')
-        .select('user_id, template_id')
-      const { data: purchasedAgents } = await adminClient
-        .from('agent_purchases')
-        .select('user_id, agent_id')
-      // Get agent template_ids for matching
+      // Conversion rate
+      const { data: trials } = await adminClient.from('agent_trials').select('user_id, template_id')
+      const { data: purchasedAgents } = await adminClient.from('agent_purchases').select('user_id, agent_id')
       const purchaseAgentIds = [...new Set((purchasedAgents || []).map((p: any) => p.agent_id))]
       const { data: agentsWithTemplates } = purchaseAgentIds.length > 0
         ? await adminClient.from('agents').select('id, template_id').in('id', purchaseAgentIds)
         : { data: [] }
       const agentTemplateMap = Object.fromEntries((agentsWithTemplates || []).map((a: any) => [a.id, a.template_id]))
-
-      // Build set of "userId:templateId" from purchases
-      const purchaseKeys = new Set(
-        (purchasedAgents || []).map((p: any) => `${p.user_id}:${agentTemplateMap[p.agent_id] || ''}`)
-      )
+      const purchaseKeys = new Set((purchasedAgents || []).map((p: any) => `${p.user_id}:${agentTemplateMap[p.agent_id] || ''}`))
       const convertedTrials = (trials || []).filter((t: any) => purchaseKeys.has(`${t.user_id}:${t.template_id}`)).length
       const conversionRate = (totalTrials || 0) > 0 ? Math.round((convertedTrials / (totalTrials || 1)) * 100) : 0
 
-      // Avg purchase value
-      const avgPurchaseValue = (totalPurchases || 0) > 0 ? Math.round(totalRevenue / (totalPurchases || 1)) : 0
+      // Daily growth data for the range (signups per day)
+      const { data: signupsByDay } = await adminClient
+        .from('profiles')
+        .select('created_at')
+        .gte('created_at', rangeDate)
+        .order('created_at', { ascending: true })
+      
+      const dailyMap: Record<string, { signups: number, date: string }> = {}
+      for (const row of (signupsByDay || [])) {
+        const day = row.created_at.slice(0, 10)
+        if (!dailyMap[day]) dailyMap[day] = { signups: 0, date: day }
+        dailyMap[day].signups++
+      }
+
+      // Also get daily posts
+      const { data: postsByDay } = await adminClient
+        .from('social_posts')
+        .select('created_at')
+        .gte('created_at', rangeDate)
+        .order('created_at', { ascending: true })
+      
+      for (const row of (postsByDay || [])) {
+        const day = row.created_at.slice(0, 10)
+        if (!dailyMap[day]) dailyMap[day] = { signups: 0, date: day }
+        ;(dailyMap[day] as any).posts = ((dailyMap[day] as any).posts || 0) + 1
+      }
+
+      const dailyGrowth = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date))
+
+      // Top agents by runs
+      const { data: topAgents } = await adminClient
+        .from('agents')
+        .select('id, name, avatar, total_runs, total_earnings, status, reliability_score')
+        .order('total_runs', { ascending: false })
+        .limit(10)
+
+      // Top posts by likes
+      const { data: topPosts } = await adminClient
+        .from('social_posts')
+        .select('id, content, likes, reposts, replies, created_at, social_bots!inner(name, handle, avatar)')
+        .is('parent_post_id', null)
+        .order('likes', { ascending: false })
+        .limit(10)
 
       return new Response(JSON.stringify({
         totalUsers, totalBots, totalPosts, totalAgents, totalPurchases, recentSignups,
         totalTrials, totalRevenue, convertedTrials, conversionRate, avgPurchaseValue,
+        totalLikes, totalFollows,
+        rangeSignups, rangePosts, rangeLikes, rangeFollows, rangeAgents,
+        dailyGrowth, topAgents, topPosts,
       }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
