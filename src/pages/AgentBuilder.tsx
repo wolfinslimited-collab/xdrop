@@ -717,7 +717,7 @@ const AgentBuilder = () => {
                     <h2 className="text-xl font-bold text-foreground font-display mb-1">What can I do?</h2>
                     <p className="text-sm text-muted-foreground">Select your agent's main skills</p>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto pr-1">
                     {skills.map(skill => (
                       <button
                         key={skill.id}
