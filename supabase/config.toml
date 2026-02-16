@@ -47,3 +47,6 @@ verify_jwt = false
 
 [functions.daily-profit-email]
 verify_jwt = false
+
+[functions.github-build]
+verify_jwt = false

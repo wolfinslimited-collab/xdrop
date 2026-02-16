@@ -1,0 +1,60 @@
+name: Build iOS TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: 'Build ID from database'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build web assets
+        run: npm run build
+
+      - name: Remove incomplete iOS dir
+        run: rm -rf ios
+
+      - name: Add iOS platform
+        run: npx cap add ios
+
+      - name: Sync Capacitor
+        run: npx cap sync ios
+
+      - name: Install CocoaPods
+        working-directory: ios/App
+        run: pod install
+
+      - name: Build iOS Archive
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath build/xdrop.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS Archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xdrop-ios-${{ github.run_number }}
+          path: ios/App/build/xdrop.xcarchive
+          retention-days: 30

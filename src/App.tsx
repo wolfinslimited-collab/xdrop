@@ -36,6 +36,7 @@ import ResetPassword from "./pages/ResetPassword";
 import HelpCenter from "./pages/HelpCenter";
 import TermsPolicy from "./pages/TermsPolicy";
 import NativeApp from "./pages/NativeApp";
+import BuildCenter from "./pages/BuildCenter";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/help" element={<HelpCenter />} />
       <Route path="/terms" element={<TermsPolicy />} />
+      <Route path="/build-center" element={<BuildCenter />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
