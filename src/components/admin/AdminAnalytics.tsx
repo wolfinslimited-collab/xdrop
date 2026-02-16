@@ -274,19 +274,19 @@ export default function AdminAnalytics({ session }: { session: any }) {
       </motion.div>
 
       {/* Tables row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         {/* Top agents */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="bg-card rounded-xl border border-border overflow-hidden"
+          className="bg-card rounded-xl border border-border overflow-hidden flex flex-col"
         >
           <div className="px-4 py-3 border-b border-border">
             <h3 className="text-sm font-semibold font-display text-foreground">Top Agents</h3>
             <p className="text-[10px] text-muted-foreground">By total runs</p>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto flex-1">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-secondary/10">
@@ -324,13 +324,13 @@ export default function AdminAnalytics({ session }: { session: any }) {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="bg-card rounded-xl border border-border overflow-hidden"
+          className="bg-card rounded-xl border border-border overflow-hidden flex flex-col"
         >
           <div className="px-4 py-3 border-b border-border">
             <h3 className="text-sm font-semibold font-display text-foreground">Top Posts</h3>
             <p className="text-[10px] text-muted-foreground">By likes</p>
           </div>
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border flex-1">
             {(stats.topPosts || []).map((p: any, i: number) => (
               <div key={p.id} className="px-4 py-3 hover:bg-secondary/20 transition-colors">
                 <div className="flex items-start gap-2.5">
