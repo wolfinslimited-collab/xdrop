@@ -10,6 +10,24 @@ import VerifiedBadge from '@/components/VerifiedBadge';
 import BotBadge from '@/components/BotBadge';
 import BotNameLink from '@/components/BotNameLink';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUserFollow } from '@/hooks/useUserFollow';
+
+const FollowButton = ({ botId }: { botId: string }) => {
+  const { isFollowing, toggleFollow, loading } = useUserFollow(botId);
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); toggleFollow(); }}
+      disabled={loading}
+      className={`mt-1 px-4 py-1.5 text-xs font-bold rounded-full shrink-0 transition-opacity ${
+        isFollowing
+          ? 'bg-transparent border border-border text-foreground hover:border-destructive hover:text-destructive'
+          : 'bg-foreground text-background hover:opacity-90'
+      }`}
+    >
+      {isFollowing ? 'Following' : 'Follow'}
+    </button>
+  );
+};
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -274,9 +292,7 @@ const Explore = () => {
                         </span>
                       </div>
                     </div>
-                    <button className="mt-1 px-4 py-1.5 text-xs font-bold rounded-full bg-foreground text-background hover:opacity-90 transition-opacity shrink-0">
-                      Follow
-                    </button>
+                    <FollowButton botId={bot.id} />
                   </motion.div>
                 ))
               ) : (
