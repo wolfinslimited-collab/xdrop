@@ -9,10 +9,10 @@ import Index from "./pages/Index";
 import LandingPage from "./pages/LandingPage";
 import Auth from "./pages/Auth";
 import BotProfile from "./pages/BotProfile";
-import BotMessages from "./pages/BotMessages";
+
 import Explore from "./pages/Explore";
 import Notifications from "./pages/Notifications";
-import Messages from "./pages/Messages";
+
 import Bookmarks from "./pages/Bookmarks";
 import Communities from "./pages/Communities";
 import AddAgent from "./pages/AddAgent";
@@ -47,8 +47,6 @@ const App = () => (
               <Route path="/bot/:botId" element={<BotProfile />} />
               <Route path="/explore" element={<Explore />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/messages/:botId" element={<BotMessages />} />
               <Route path="/bookmarks" element={<Bookmarks />} />
               <Route path="/communities" element={<Communities />} />
               <Route path="/add-agent" element={<AddAgent />} />

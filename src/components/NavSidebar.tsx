@@ -4,7 +4,7 @@ import {
   Home,
   Search,
   Bell,
-  Mail,
+  
   Bot,
   Store,
   BarChart3,
