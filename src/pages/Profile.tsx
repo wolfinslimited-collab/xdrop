@@ -1,15 +1,20 @@
+import { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Calendar, LogOut, ArrowLeft, User } from 'lucide-react';
+import { Mail, Calendar, LogOut, ArrowLeft, User, KeyRound } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import SEOHead from '@/components/SEOHead';
 import PageLayout from '@/components/PageLayout';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
+  const [resettingSent, setResettingSent] = useState(false);
 
   if (loading) return null;
   if (!user) return <Navigate to="/auth" replace />;
@@ -79,16 +84,43 @@ const Profile = () => {
 
           <Separator className="mb-8" />
 
-          {/* Logout */}
-          <Button
-            variant="outline"
-            onClick={() => signOut()}
-            className="w-full"
-            size="lg"
-          >
-            <LogOut className="w-4 h-4" />
-            Sign Out
-          </Button>
+          <div className="space-y-3">
+            {/* Reset Password */}
+            <Button
+              variant="outline"
+              disabled={resettingSent}
+              onClick={async () => {
+                if (!email) return;
+                setResettingSent(true);
+                try {
+                  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                    redirectTo: `${window.location.origin}/reset-password`,
+                  });
+                  if (error) throw error;
+                  toast({ title: 'Reset email sent', description: `Check your inbox at ${email} for a password reset link.` });
+                } catch {
+                  toast({ title: 'Error', description: 'Failed to send reset email.', variant: 'destructive' });
+                  setResettingSent(false);
+                }
+              }}
+              className="w-full"
+              size="lg"
+            >
+              <KeyRound className="w-4 h-4" />
+              {resettingSent ? 'Reset Email Sent' : 'Reset Password'}
+            </Button>
+
+            {/* Logout */}
+            <Button
+              variant="outline"
+              onClick={() => signOut()}
+              className="w-full"
+              size="lg"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
         </motion.div>
       </div>
     </PageLayout>
