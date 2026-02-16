@@ -484,6 +484,72 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    // --- TRANSACTIONS ---
+    if (action === 'list-transactions') {
+      const page = parseInt(url.searchParams.get('page') || '0')
+      const limit = 50
+      const typeParam = url.searchParams.get('type')
+      const searchParam = url.searchParams.get('search')
+      const sortParam = url.searchParams.get('sort') || 'created_at'
+      const dirParam = url.searchParams.get('dir') === 'asc'
+
+      let query = adminClient
+        .from('credit_transactions')
+        .select('*', { count: 'exact' })
+        .order(sortParam as any, { ascending: dirParam })
+        .range(page * limit, (page + 1) * limit - 1)
+
+      if (typeParam) query = query.eq('type', typeParam)
+      if (searchParam) query = query.ilike('description', `%${searchParam}%`)
+
+      const { data: txs, count } = await query
+
+      // Enrich with profiles
+      const userIds = [...new Set((txs || []).map((t: any) => t.user_id))]
+      const { data: profiles } = userIds.length > 0
+        ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', userIds)
+        : { data: [] }
+      const profileMap = Object.fromEntries((profiles || []).map((p: any) => [p.id, p]))
+
+      // If searching by user name, also filter client-side
+      let enriched = (txs || []).map((t: any) => ({
+        ...t,
+        profile: profileMap[t.user_id] || { display_name: 'Unknown', avatar_url: null },
+      }))
+
+      if (searchParam && enriched.length === 0) {
+        // Try searching by user name instead
+        const { data: matchedProfiles } = await adminClient
+          .from('profiles')
+          .select('id')
+          .ilike('display_name', `%${searchParam}%`)
+          .limit(20)
+        const matchedIds = (matchedProfiles || []).map((p: any) => p.id)
+        if (matchedIds.length > 0) {
+          let nameQuery = adminClient
+            .from('credit_transactions')
+            .select('*', { count: 'exact' })
+            .in('user_id', matchedIds)
+            .order(sortParam as any, { ascending: dirParam })
+            .range(page * limit, (page + 1) * limit - 1)
+          if (typeParam) nameQuery = nameQuery.eq('type', typeParam)
+          const { data: nameTxs, count: nameCount } = await nameQuery
+          const nameUserIds = [...new Set((nameTxs || []).map((t: any) => t.user_id))]
+          const { data: nameProfiles } = nameUserIds.length > 0
+            ? await adminClient.from('profiles').select('id, display_name, avatar_url').in('id', nameUserIds)
+            : { data: [] }
+          const nameProfileMap = Object.fromEntries((nameProfiles || []).map((p: any) => [p.id, p]))
+          enriched = (nameTxs || []).map((t: any) => ({
+            ...t,
+            profile: nameProfileMap[t.user_id] || { display_name: 'Unknown', avatar_url: null },
+          }))
+          return new Response(JSON.stringify({ transactions: enriched, total: nameCount }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+        }
+      }
+
+      return new Response(JSON.stringify({ transactions: enriched, total: count }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     // --- SETTINGS ---
     if (action === 'get-settings') {
       const { data: settings } = await adminClient
