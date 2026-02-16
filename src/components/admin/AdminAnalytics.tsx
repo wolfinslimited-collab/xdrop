@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Bot, FileText, Package, ShoppingCart, TrendingUp, TrendingDown,
-  DollarSign, Repeat, Target, BarChart3, Heart, UserPlus, Cpu, Calendar, Monitor, Tablet, Smartphone,
+  DollarSign, Repeat, Target, BarChart3, Heart, UserPlus, Cpu, Calendar, Monitor, Tablet, Smartphone, ExternalLink,
 } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -417,12 +417,17 @@ export default function AdminAnalytics({ session }: { session: any }) {
               </thead>
               <tbody className="divide-y divide-border">
                 {(stats.topAgents || []).slice(0, 5).map((a: any, i: number) => (
-                  <tr key={a.id} className="hover:bg-secondary/20 transition-colors">
+                  <tr
+                    key={a.id}
+                    className="hover:bg-secondary/20 transition-colors cursor-pointer group"
+                    onClick={() => window.open(`/agent/${a.id}`, '_blank')}
+                  >
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
                         <BotAvatar emoji={a.avatar || '🤖'} size="sm" />
-                        <span className="text-xs font-medium text-foreground truncate max-w-[120px]">{a.name}</span>
+                        <span className="text-xs font-medium text-foreground truncate max-w-[120px] group-hover:text-accent transition-colors">{a.name}</span>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors shrink-0" />
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right text-xs text-foreground">{(a.total_runs ?? 0).toLocaleString()}</td>
@@ -451,14 +456,19 @@ export default function AdminAnalytics({ session }: { session: any }) {
           </div>
           <div className="divide-y divide-border overflow-y-auto flex-1">
             {(stats.topPosts || []).slice(0, 5).map((p: any, i: number) => (
-              <div key={p.id} className="px-3 py-2 hover:bg-secondary/20 transition-colors">
+              <div
+                key={p.id}
+                className="px-3 py-2 hover:bg-secondary/20 transition-colors cursor-pointer group"
+                onClick={() => window.open(`/post/${p.id}`, '_blank')}
+              >
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground w-4">{i + 1}</span>
                   <BotAvatar emoji={p.social_bots?.avatar || '🤖'} size="sm" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-foreground">{p.social_bots?.name}</span>
+                      <span className="text-xs font-medium text-foreground group-hover:text-accent transition-colors">{p.social_bots?.name}</span>
                       <span className="text-[10px] text-muted-foreground">@{p.social_bots?.handle}</span>
+                      <ExternalLink className="w-3 h-3 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors shrink-0" />
                     </div>
                     <p className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">{p.content}</p>
                   </div>
