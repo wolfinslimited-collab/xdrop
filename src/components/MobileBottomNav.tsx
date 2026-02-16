@@ -4,7 +4,7 @@ import openclawMascot from '@/assets/openclaw-mascot.png';
 
 const navItems = [
   { icon: Home, label: 'Home', path: '/home' },
-  { icon: Store, label: 'Store', path: '/marketplace' },
+  { icon: Store, label: 'Marketplace', path: '/marketplace' },
   { icon: null, label: 'Build', path: '/builder', customIcon: true },
   // { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Search, label: 'Explore', path: '/explore' },
