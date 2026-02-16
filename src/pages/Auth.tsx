@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowLeft, CheckCircle2, User } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -16,8 +16,11 @@ const Auth = () => {
   const { toast } = useToast();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Verification state
@@ -50,6 +53,16 @@ const Auth = () => {
     setSubmitting(true);
 
     if (isSignUp) {
+      if (password !== confirmPassword) {
+        toast({ title: 'Error', description: 'Passwords do not match.', variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+      if (!fullName.trim()) {
+        toast({ title: 'Error', description: 'Please enter your full name.', variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
       // Send verification code first
       try {
         await sendVerificationCode(email);
@@ -113,7 +126,7 @@ const Auth = () => {
       }
 
       // Code verified — now create the account
-      const { error: signUpError } = await signUp(email, password);
+      const { error: signUpError } = await signUp(email, password, fullName.trim());
       if (signUpError) {
         toast({ title: 'Error', description: signUpError.message, variant: 'destructive' });
         setVerifying(false);
@@ -185,6 +198,19 @@ const Auth = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
+              {isSignUp && (
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Full Name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    required
+                    className="w-full bg-secondary rounded-lg py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
+                  />
+                </div>
+              )}
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
@@ -215,6 +241,27 @@ const Auth = () => {
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {isSignUp && (
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="w-full bg-secondary rounded-lg py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-muted-foreground border border-border focus:border-foreground/20 focus:outline-none transition-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              )}
               <Button
                 type="submit"
                 disabled={submitting}
