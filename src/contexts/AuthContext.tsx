@@ -21,10 +21,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // If recovery token was exchanged, redirect to reset password page
+      if (event === 'PASSWORD_RECOVERY') {
+        window.location.href = '/reset-password';
+      }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
