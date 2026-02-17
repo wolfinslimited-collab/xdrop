@@ -86,7 +86,9 @@ export default function Wallet() {
       toast({ title: "Missing fields", description: "Fill in all fields", variant: "destructive" });
       return;
     }
-    const result = await wallet.sendTransaction(myWallet.chain, myWallet.address, sendTo, sendAmount);
+    // Use USDC-SOL chain for USDC transfers on Solana
+    const sendChain = myWallet.chain === "SOL" ? "USDC-SOL" : myWallet.chain;
+    const result = await wallet.sendTransaction(sendChain, myWallet.address, sendTo, sendAmount);
     if (result) {
       toast({ title: "Transaction sent", description: `TX: ${result.txId}` });
       setSendTo("");
