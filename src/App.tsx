@@ -37,6 +37,7 @@ import HelpCenter from "./pages/HelpCenter";
 import TermsPolicy from "./pages/TermsPolicy";
 import NativeApp from "./pages/NativeApp";
 import BuildCenter from "./pages/BuildCenter";
+import Wallet from "./pages/Wallet";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const AppRoutes = () => {
       <Route path="/help" element={<HelpCenter />} />
       <Route path="/terms" element={<TermsPolicy />} />
       <Route path="/build-center" element={<BuildCenter />} />
+      <Route path="/wallet" element={<Wallet />} />
       {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
       <Route path="*" element={<NotFound />} />
     </Routes>
