@@ -86,6 +86,16 @@ export default function Wallet() {
       toast({ title: "Missing fields", description: "Fill in all fields", variant: "destructive" });
       return;
     }
+    const numAmount = parseFloat(sendAmount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast({ title: "Invalid amount", description: "Enter a valid positive amount", variant: "destructive" });
+      return;
+    }
+    const currentBalance = parseFloat(balance ?? "0");
+    if (numAmount > currentBalance) {
+      toast({ title: "Insufficient funds", description: `Your balance is $${currentBalance.toFixed(2)} USDC`, variant: "destructive" });
+      return;
+    }
     // Use USDC-SOL chain for USDC transfers on Solana
     const sendChain = myWallet.chain === "SOL" ? "USDC-SOL" : myWallet.chain;
     const result = await wallet.sendTransaction(sendChain, myWallet.address, sendTo, sendAmount);
