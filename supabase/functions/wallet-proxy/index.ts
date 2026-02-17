@@ -120,6 +120,11 @@ Deno.serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     );
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
     const token = authHeader.replace("Bearer ", "");
     const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
@@ -140,6 +145,21 @@ Deno.serve(async (req) => {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // ── Handle get-balance from local DB ──
+    if (action === "get-balance") {
+      const { data: walletRow } = await supabaseAdmin
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", userId)
+        .eq("currency", "USDC")
+        .maybeSingle();
+
+      return new Response(
+        JSON.stringify({ balance: String(walletRow?.balance ?? "0") }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Build Wolfins API request
@@ -172,22 +192,58 @@ Deno.serve(async (req) => {
     const wolfinsRes = await fetch(wolfinsUrl, fetchOptions);
     const data = await wolfinsRes.json();
 
-    // Send withdrawal email on successful send-transaction
+    // ── Save wallet to local DB on generate ──
+    if (action === "generate-user-wallet" && wolfinsRes.ok && data?.address) {
+      await supabaseAdmin.from("wallets").upsert(
+        {
+          user_id: userId,
+          address: data.address,
+          balance: 0,
+          currency: "USDC",
+          network: "solana",
+          derivation_index: data.derivation_index ?? null,
+        },
+        { onConflict: "user_id,address", ignoreDuplicates: true }
+      );
+      console.log(`Saved wallet ${data.address} for user ${userId}`);
+    }
+
+    // ── Update local balance on send-transaction ──
     if (
       action === "send-transaction" &&
       wolfinsRes.ok &&
       data?.txId &&
-      userEmail &&
       requestBody
     ) {
-      // Fire-and-forget — don't block the response
-      sendWithdrawalEmail(
-        userEmail,
-        String(requestBody.amount || "0"),
-        String(requestBody.toAddress || ""),
-        String(requestBody.fromAddress || ""),
-        String(data.txId || "")
-      ).catch((err) => console.error("Email send error:", err));
+      const sendAmount = parseFloat(String(requestBody.amount || "0"));
+      if (sendAmount > 0) {
+        const { data: walletRow } = await supabaseAdmin
+          .from("wallets")
+          .select("id, balance")
+          .eq("user_id", userId)
+          .eq("currency", "USDC")
+          .maybeSingle();
+
+        if (walletRow) {
+          const newBalance = Math.max(0, walletRow.balance - sendAmount);
+          await supabaseAdmin
+            .from("wallets")
+            .update({ balance: newBalance, updated_at: new Date().toISOString() })
+            .eq("id", walletRow.id);
+          console.log(`Deducted ${sendAmount} from wallet ${walletRow.id}, new balance: ${newBalance}`);
+        }
+      }
+
+      // Send withdrawal email (fire-and-forget)
+      if (userEmail) {
+        sendWithdrawalEmail(
+          userEmail,
+          String(requestBody.amount || "0"),
+          String(requestBody.toAddress || ""),
+          String(requestBody.fromAddress || ""),
+          String(data.txId || "")
+        ).catch((err) => console.error("Email send error:", err));
+      }
     }
 
     return new Response(JSON.stringify(data), {
