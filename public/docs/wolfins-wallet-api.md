@@ -1,4 +1,4 @@
-# Wallet API Documentation
+# Wallet API Documentation — v1.2.0
 
 **Base URL:** `https://kaqsiocszidolsaoeusd.supabase.co/functions/v1/wallet-api`
 
@@ -343,6 +343,50 @@ GET ?action=test-webhook&webhookId=<WEBHOOK_UUID>
   "status_code": 200
 }
 ```
+
+---
+
+## Webhook Receiver Endpoint
+
+**Base URL:** `https://kaqsiocszidolsaoeusd.supabase.co/functions/v1/wallet-webhook`
+
+This is the built-in receiver that processes incoming webhook deliveries. It verifies HMAC-SHA256 signatures against registered webhook secrets and logs each delivery.
+
+### Receiving Webhooks
+
+**Request (sent by the system):**
+```
+POST /wallet-webhook
+```
+
+**Required Headers:**
+
+| Header | Description |
+|--------|-------------|
+| `X-Webhook-Signature` | HMAC-SHA256 hex digest of the request body, signed with your webhook secret |
+| `X-Webhook-Event` | Event type: `deposit`, `withdrawal`, or `test` |
+| `Content-Type` | `application/json` |
+
+**Response on success:**
+```json
+{
+  "received": true,
+  "event": "deposit",
+  "webhook_id": "uuid",
+  "timestamp": "2026-02-17T12:00:00Z"
+}
+```
+
+**Error Responses:**
+
+| Status | Meaning |
+|--------|---------|
+| 401 | Missing or invalid `X-Webhook-Signature` |
+| 400 | Invalid JSON payload |
+| 404 | No active webhooks configured |
+| 405 | Method not allowed (only POST accepted) |
+
+> **Note:** This endpoint does not require JWT authentication — it uses signature-based verification instead.
 
 ---
 
