@@ -25,13 +25,8 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const SUPPORTED_CHAINS = [
-  { label: "ETH", name: "Ethereum" },
-  { label: "BTC", name: "Bitcoin" },
-  { label: "BSC", name: "BNB Chain" },
   { label: "SOL", name: "Solana" },
   { label: "USDC-SOL", name: "USDC (Solana)" },
-  { label: "TRX", name: "Tron" },
-  { label: "USDT-TRC20", name: "USDT (Tron)" },
 ];
 
 export default function Wallet() {
