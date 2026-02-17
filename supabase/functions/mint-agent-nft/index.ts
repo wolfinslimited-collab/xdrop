@@ -22,14 +22,6 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const tatumApiKey = Deno.env.get("TATUM_API_KEY") ?? "";
-
-  if (!tatumApiKey) {
-    return new Response(JSON.stringify({ error: "TATUM_API_KEY not configured" }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
-  }
 
   try {
     const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY") ?? "");
@@ -107,52 +99,10 @@ serve(async (req) => {
     const { data: metadataUrlData } = serviceClient.storage.from("nft-images").getPublicUrl(metadataPath);
     const metadataUri = metadataUrlData.publicUrl;
 
-    // 5. Mint NFT via Tatum API on Solana
-    let mintAddress = null;
-    let mintTxHash = null;
-    let nftStatus = "metadata_ready";
-
-    try {
-      const { data: wallet } = await serviceClient
-        .from("wallets")
-        .select("address")
-        .eq("user_id", user.id)
-        .eq("network", "solana")
-        .single();
-
-      if (wallet?.address) {
-        const mintResponse = await fetch("https://api.tatum.io/v3/nft/mint", {
-          method: "POST",
-          headers: {
-            "x-api-key": tatumApiKey,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            chain: "SOL",
-            to: wallet.address,
-            url: metadataUri,
-          }),
-        });
-
-        if (mintResponse.ok) {
-          const mintData = await mintResponse.json();
-          mintAddress = mintData.nftAddress || mintData.contractAddress || null;
-          mintTxHash = mintData.txId || mintData.signatureId || null;
-          nftStatus = "minted";
-          console.log("NFT minted successfully:", mintData);
-        } else {
-          const mintErr = await mintResponse.text();
-          console.error("Tatum mint failed (non-fatal):", mintErr);
-          nftStatus = "mint_failed";
-        }
-      } else {
-        console.log("No wallet found, storing metadata only");
-        nftStatus = "no_wallet";
-      }
-    } catch (mintErr) {
-      console.error("Minting error (non-fatal):", mintErr);
-      nftStatus = "mint_failed";
-    }
+    // 5. NFT minting - store metadata only (on-chain minting handled separately)
+    const nftStatus = "metadata_ready";
+    const mintAddress = null;
+    const mintTxHash = null;
 
     // 6. Save NFT record to database
     const { data: nftRecord, error: nftError } = await serviceClient
@@ -168,7 +118,7 @@ serve(async (req) => {
         serial_number: serialNumber,
         status: nftStatus,
         mint_tx_hash: mintTxHash,
-        minted_at: nftStatus === "minted" ? new Date().toISOString() : null,
+        minted_at: null,
       })
       .select()
       .single();
