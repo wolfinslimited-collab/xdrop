@@ -39,7 +39,8 @@ export default function Wallet() {
   const loadWallet = useCallback(async () => {
     const result = await wallet.listWallets();
     if (result && result.length > 0) {
-      setMyWallet(result[0]);
+      const solWallet = result.find((w) => w.chain === "SOL" && w.label !== "Mother Wallet (SOL)");
+      setMyWallet(solWallet || null);
     } else {
       setMyWallet(null);
     }
