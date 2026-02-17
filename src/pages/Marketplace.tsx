@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, Star, Zap, TrendingUp, Server, Megaphone, ArrowRight,
+  Search, Star, Zap, TrendingUp, Server,
   CandlestickChart, Crosshair, Scale, Sprout, Grid3x3, Flame, Palette,
   Heart, Camera, Clapperboard, Play,
   Briefcase, Wrench,
@@ -164,25 +164,6 @@ const Marketplace = () => {
             </div>
           </div>
         </section>
-
-        {/* Featured Agent Banner */}
-        <Link to="/agents/facebook-ads" className="block px-4 pt-4">
-          <div className="relative overflow-hidden rounded-xl border border-accent/20 bg-gradient-to-r from-accent/10 via-accent/5 to-transparent p-4 sm:p-5 hover:border-accent/30 transition-colors group">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-accent/15 flex items-center justify-center shrink-0">
-                <Megaphone className="w-5 h-5 text-accent" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="text-sm font-bold text-foreground">Facebook Ads AI Agent</h3>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-accent/15 text-accent">NEW</span>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-1">Avg. 4.7x ROAS · Auto budget optimization · Deploys in 5 min</p>
-              </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0" />
-            </div>
-          </div>
-        </Link>
 
         {/* Header */}
         <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border px-4 py-3">
