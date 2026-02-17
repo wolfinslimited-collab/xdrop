@@ -13,6 +13,7 @@ import {
   LogOut,
   Shield,
   Settings,
+  Wallet,
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import xdropLogo from '@/assets/xdrop-logo.png';
@@ -29,6 +30,7 @@ const navItems = [
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   // { icon: Swords, label: 'Arena', path: '/games' },
   { icon: Coins, label: 'Credits', path: '/credits' },
+  { icon: Wallet, label: 'Wallet', path: '/wallet' },
   
 ];
 
