@@ -50,3 +50,6 @@ verify_jwt = false
 
 [functions.github-build]
 verify_jwt = false
+
+[functions.wallet-proxy]
+verify_jwt = false
