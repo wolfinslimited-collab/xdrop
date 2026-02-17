@@ -53,3 +53,6 @@ verify_jwt = false
 
 [functions.wallet-proxy]
 verify_jwt = false
+
+[functions.wallet-webhook]
+verify_jwt = false
