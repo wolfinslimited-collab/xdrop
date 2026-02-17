@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,14 +7,39 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const WOLFINS_BASE_URL = "https://kaqsiocszidolsaoeusd.supabase.co/functions/v1/wallet-api";
+
+async function wolfinsApi(action: string, params: Record<string, string> = {}, body: Record<string, unknown> | null = null) {
+  const WOLFINS_ANON_KEY = Deno.env.get("WOLFINS_ANON_KEY")!;
+  const WOLFINS_API_KEY = Deno.env.get("WOLFINS_API_KEY")!;
+
+  const qp = new URLSearchParams({ action, ...params });
+  const options: RequestInit = {
+    method: body ? "POST" : "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": WOLFINS_ANON_KEY,
+      "x-api-key": WOLFINS_API_KEY,
+    },
+  };
+  if (body) options.body = JSON.stringify(body);
+
+  const res = await fetch(`${WOLFINS_BASE_URL}?${qp}`, options);
+  if (!res.ok) {
+    const errBody = await res.text();
+    throw new Error(`Wolfins API failed [${res.status}]: ${errBody}`);
+  }
+  return res.json();
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const TATUM_API_KEY = Deno.env.get("TATUM_API_KEY");
-    if (!TATUM_API_KEY) throw new Error("TATUM_API_KEY is not configured");
+    const WOLFINS_API_KEY = Deno.env.get("WOLFINS_API_KEY");
+    if (!WOLFINS_API_KEY) throw new Error("WOLFINS_API_KEY is not configured");
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -55,17 +80,14 @@ serve(async (req) => {
       );
     }
 
-    // Generate Solana wallet via Tatum
-    const tatumRes = await fetch("https://api.tatum.io/v3/solana/wallet", {
-      headers: { "x-api-key": TATUM_API_KEY },
+    // Get next derivation index atomically
+    const { data: derivationIndex } = await supabaseAdmin.rpc("next_derivation_index", { p_chain: "SOL" });
+
+    // Generate Solana wallet via Wolfins Wallet Hub
+    const wallet = await wolfinsApi("generate-user-wallet", {}, {
+      chain: "SOL",
+      derivationIndex: derivationIndex || 1,
     });
-
-    if (!tatumRes.ok) {
-      const errBody = await tatumRes.text();
-      throw new Error(`Tatum API failed [${tatumRes.status}]: ${errBody}`);
-    }
-
-    const wallet = await tatumRes.json();
 
     // Store in agent_wallets (SOL and USDC share the same Solana address)
     const { error: insertError } = await supabaseAdmin
@@ -74,10 +96,11 @@ serve(async (req) => {
         agent_name: agentName,
         user_id: user.id,
         sol_address: wallet.address,
-        usdc_address: wallet.address, // USDC is an SPL token on the same address
+        usdc_address: wallet.address,
         sol_balance: 0,
         usdc_balance: 0,
         network: "solana",
+        derivation_index: derivationIndex || 1,
       });
 
     if (insertError) throw new Error(`Failed to save wallet: ${insertError.message}`);
@@ -89,9 +112,7 @@ serve(async (req) => {
         usdc_address: wallet.address,
         sol_balance: 0,
         usdc_balance: 0,
-        mnemonic: wallet.mnemonic,
-        privateKey: wallet.privateKey,
-        warning: "Save your mnemonic and private key securely. They will NOT be shown again.",
+        warning: "Agent wallet created. Keys are managed by the platform.",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

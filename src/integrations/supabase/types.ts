@@ -312,6 +312,7 @@ export type Database = {
         Row: {
           agent_name: string
           created_at: string
+          derivation_index: number | null
           id: string
           network: string
           sol_address: string
@@ -324,6 +325,7 @@ export type Database = {
         Insert: {
           agent_name: string
           created_at?: string
+          derivation_index?: number | null
           id?: string
           network?: string
           sol_address: string
@@ -336,6 +338,7 @@ export type Database = {
         Update: {
           agent_name?: string
           created_at?: string
+          derivation_index?: number | null
           id?: string
           network?: string
           sol_address?: string
@@ -1270,12 +1273,28 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_derivation_counters: {
+        Row: {
+          chain: string
+          next_index: number
+        }
+        Insert: {
+          chain: string
+          next_index?: number
+        }
+        Update: {
+          chain?: string
+          next_index?: number
+        }
+        Relationships: []
+      }
       wallets: {
         Row: {
           address: string
           balance: number
           created_at: string
           currency: string
+          derivation_index: number | null
           id: string
           network: string
           updated_at: string
@@ -1286,6 +1305,7 @@ export type Database = {
           balance?: number
           created_at?: string
           currency?: string
+          derivation_index?: number | null
           id?: string
           network?: string
           updated_at?: string
@@ -1296,6 +1316,7 @@ export type Database = {
           balance?: number
           created_at?: string
           currency?: string
+          derivation_index?: number | null
           id?: string
           network?: string
           updated_at?: string
@@ -1336,6 +1357,7 @@ export type Database = {
         Returns: boolean
       }
       is_agent_creator: { Args: { _agent_id: string }; Returns: boolean }
+      next_derivation_index: { Args: { p_chain: string }; Returns: number }
       next_nft_serial: { Args: { p_agent_name: string }; Returns: number }
     }
     Enums: {
