@@ -79,8 +79,12 @@ export default function Wallet() {
   };
 
   const handleGenerate = async () => {
+    if (wallets.length > 0) {
+      toast({ title: "Limit reached", description: "Only one wallet per user is allowed", variant: "destructive" });
+      return;
+    }
     const chain = "SOL";
-    const derivationIndex = wallets.filter((w) => w.chain === chain).length + 1;
+    const derivationIndex = 1;
     const result = await wallet.generateWallet(chain, derivationIndex);
     if (result) {
       toast({ title: "Wallet created", description: "Solana wallet generated successfully" });
@@ -157,11 +161,13 @@ export default function Wallet() {
           {/* ── Wallets Tab ── */}
           <TabsContent value="wallets" className="space-y-4 mt-4">
             {/* Generate new wallet */}
-            <Card className="p-4 border-dashed border-2 border-border">
-              <Button onClick={handleGenerate} disabled={wallet.loading} className="w-full">
-                <Plus className="h-4 w-4 mr-1" /> Generate Solana Wallet
-              </Button>
-            </Card>
+            {wallets.length === 0 && (
+              <Card className="p-4 border-dashed border-2 border-border">
+                <Button onClick={handleGenerate} disabled={wallet.loading} className="w-full">
+                  <Plus className="h-4 w-4 mr-1" /> Generate Solana Wallet
+                </Button>
+              </Card>
+            )}
 
             {wallets.length === 0 && !wallet.loading && (
               <p className="text-muted-foreground text-center py-8">
