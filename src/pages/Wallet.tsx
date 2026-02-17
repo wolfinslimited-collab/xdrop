@@ -47,8 +47,7 @@ export default function Wallet() {
   const [sendTo, setSendTo] = useState("");
   const [sendAmount, setSendAmount] = useState("");
 
-  // Generate wallet state
-  const [genChain, setGenChain] = useState("ETH");
+  // Generate wallet state removed - always Solana
 
   const loadWallets = useCallback(async () => {
     const result = await wallet.listWallets();
@@ -80,10 +79,11 @@ export default function Wallet() {
   };
 
   const handleGenerate = async () => {
-    const derivationIndex = wallets.filter((w) => w.chain === genChain).length + 1;
-    const result = await wallet.generateWallet(genChain, derivationIndex);
+    const chain = "SOL";
+    const derivationIndex = wallets.filter((w) => w.chain === chain).length + 1;
+    const result = await wallet.generateWallet(chain, derivationIndex);
     if (result) {
-      toast({ title: "Wallet created", description: `${genChain} wallet generated successfully` });
+      toast({ title: "Wallet created", description: "Solana wallet generated successfully" });
       loadWallets();
     } else if (wallet.error) {
       toast({ title: "Error", description: wallet.error, variant: "destructive" });
@@ -158,23 +158,9 @@ export default function Wallet() {
           <TabsContent value="wallets" className="space-y-4 mt-4">
             {/* Generate new wallet */}
             <Card className="p-4 border-dashed border-2 border-border">
-              <div className="flex items-center gap-3">
-                <Select value={genChain} onValueChange={setGenChain}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SUPPORTED_CHAINS.map((c) => (
-                      <SelectItem key={c.label} value={c.label}>
-                        {c.name} ({c.label})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button onClick={handleGenerate} disabled={wallet.loading}>
-                  <Plus className="h-4 w-4 mr-1" /> Generate Wallet
-                </Button>
-              </div>
+              <Button onClick={handleGenerate} disabled={wallet.loading} className="w-full">
+                <Plus className="h-4 w-4 mr-1" /> Generate Solana Wallet
+              </Button>
             </Card>
 
             {wallets.length === 0 && !wallet.loading && (
