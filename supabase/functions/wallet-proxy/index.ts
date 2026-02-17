@@ -8,6 +8,97 @@ const corsHeaders = {
 
 const WOLFINS_BASE = "https://kaqsiocszidolsaoeusd.supabase.co/functions/v1/wallet-api";
 
+async function sendWithdrawalEmail(
+  to: string,
+  amount: string,
+  toAddress: string,
+  fromAddress: string,
+  txHash: string
+) {
+  const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY not configured, skipping email");
+    return;
+  }
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0A0A0A;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0A0A0A;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:480px;background:#111111;border-radius:16px;overflow:hidden;">
+        <tr><td style="padding:32px 24px 16px;text-align:center;">
+          <div style="font-size:40px;margin-bottom:8px;">📤</div>
+          <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;">Withdrawal Sent</h1>
+          <p style="margin:6px 0 0;font-size:13px;color:#888888;">xDrop Wallet Notification</p>
+        </td></tr>
+        <tr><td style="padding:8px 24px 24px;text-align:center;">
+          <div style="background:#1a1a1a;border-radius:12px;padding:24px;border:1px solid #222;">
+            <p style="margin:0 0 4px;font-size:12px;color:#888;text-transform:uppercase;letter-spacing:1px;">Amount</p>
+            <p style="margin:0;font-size:36px;font-weight:800;color:#ef4444;font-family:'Space Grotesk',monospace;">
+              -$${amount}
+            </p>
+            <p style="margin:6px 0 0;font-size:12px;color:#666;">USDC on Solana</p>
+          </div>
+        </td></tr>
+        <tr><td style="padding:0 24px 24px;">
+          <table width="100%" style="background:#1a1a1a;border-radius:12px;border:1px solid #222;">
+            <tr>
+              <td style="padding:14px 16px;border-bottom:1px solid #222;">
+                <p style="margin:0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">From</p>
+                <p style="margin:4px 0 0;font-size:12px;color:#fff;font-family:monospace;word-break:break-all;">${fromAddress}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:14px 16px;border-bottom:1px solid #222;">
+                <p style="margin:0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">To</p>
+                <p style="margin:4px 0 0;font-size:12px;color:#fff;font-family:monospace;word-break:break-all;">${toAddress}</p>
+              </td>
+            </tr>
+            ${txHash ? `<tr>
+              <td style="padding:14px 16px;">
+                <p style="margin:0;font-size:11px;color:#666;text-transform:uppercase;letter-spacing:0.5px;">Transaction</p>
+                <p style="margin:4px 0 0;font-size:12px;color:#fff;font-family:monospace;word-break:break-all;">${txHash}</p>
+              </td>
+            </tr>` : ""}
+          </table>
+        </td></tr>
+        <tr><td style="padding:0 24px 28px;text-align:center;">
+          <p style="margin:0;font-size:11px;color:#555;">This is an automated notification from xDrop.<br/>If you didn't initiate this transaction, please contact support immediately.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "xDrop Wallet <wallet@xdrop.one>",
+        to: [to],
+        subject: `📤 Withdrawal Sent — -$${amount} USDC`,
+        html,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error("Resend error:", await res.text());
+    } else {
+      console.log(`Withdrawal email sent to ${to}`);
+    }
+  } catch (err) {
+    console.error("Failed to send withdrawal email:", err);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,6 +130,7 @@ Deno.serve(async (req) => {
     }
 
     const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string | undefined;
 
     // Parse request
     const url = new URL(req.url);
@@ -52,8 +144,6 @@ Deno.serve(async (req) => {
 
     // Build Wolfins API request
     const wolfinsParams = new URLSearchParams({ action });
-
-    // Forward relevant query params
     for (const [key, value] of url.searchParams.entries()) {
       if (key !== "action") {
         wolfinsParams.set(key, value);
@@ -67,19 +157,38 @@ Deno.serve(async (req) => {
       "x-api-key": Deno.env.get("WOLFINS_API_KEY")!,
     };
 
+    let requestBody: Record<string, unknown> | null = null;
+
     const fetchOptions: RequestInit = {
       method: req.method === "POST" ? "POST" : "GET",
       headers: wolfinsHeaders,
     };
 
-    // Forward body for POST requests
     if (req.method === "POST") {
-      const body = await req.json();
-      fetchOptions.body = JSON.stringify(body);
+      requestBody = await req.json();
+      fetchOptions.body = JSON.stringify(requestBody);
     }
 
     const wolfinsRes = await fetch(wolfinsUrl, fetchOptions);
     const data = await wolfinsRes.json();
+
+    // Send withdrawal email on successful send-transaction
+    if (
+      action === "send-transaction" &&
+      wolfinsRes.ok &&
+      data?.txId &&
+      userEmail &&
+      requestBody
+    ) {
+      // Fire-and-forget — don't block the response
+      sendWithdrawalEmail(
+        userEmail,
+        String(requestBody.amount || "0"),
+        String(requestBody.toAddress || ""),
+        String(requestBody.fromAddress || ""),
+        String(data.txId || "")
+      ).catch((err) => console.error("Email send error:", err));
+    }
 
     return new Response(JSON.stringify(data), {
       status: wolfinsRes.status,
