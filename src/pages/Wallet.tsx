@@ -96,8 +96,8 @@ export default function Wallet() {
       toast({ title: "Insufficient funds", description: `Your balance is $${currentBalance.toFixed(2)} USDC`, variant: "destructive" });
       return;
     }
-    // Use USDC-SOL chain for USDC transfers on Solana
-    const sendChain = myWallet.chain === "SOL" ? "USDC-SOL" : myWallet.chain;
+    // Use native SOL chain for transfers
+    const sendChain = myWallet.chain;
     const result = await wallet.sendTransaction(sendChain, myWallet.address, sendTo, sendAmount);
     if (result) {
       toast({ title: "Transaction sent", description: `TX: ${result.txId}` });
