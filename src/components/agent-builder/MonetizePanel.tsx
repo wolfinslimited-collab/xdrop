@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Users, Coins, Wallet, Copy, CheckCircle2, Loader2, AlertTriangle, Eye, EyeOff, TrendingUp } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, Coins, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import type { AgentConfig } from '@/types/agentBuilder';
+
 interface MonetizePanelProps {
   config: AgentConfig;
   onConfigChange: (config: AgentConfig) => void;
@@ -13,31 +13,15 @@ interface MonetizePanelProps {
 
 const LISTING_FEE = 1000;
 
-interface AgentWalletData {
-  sol_address: string;
-  sol_balance: number;
-  usdc_balance: number;
-  mnemonic?: string;
-  privateKey?: string;
-  exists: boolean;
-  warning?: string;
-}
-
-// Helper to get day label
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePanelProps) => {
   const isListed = (config as any).listOnMarketplace ?? false;
   const canAffordListing = userCredits >= LISTING_FEE;
 
-  const [walletData, setWalletData] = useState<AgentWalletData | null>(null);
-  const [walletLoading, setWalletLoading] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
-  const [copied, setCopied] = useState<string | null>(null);
   const [revenueData, setRevenueData] = useState<{ day: string; earnings: number }[]>([]);
   const [totalEarnings, setTotalEarnings] = useState(0);
 
-  // Fetch real earnings from agent_runs for the last 7 days
   useEffect(() => {
     const fetchEarnings = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -55,7 +39,6 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
         .gte('completed_at', sevenDaysAgo.toISOString())
         .not('earnings', 'is', null);
 
-      // Build 7-day buckets
       const buckets: Record<string, number> = {};
       for (let i = 0; i < 7; i++) {
         const d = new Date();
@@ -85,6 +68,7 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
 
     fetchEarnings();
   }, []);
+
   const updateField = (field: string, value: any) => {
     onConfigChange({ ...config, [field]: value } as any);
   };
@@ -94,173 +78,11 @@ const MonetizePanel = ({ config, onConfigChange, userCredits = 0 }: MonetizePane
     updateField('listOnMarketplace', !isListed);
   };
 
-  const handleGenerateWallet = async () => {
-    if (!config.name?.trim()) {
-      toast({ title: 'Name your agent first', description: 'Set an agent name before generating a wallet.', variant: 'destructive' });
-      return;
-    }
-
-    setWalletLoading(true);
-    try {
-      const session = await supabase.auth.getSession();
-      const resp = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-agent-wallet`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.data.session?.access_token}`,
-        },
-        body: JSON.stringify({ agentName: config.name }),
-      });
-
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to create wallet');
-
-      setWalletData({
-        sol_address: data.sol_address,
-        sol_balance: data.sol_balance,
-        usdc_balance: data.usdc_balance,
-        mnemonic: data.mnemonic,
-        privateKey: data.privateKey,
-        exists: data.exists,
-        warning: data.warning,
-      });
-
-      if (!data.exists) {
-        toast({
-          title: '🔐 Wallet created!',
-          description: 'Save your mnemonic and private key — they won\'t be shown again.',
-        });
-      }
-    } catch (err: any) {
-      toast({ title: 'Wallet error', description: err.message, variant: 'destructive' });
-    } finally {
-      setWalletLoading(false);
-    }
-  };
-
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const CopyButton = ({ text, label }: { text: string; label: string }) => (
-    <button
-      onClick={() => copyToClipboard(text, label)}
-      className="w-5 h-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-    >
-      {copied === label ? <CheckCircle2 className="w-3 h-3 text-primary" /> : <Copy className="w-3 h-3" />}
-    </button>
-  );
-
-  const totalBalance = walletData ? walletData.sol_balance + walletData.usdc_balance : 0;
-
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-sm font-semibold text-foreground mb-1">Monetize</h3>
-        <p className="text-xs text-muted-foreground">Wallet, earnings, and marketplace listing</p>
-      </div>
-
-      {/* Bot Wallet Section */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 mb-1">
-          <Wallet className="w-3.5 h-3.5 text-muted-foreground" />
-          <label className="text-xs font-medium text-foreground">Agent Wallet</label>
-        </div>
-
-        {!walletData ? (
-          <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-2">
-            <p className="text-[11px] text-muted-foreground">
-              Generate a Solana wallet for your bot to receive earnings, tips, and payments.
-            </p>
-            <Button
-              onClick={handleGenerateWallet}
-              disabled={walletLoading}
-              variant="outline"
-              size="sm"
-              className="w-full gap-2 text-xs"
-            >
-              {walletLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Wallet className="w-3.5 h-3.5" />
-              )}
-              {walletLoading ? 'Generating…' : 'Generate Wallet'}
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {/* Single wallet address */}
-            <div className="p-3 rounded-lg border border-border bg-muted/30 space-y-3">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Wallet Address</span>
-                  <CopyButton text={walletData.sol_address} label="address" />
-                </div>
-                <p className="text-[11px] text-foreground font-mono break-all leading-relaxed">
-                  {walletData.sol_address}
-                </p>
-              </div>
-
-              {/* Balance cards */}
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
-                <div className="p-2 rounded-md bg-background/50 border border-border">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">SOL</p>
-                  <p className="text-sm font-semibold text-foreground">{walletData.sol_balance.toFixed(4)}</p>
-                </div>
-                <div className="p-2 rounded-md bg-background/50 border border-border">
-                  <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-0.5">USDC</p>
-                  <p className="text-sm font-semibold text-foreground">${walletData.usdc_balance.toFixed(2)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Secret keys (only shown on first creation) */}
-            {walletData.mnemonic && walletData.privateKey && (
-              <div className="p-3 rounded-lg border border-accent/30 bg-accent/5 space-y-2">
-                <div className="flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-accent-foreground flex-shrink-0" />
-                  <p className="text-[11px] font-medium text-accent-foreground">Save these — shown only once!</p>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground">Show secrets</span>
-                  <button onClick={() => setShowSecret(!showSecret)} className="text-muted-foreground hover:text-foreground transition-colors">
-                    {showSecret ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                  </button>
-                </div>
-
-                {showSecret && (
-                  <div className="space-y-2">
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Mnemonic</span>
-                        <CopyButton text={walletData.mnemonic} label="mnemonic" />
-                      </div>
-                      <p className="text-[10px] text-foreground font-mono break-all bg-background/50 p-1.5 rounded border border-border">
-                        {walletData.mnemonic}
-                      </p>
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Private Key</span>
-                        <CopyButton text={walletData.privateKey} label="pk" />
-                      </div>
-                      <p className="text-[10px] text-foreground font-mono break-all bg-background/50 p-1.5 rounded border border-border">
-                        {walletData.privateKey}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {walletData.exists && (
-              <p className="text-[10px] text-muted-foreground/60 text-center">Wallet already generated for this agent</p>
-            )}
-          </div>
-        )}
+        <p className="text-xs text-muted-foreground">Earnings and marketplace listing</p>
       </div>
 
       {/* Revenue Income Chart */}

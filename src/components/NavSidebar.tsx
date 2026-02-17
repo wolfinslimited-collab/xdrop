@@ -7,7 +7,6 @@ import {
   Bot,
   Store,
   BarChart3,
-  Wallet,
   Swords,
   Coins,
   LogIn,
@@ -29,7 +28,6 @@ const navItems = [
   { icon: null, label: 'Builder', path: '/builder', customIcon: true },
   { icon: BarChart3, label: 'Dashboard', path: '/dashboard' },
   // { icon: Swords, label: 'Arena', path: '/games' },
-  { icon: Wallet, label: 'Wallet', path: '/wallet' },
   { icon: Coins, label: 'Credits', path: '/credits' },
   
 ];

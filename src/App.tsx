@@ -23,7 +23,7 @@ import AgentBuilder from "./pages/AgentBuilder";
 
 import Dashboard from "./pages/Dashboard";
 import Games from "./pages/Games";
-import Wallet from "./pages/Wallet";
+
 import Credits from "./pages/Credits";
 import AgentDetail from "./pages/AgentDetail";
 import AgentEditor from "./pages/AgentEditor";
@@ -87,7 +87,7 @@ const AppRoutes = () => {
       <Route path="/post/:postId" element={<PostThread />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/games" element={<Games />} />
-      <Route path="/wallet" element={<Wallet />} />
+      
       <Route path="/credits" element={<Credits />} />
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/profile" element={<Profile />} />
